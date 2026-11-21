@@ -1,0 +1,123 @@
+<USER_REQUEST>
+ASHA SAKHI – COMPLETE FUNCTIONALITY, MAP & AI INTELLIGENCE CORRECTION
+
+Act as a senior full-stack engineer, AI engineer, Google Maps integration specialist and UI/UX architect.
+
+I have an existing ASHA Sakhi application. The landing page and dashboard design are already implemented. However, several critical functional and UI problems must be corrected.
+
+IMPORTANT: Do not create a new project. Do not replace the existing application. Work directly inside the existing repository. Preserve all working features, database records, authentication, routing and existing integrations.
+
+My objective is to make ASHA Sakhi a professional, reliable, multilingual AI-powered field operations platform for ASHA workers.
+
+Study the existing codebase first, identify the actual causes of the problems, and then implement the fixes.
+
+---
+
+TASK 1: FIX COMPLETE MULTILINGUAL SUPPORT
+
+Currently, English is selected in the language selector, but multiple headings, labels, map information, beneficiary information and other interface elements continue displaying in Kannada.
+
+This is unacceptable.
+
+Implement a centralized internationalization architecture.
+
+Supported languages:
+
+1. English – en
+2. Kannada – kn
+3. Hindi – hi
+
+Requirements:
+
+- Selecting English must translate the ENTIRE application into English.
+- Selecting Kannada must translate the ENTIRE application into Kannada.
+- Selecting Hindi must translate the ENTIRE application into Hindi.
+- Never display mixed-language interface elements.
+- Do not translate only the navigation bar. Translate every page and component.
+
+Audit and translate:
+
+- Sidebar navigation.
+- Dashboard headings and cards.
+- Search placeholders.
+- Buttons and tooltips.
+- Beneficiary directory.
+- Maternal health records.
+- Household route planner.
+- Ambulance tracking page.
+- Emergency alerts.
+- Incentives and NHM.
+- Follow-ups and reports.
+- AI Voice Assistant.
+- Forms and validation messages.
+- Toast notifications.
+- Dialogs and confirmat
+<truncated 11184 bytes>
+. Show my pending tasks.
+
+Verify that different questions return different, relevant responses.
+
+Specifically verify that Lakshamma is not mentioned unless the question or retrieved records actually concern Lakshamma.
+
+TEST THE UI:
+
+- Desktop.
+- Tablet.
+- Mobile.
+- Loading states.
+- Empty states.
+- Error states.
+- Navigation.
+- Buttons.
+- Forms.
+- Search.
+- Database updates.
+
+Run the existing test suite, type checks, lint checks and production build.
+
+Do not claim that a feature works unless it has actually been tested.
+
+---
+
+IMPLEMENTATION RULES
+
+1. Inspect the existing repository before editing.
+2. Identify the root cause of every issue.
+3. Preserve all existing working features.
+4. Do not create duplicate pages or duplicate database tables unnecessarily.
+5. Reuse existing APIs and components wherever appropriate.
+6. Do not replace real integrations with fake UI.
+7. Do not hardcode patient-specific responses.
+8. Do not expose sensitive patient information in logs.
+9. Never commit API keys or secrets.
+10. Keep the existing ASHA Sakhi branding.
+
+FINAL DELIVERABLE
+
+After implementation, provide:
+
+1. Root causes identified.
+2. Files modified.
+3. Multilingual improvements.
+4. Google Maps integration details.
+5. AI assistant architecture improvements.
+6. Database and API changes.
+7. Tests performed and their actual results.
+8. Environment variables required.
+9. Any remaining limitations.
+
+The final result should look and behave like a professional government healthcare field operations platform, suitable for a national-level hackathon demonstration.
+
+PRIORITY ORDER:
+
+1. Fix AI responses and database retrieval.
+2. Fix complete multilingual translation.
+3. Fix Google Maps and ambulance routing.
+4. Unify the entire application design.
+5. Complete functional testing.
+
+Start by inspecting the existing codebase. Then implement and verify each task.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-21T18:48:19+05:30.
+</ADDITIONAL_METADATA>

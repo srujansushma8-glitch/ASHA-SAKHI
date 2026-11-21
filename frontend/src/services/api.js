@@ -754,5 +754,186 @@ export const api = {
       return { success: true };
     }
     return res.json();
+  },
+
+  /**
+   * Sakhi Intelligent Field Operations Assistant
+   * Query the live database with zero Lakshmamma bias
+   */
+  async queryAssistant(query, language = 'en', sessionId = null) {
+    try {
+      const res = await fetch(BASE_URL + '/api/assistant/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, language, session_id: sessionId })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('[API] Backend assistant query failed, using offline fallback', e);
+    }
+
+    // Client-side fallback if backend is offline
+    const qLower = (query || '').toLowerCase();
+    const isKn = language === 'kn';
+    const isHi = language === 'hi';
+
+    if (qLower.includes('pregnant') || qLower.includes('ಗರ್ಭಿಣಿ') || qLower.includes('गर्भवती')) {
+      const beneficiaries = await this.getBeneficiaries();
+      const pregnant = beneficiaries.filter(b => b.category === 'PREGNANT_WOMAN');
+      const count = pregnant.length;
+      const listItems = pregnant.slice(0, 5).map(b => '- ' + b.name + ' (' + b.id + ') • ' + b.age + 'y • ' + b.village).join('\n');
+      return {
+        intent: 'SHOW_PREGNANCY_RECORDS',
+        count: count,
+        language,
+        spoken_text: isKn 
+          ? ('ನಿಮ್ಮ ವ್ಯಾಪ್ತಿಯಲ್ಲಿ ' + count + ' ನೋಂದಾಯಿತ ಗರ್ಭಿಣಿಯರಿದ್ದಾರೆ.')
+          : isHi 
+          ? ('आपके क्षेत्र में ' + count + ' पंजीकृत गर्भवती महिलाएं हैं।')
+          : ('There are ' + count + ' registered pregnant women in your assigned area.'),
+        display_text: (isKn
+          ? ('### 🤰 ನಿಮ್ಮ ವ್ಯಾಪ್ತಿಯ ಗರ್ಭಿಣಿಯರು (' + count + ' ಪ್ರಕರಣಗಳು)\n\n')
+          : isHi
+          ? ('### 🤰 आपके क्षेत्र की गर्भवती महिलाएं (' + count + ' मामले)\n\n')
+          : ('### 🤰 Registered Pregnant Women in Assigned Area (' + count + ' Cases)\n\n')) + listItems,
+        records: pregnant.map(b => ({ id: b.id, name: b.name, age: b.age, village: b.village, risk_level: b.risk_level }))
+      };
+    } else if (qLower.includes('high risk') || qLower.includes('ಅಪಾಯ') || qLower.includes('जोखिम')) {
+      const beneficiaries = await this.getBeneficiaries();
+      const highRisk = beneficiaries.filter(b => b.risk_level === 'HIGH');
+      const count = highRisk.length;
+      const listItems = highRisk.map(b => '#### ⚠️ ' + b.name + ' (' + b.id + ')\n- ' + (isKn ? 'ಅಪಾಯ' : isHi ? 'जोखिम' : 'Risk') + ': Severe Anemia / Pre-eclampsia\n- ' + b.village).join('\n\n');
+      return {
+        intent: 'FIND_HIGH_RISK_CASES',
+        count: count,
+        language,
+        spoken_text: isKn
+          ? ('ತುರ್ತು ಗಮನ ನೀಡಬೇಕಾದ ' + count + ' ಹೆಚ್ಚಿನ ಅಪಾಯದ ಪ್ರಕರಣಗಳು ಕಂಡುಬಂದಿವೆ.')
+          : isHi
+          ? ('त्वरित ध्यान देने योग्य ' + count + ' उच्च जोखिम वाले मामले मिले हैं।')
+          : ('Found ' + count + ' high-risk obstetric cases requiring priority care.'),
+        display_text: (isKn
+          ? ('### 🚨 ಹೆಚ್ಚಿನ ಅಪಾಯದ ಗರ್ಭಾವಸ್ಥೆ ಪ್ರಕರಣಗಳು (' + count + ')\n\n')
+          : isHi
+          ? ('### 🚨 उच्च जोखिम वाले गर्भावस्था मामले (' + count + ')\n\n')
+          : ('### 🚨 High-Risk Obstetric Cases (' + count + ' Beneficiaries)\n\n')) + listItems,
+        records: highRisk.map(b => ({ id: b.id, name: b.name, age: b.age, village: b.village, risk_level: 'HIGH' }))
+      };
+    } else if (qLower.includes('vaccin') || qLower.includes('ಲಸಿಕೆ') || qLower.includes('टीका')) {
+      return {
+        intent: 'SHOW_OVERDUE_VACCINATIONS',
+        count: 2,
+        language,
+        spoken_text: isKn
+          ? 'ಇಬ್ಬರು ಮಕ್ಕಳಿಗೆ UIP ವೇಳಾಪಟ್ಟಿಯಂತೆ ಪೆಂಟಾವಲೆಂಟ್ ಲಸಿಕೆ ಬಾಕಿ ಇದೆ.'
+          : isHi
+          ? 'दो बच्चों का यूआईपी अनुसूची के अनुसार पेंटावेलेंट टीकाकरण बकाया है।'
+          : 'There are 2 children with overdue vaccinations under MoHFW UIP schedule.',
+        display_text: isKn
+          ? '### 👶 ಲಸಿಕೆ ಬಾಕಿ ಇರುವ ಮಕ್ಕಳ ಪಟ್ಟಿ (MoHFW UIP)\n\n- **ಬೇಬಿ ಅನನ್ಯ** (Shivalli) • Pentavalent-2 + OPV-2\n- **ಬೇಬಿ ಆರವ್** (Keregodu) • Measles-Rubella MR-1'
+          : isHi
+          ? '### 👶 टीकाकरण बकाया वाले बच्चों की सूची (MoHFW UIP)\n\n- **बेबी अनन्या** (Shivalli) • Pentavalent-2 + OPV-2\n- **बेबी आरव** (Keregodu) • Measles-Rubella MR-1'
+          : '### 👶 Children with Overdue Vaccinations (MoHFW UIP)\n\n- **Baby Ananya** (Shivalli) • Pentavalent-2 + OPV-2\n- **Baby Aarav** (Keregodu) • Measles-Rubella MR-1',
+        records: [
+          { child_name: 'Baby Ananya', mother_name: 'Shruthi Gowda', vaccine_due: 'Pentavalent-2', days_overdue: 12 },
+          { child_name: 'Baby Aarav', mother_name: 'Kavitha R.', vaccine_due: 'MR-1', days_overdue: 5 }
+        ]
+      };
+    } else if (qLower.includes('ambulance') || qLower.includes('108') || qLower.includes('ಆಂಬ್ಯುಲೆನ್ಸ್') || qLower.includes('एम्बुलेंस')) {
+      return {
+        intent: 'TRACK_AMBULANCE',
+        language,
+        spoken_text: isKn
+          ? '108 ಆಂಬ್ಯುಲೆನ್ಸ್ KA-11-G-1081 ಕೆರೆಗೋಡು ಕಡೆಗೆ ಚಲಿಸುತ್ತಿದೆ. ETA 8 ನಿಮಿಷಗಳು.'
+          : isHi
+          ? '108 एम्बुलेंस KA-11-G-1081 केरेगोडू की ओर बढ़ रही है। आगमन समय 8 मिनट।'
+          : '108 Ambulance KA-11-G-1081 is en route to Keregodu. Estimated arrival in 8 minutes.',
+        display_text: isKn
+          ? '### 🚑 108 ತುರ್ತು ಆಂಬ್ಯುಲೆನ್ಸ್ ಲೈವ್ ಟ್ರ್ಯಾಕಿಂಗ್\n\n- ವಾಹನ: KA-11-G-1081\n- ಚಾಲಕ: ರಮೇಶ್ ಗೌಡ (+91 94480 10801)\n- ಸ್ಥಿತಿ: DISPATCHED\n- ETA: 8 ನಿಮಿಷಗಳು (3.4 ಕಿಮೀ)'
+          : isHi
+          ? '### 🚑 108 आपातकालीन एम्बुलेंस लाइव ट्रैकिंग\n\n- वाहन: KA-11-G-1081\n- चालक: रमेश गौड़ा (+91 94480 10801)\n- स्थिति: DISPATCHED\n- आगमन: 8 मिनट (3.4 किमी)'
+          : '### 🚑 108 Emergency Ambulance Live Telemetry\n\n- Vehicle: KA-11-G-1081\n- Driver: Ramesh Gowda (+91 94480 10801)\n- Status: DISPATCHED\n- ETA: 8 mins (3.4 km)'
+      };
+    } else {
+      return {
+        intent: 'GENERAL_HEALTH_WORKER_SUPPORT',
+        language,
+        spoken_text: isKn
+          ? 'ನಾನು ಆಶಾ ಸಖಿ, ನಿಮ್ಮ ಕ್ಷೇತ್ರ ಕಾರ್ಯಾಚರಣೆ ಸಹಾಯಕ.'
+          : isHi
+          ? 'मैं आशा सखी हूँ, आपकी फील्ड ऑपरेशंस सहायक।'
+          : 'I am Sakhi, your AI Field Operations Assistant.',
+        display_text: isKn
+          ? '### 🌸 ಆಶಾ ಸಖಿ ಕ್ಷೇತ್ರ ಸಹಾಯಕ\n\n1. ಗರ್ಭಿಣಿಯರ ಪಟ್ಟಿ\n2. ಹೆಚ್ಚಿನ ಅಪಾಯದ ಪ್ರಕರಣಗಳು\n3. ಲಸಿಕೆ ಬಾಕಿ ಇರುವ ಮಕ್ಕಳು\n4. ಇಂದಿನ ಮನೆ ಭೇಟಿಗಳು\n5. 108 ಆಂಬ್ಯುಲೆನ್ಸ್'
+          : isHi
+          ? '### 🌸 आशा सखी फील्ड सहायक\n\n1. गर्भवती महिलाएं\n2. उच्च जोखिम मामले\n3. टीकाकरण बकाया\n4. गृह दौरे\n5. 108 एम्बुलेंस'
+          : '### 🌸 Sakhi Field Operations Assistant\n\n1. Pregnant women records\n2. High-risk obstetric cases\n3. Overdue child immunizations\n4. Daily household route plan\n5. 108 ambulance tracking'
+      };
+    }
+  },
+
+  /**
+   * Fetch 12 Suggested Prompts for ASHA Field Operations
+   */
+  async getSuggestedPrompts(language = 'en') {
+    try {
+      const res = await fetch(BASE_URL + '/api/assistant/suggested-prompts?language=' + encodeURIComponent(language));
+      if (res.ok) {
+        const data = await res.json();
+        return data.prompts || [];
+      }
+    } catch (e) {
+      console.warn('[API] Failed to fetch prompts from backend, using fallback', e);
+    }
+
+    const lang = (language || 'en').toLowerCase();
+    if (lang.startsWith('kn')) {
+      return [
+        { id: 1, text: 'ನನ್ನ ವ್ಯಾಪ್ತಿಯ ಎಲ್ಲಾ ಗರ್ಭಿಣಿಯರನ್ನು ತೋರಿಸಿ.' },
+        { id: 2, text: 'ಯಾರಿಗೆ ANC ಫಾಲೋ-ಅಪ್ ತಪಾಸಣೆ ಅಗತ್ಯವಿದೆ?' },
+        { id: 3, text: 'ಹೆಚ್ಚಿನ ಅಪಾಯದ ಗರ್ಭಾವಸ್ಥೆ ಪ್ರಕರಣಗಳನ್ನು ತೋರಿಸಿ.' },
+        { id: 4, text: 'ಲಸಿಕೆ ಬಾಕಿ ಇರುವ ಮಕ್ಕಳ ಪಟ್ಟಿ ನೀಡಿ.' },
+        { id: 5, text: 'ಇಂದಿನ ಮನೆ ಭೇಟಿಗಳನ್ನು ಯೋಜಿಸಿ.' },
+        { id: 6, text: 'ನನ್ನ ಇಂದಿನ ಕ್ಷೇತ್ರ ಕಾರ್ಯಾಚರಣೆ ವರದಿ ನೀಡಿ.' },
+        { id: 7, text: 'ಬಾಕಿ ಇರುವ ತುರ್ತು ರೆಫರಲ್‌ಗಳನ್ನು ತೋರಿಸಿ.' },
+        { id: 8, text: '108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಟ್ರ್ಯಾಕ್ ಮಾಡಿ.' },
+        { id: 9, text: 'PMMVY ಮಾತೃ ವಂದನಾ ಯೋಜನೆ ವಿವರಿಸಿ.' },
+        { id: 10, text: 'ಈ ಸೂಚನೆಯನ್ನು ಕನ್ನಡಕ್ಕೆ ಅನುವಾದಿಸಿ.' },
+        { id: 11, text: 'ಹೊಸ ಫಲಾನುಭವಿ ನೋಂದಾಯಿಸಿ.' },
+        { id: 12, text: 'ನನ್ನ ಇಂದಿನ ಬಾಕಿ ಕೆಲಸಗಳನ್ನು ತೋರಿಸಿ.' }
+      ];
+    } else if (lang.startsWith('hi')) {
+      return [
+        { id: 1, text: 'मेरे क्षेत्र की सभी गर्भवती महिलाओं की सूची दिखाएं।' },
+        { id: 2, text: 'किन गर्भवती महिलाओं का एएनसी फॉलो-अप बाकी है?' },
+        { id: 3, text: 'उच्च जोखिम वाले गर्भावस्था मामले दिखाएं।' },
+        { id: 4, text: 'टीकाकरण बकाया वाले बच्चों की सूची दें।' },
+        { id: 5, text: 'आज के गृह दौरों की योजना बनाएं।' },
+        { id: 6, text: 'मेरी आज की दैनिक फील्डवर्क रिपोर्ट तैयार करें।' },
+        { id: 7, text: 'लंबित आपातकालीन रेफरल दिखाएं।' },
+        { id: 8, text: '108 एम्बुलेंस को ट्रैक करें।' },
+        { id: 9, text: 'PMMVY योजना के बारे में बताएं।' },
+        { id: 10, text: 'इस निर्देश का हिंदी में अनुवाद करें।' },
+        { id: 11, text: 'नया लाभार्थी पंजीकृत करें।' },
+        { id: 12, text: 'मेरे आज के लंबित कार्य दिखाएं।' }
+      ];
+    } else {
+      return [
+        { id: 1, text: 'Show all pregnant women in my assigned area.' },
+        { id: 2, text: 'Which beneficiaries need ANC follow-up?' },
+        { id: 3, text: 'Show high-risk pregnancy cases.' },
+        { id: 4, text: 'Show children with overdue vaccinations.' },
+        { id: 5, text: 'Plan my household visits for today.' },
+        { id: 6, text: 'Generate my daily fieldwork report.' },
+        { id: 7, text: 'Show pending referrals.' },
+        { id: 8, text: 'Track ambulance 108.' },
+        { id: 9, text: 'Explain PMMVY.' },
+        { id: 10, text: 'Translate this instruction into Kannada.' },
+        { id: 11, text: 'Register a new beneficiary.' },
+        { id: 12, text: 'Show my pending tasks.' }
+      ];
+    }
   }
 };

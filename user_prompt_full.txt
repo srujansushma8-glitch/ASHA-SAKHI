@@ -1,0 +1,475 @@
+<USER_REQUEST>
+ASHA SAKHI – COMPLETE FUNCTIONALITY, MAP & AI INTELLIGENCE CORRECTION
+
+Act as a senior full-stack engineer, AI engineer, Google Maps integration specialist and UI/UX architect.
+
+I have an existing ASHA Sakhi application. The landing page and dashboard design are already implemented. However, several critical functional and UI problems must be corrected.
+
+IMPORTANT: Do not create a new project. Do not replace the existing application. Work directly inside the existing repository. Preserve all working features, database records, authentication, routing and existing integrations.
+
+My objective is to make ASHA Sakhi a professional, reliable, multilingual AI-powered field operations platform for ASHA workers.
+
+Study the existing codebase first, identify the actual causes of the problems, and then implement the fixes.
+
+---
+
+TASK 1: FIX COMPLETE MULTILINGUAL SUPPORT
+
+Currently, English is selected in the language selector, but multiple headings, labels, map information, beneficiary information and other interface elements continue displaying in Kannada.
+
+This is unacceptable.
+
+Implement a centralized internationalization architecture.
+
+Supported languages:
+
+1. English – en
+2. Kannada – kn
+3. Hindi – hi
+
+Requirements:
+
+- Selecting English must translate the ENTIRE application into English.
+- Selecting Kannada must translate the ENTIRE application into Kannada.
+- Selecting Hindi must translate the ENTIRE application into Hindi.
+- Never display mixed-language interface elements.
+- Do not translate only the navigation bar. Translate every page and component.
+
+Audit and translate:
+
+- Sidebar navigation.
+- Dashboard headings and cards.
+- Search placeholders.
+- Buttons and tooltips.
+- Beneficiary directory.
+- Maternal health records.
+- Household route planner.
+- Ambulance tracking page.
+- Emergency alerts.
+- Incentives and NHM.
+- Follow-ups and reports.
+- AI Voice Assistant.
+- Forms and validation messages.
+- Toast notifications.
+- Dialogs and confirmation messages.
+- Table headings and status badges.
+- Map markers, map legends and information cards.
+- AI-generated interface responses.
+- Loading, empty and error states.
+- Date, time and notification labels.
+
+Technical requirements:
+
+- Create a centralized translation dictionary or use a reliable i18n library.
+- Use one global language state shared across all pages.
+- Persist the selected language across refreshes and navigation.
+- Ensure all components react immediately when the language changes.
+- Do not hardcode Kannada or English text inside individual components.
+- Separate interface translations from actual beneficiary names and original user-entered records.
+- Preserve names, addresses and original records unless an explicit translation is requested.
+- Use appropriate date and number localization.
+
+IMPORTANT: Google Maps labels may depend on the Maps language configuration. Configure the Google Maps language according to the selected application language and reload or recreate the map when necessary.
+
+Acceptance test:
+Select English and navigate through every sidebar item. No Kannada or Hindi interface labels should remain. Repeat for Kannada and Hindi.
+
+---
+
+TASK 2: COMPLETELY REDESIGN THE AMBULANCE TRACKING MAP
+
+The existing ambulance map is visually poor. The route appears distorted and does not resemble a professional real-world navigation interface.
+
+Replace the existing simulated-looking route visualization with an actual Google Maps integration.
+
+Use Google Maps JavaScript API with the appropriate Directions or Routes integration.
+
+Environment configuration:
+
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+
+Never hardcode the API key.
+
+Required map appearance:
+
+- Professional Google Maps street map.
+- Clearly visible roads, streets and surrounding locations.
+- Actual road-following ambulance route.
+- Clearly distinguish ambulance, pickup location and hospital/PHC destination.
+- Use smooth, visible route polylines following actual roads.
+- Show recognizable map markers.
+- Automatically fit the complete route inside the map viewport.
+- Provide zoom-in and zoom-out controls.
+- Add map recentering.
+- Responsive layout.
+- Clean white map card with rose-colored interface accents.
+
+Route visualization:
+
+1. Pickup location – rose-colored marker.
+2. Ambulance – recognizable ambulance marker.
+3. Destination – green or deep-rose hospital marker.
+4. Actual road route – prominent rose-colored polyline.
+5. Current ambulance position – updated marker.
+6. Display distance and ETA.
+
+Use the following visual design:
+
+Primary rose: #A25B74
+Secondary rose: #C47A92
+Background: #F9ECEC
+Light background: #FDF6F5
+Card background: #FFFFFF
+Text: #3B2A33
+Muted text: #7A6670
+
+Do not use dark navy or dark-blue panels anywhere in the application.
+
+Ambulance tracking information panel:
+
+- Ambulance ID.
+- Driver information, where available.
+- Dispatch status.
+- Current location.
+- Pickup location.
+- Destination hospital.
+- Remaining distance.
+- Estimated arrival time.
+- Last GPS update.
+
+LIVE TRACKING:
+
+If an actual ambulance GPS feed is available, subscribe to its location updates and update the marker without refreshing the entire map.
+
+If no real GPS device or feed is connected, clearly label the experience as DEMO SIMULATION.
+
+Do not present simulated movement as real ambulance tracking.
+
+For demo mode, implement a smooth, realistic route simulation that moves the ambulance marker along the actual road route.
+
+Route status stages:
+
+1. Emergency received.
+2. Ambulance dispatched.
+3. Ambulance on the way.
+4. Patient picked up.
+5. Arrived at hospital.
+
+Add a clear progress indicator.
+
+IMPORTANT:
+Do not draw arbitrary diagonal lines between two coordinates. The route must follow the road network returned by the mapping service.
+
+If the Google Maps API key is missing or the API fails, display a proper error state and a usable fallback instead of a broken map.
+
+---
+
+TASK 3: FIX THE SAKHI AI ASSISTANT – CRITICAL
+
+Currently, almost every question asked to Sakhi receives information about Lakshamma.
+
+This indicates a possible hardcoded beneficiary response, incorrect database retrieval, fixed prompt context or conversation-state problem.
+
+Investigate the actual backend and frontend implementation.
+
+REMOVE all hardcoded Lakshamma-specific answers from the general AI assistant.
+
+Sakhi must understand the ASHA worker's actual question and retrieve the appropriate information.
+
+Sakhi is an AI field operations assistant for ASHA WORKERS, not a chatbot intended for villagers.
+
+Its primary responsibilities include:
+
+A. Beneficiary management.
+B. Maternal health monitoring.
+C. High-risk case follow-ups.
+D. Child immunization tracking.
+E. Household visit planning.
+F. Ambulance and emergency coordination.
+G. Government health schemes.
+H. ASHA fieldwork reporting.
+I. Voice-based registration.
+J. Multilingual communication.
+
+Implement intelligent intent detection
+
+Identify the user's intention before generating a response.
+
+Example intents:
+
+- SHOW_PENDING_VISITS
+- FIND_HIGH_RISK_CASES
+- SHOW_PREGNANCY_RECORDS
+- CHECK_ANC_FOLLOWUPS
+- SHOW_OVERDUE_VACCINATIONS
+- PLAN_HOUSEHOLD_VISITS
+- REGISTER_BENEFICIARY
+- GENERATE_DAILY_REPORT
+- SHOW_PENDING_REFERRALS
+- TRACK_AMBULANCE
+- EXPLAIN_GOVERNMENT_SCHEME
+- TRANSLATE_HEALTH_INSTRUCTIONS
+- GENERAL_HEALTH_WORKER_SUPPORT
+
+The AI must choose the appropriate intent and execute the relevant database query or application action.
+
+DATABASE INTEGRATION
+
+Do not rely on one fixed beneficiary.
+
+Retrieve records dynamically from the existing database.
+
+Examples:
+
+Question: "Show all pregnant women in my assigned area."
+
+Expected: Retrieve all relevant pregnancy records belonging to the authenticated ASHA worker's assigned area.
+
+Question: "Who needs an ANC follow-up?"
+
+Expected: Retrieve records with upcoming or overdue ANC follow-ups.
+
+Question: "Show high-risk pregnancy cases."
+
+Expected: Retrieve beneficiaries with recorded high-risk flags and explain the recorded reasons.
+
+Question: "Show children with overdue vaccinations."
+
+Expected: Retrieve children whose vaccination schedules indicate overdue doses.
+
+Question: "Generate today's fieldwork report."
+
+Expected: Calculate actual activities from the database.
+
+Question: "Where is ambulance 108?"
+
+Expected: Retrieve the relevant ambulance tracking record if available.
+
+Question: "Show pending household visits."
+
+Expected: Return all pending household visits, not a single fixed beneficiary.
+
+CONVERSATION MEMORY FIX
+
+Maintain conversation context appropriately.
+
+Example:
+
+ASHA Worker: "Show high-risk pregnancy cases."
+
+Sakhi: Returns the relevant cases.
+
+ASHA Worker: "Which of them need an urgent follow-up?"
+
+Sakhi: Uses the previous result to answer the follow-up question.
+
+However:
+
+If the ASHA worker starts a completely unrelated question, Sakhi must not continue discussing Lakshamma or another previously mentioned beneficiary.
+
+Avoid stale context and hardcoded names.
+
+If a beneficiary is not identified clearly, ask the ASHA worker which record they mean.
+
+VOICE ASSISTANT
+
+Support:
+
+- English speech input.
+- Kannada speech input.
+- Hindi speech input.
+- Text-to-speech responses.
+- Voice-based field registration.
+- Voice-triggered dashboard actions.
+
+A Kannada voice command must be understood even when the dashboard language is English, and vice versa.
+
+Use the selected interface language for the response unless the worker explicitly requests another language.
+
+Do not save a voice-generated registration until required fields are validated and the worker confirms it.
+
+RESPONSE QUALITY
+
+Every response must:
+
+- Directly answer the question.
+- Use actual application data where applicable.
+- Display relevant records and counts.
+- Offer a relevant next action.
+- Respect the user's role and permissions.
+- Avoid invented statistics or patient records.
+- Never independently diagnose a patient.
+- Escalate medical emergencies to appropriate emergency services and healthcare professionals.
+
+If the required information is unavailable, explicitly say so.
+
+---
+
+TASK 4: FIX BENEFICIARY DATA RETRIEVAL
+
+Audit the entire beneficiary management system.
+
+Ensure:
+
+- Every beneficiary has a unique ID.
+- Maternal records are linked to the correct beneficiary.
+- Child records are linked to the correct household.
+- Vaccination records are linked to the correct child.
+- Household locations are stored correctly.
+- Follow-up dates are stored consistently.
+- Referral records are linked to the correct patient.
+- ASHA workers can access only authorized records.
+
+All dashboard statistics must be calculated from actual database records.
+
+Remove fixed values and incorrect fallback records from production functionality.
+
+Seed data may be used for demonstrations, but clearly distinguish sample records from real records.
+
+---
+
+TASK 5: MAKE THE ENTIRE APPLICATION VISUALLY CONSISTENT
+
+The landing page already has an attractive rose-colored design.
+
+Use the same visual identity throughout the complete application.
+
+Apply these CSS variables globally:
+
+--rose-deep: #A25B74;
+--rose-mid: #C47A92;
+--blush: #F9ECEC;
+--blush-light: #FDF6F5;
+--white: #FFFFFF;
+--plum-text: #3B2A33;
+--muted: #7A6670;
+
+Design requirements:
+
+- No random dark-blue panels.
+- No inconsistent color palettes.
+- Consistent typography.
+- Consistent border radius.
+- Soft rose-colored shadows.
+- White cards.
+- Blush section backgrounds.
+- Rose-colored primary buttons.
+- Consistent icons.
+- Professional spacing.
+- Clear visual hierarchy.
+- Responsive sidebar.
+- Consistent tables and charts.
+- Accessible contrast and visible focus states.
+
+The dashboard, household route planner, maternal health page, AI assistant and ambulance page must all look like parts of the SAME application.
+
+Do not unnecessarily redesign the existing landing page.
+
+---
+
+TASK 6: TEST EVERYTHING
+
+After implementing all changes, perform actual functional testing.
+
+Test the following:
+
+MULTILINGUAL:
+
+- English to Kannada.
+- Kannada to Hindi.
+- Hindi to English.
+- Refresh while retaining the selected language.
+- Navigate across every page without mixed-language labels.
+
+AMBULANCE:
+
+- Load Google Maps.
+- Display pickup and destination markers.
+- Display an actual road-following route.
+- Display ambulance position.
+- Verify ETA and distance.
+- Test route simulation if real GPS is unavailable.
+- Test missing API key and API failure states.
+
+AI ASSISTANT:
+Ask these exact questions:
+
+1. Show all pregnant women in my assigned area.
+2. Which beneficiaries need ANC follow-up?
+3. Show high-risk pregnancy cases.
+4. Show children with overdue vaccinations.
+5. Plan my household visits for today.
+6. Generate my daily fieldwork report.
+7. Show pending referrals.
+8. Track ambulance 108.
+9. Explain PMMVY.
+10. Translate this instruction into Kannada.
+11. Register a new beneficiary.
+12. Show my pending tasks.
+
+Verify that different questions return different, relevant responses.
+
+Specifically verify that Lakshamma is not mentioned unless the question or retrieved records actually concern Lakshamma.
+
+TEST THE UI:
+
+- Desktop.
+- Tablet.
+- Mobile.
+- Loading states.
+- Empty states.
+- Error states.
+- Navigation.
+- Buttons.
+- Forms.
+- Search.
+- Database updates.
+
+Run the existing test suite, type checks, lint checks and production build.
+
+Do not claim that a feature works unless it has actually been tested.
+
+---
+
+IMPLEMENTATION RULES
+
+1. Inspect the existing repository before editing.
+2. Identify the root cause of every issue.
+3. Preserve all existing working features.
+4. Do not create duplicate pages or duplicate database tables unnecessarily.
+5. Reuse existing APIs and components wherever appropriate.
+6. Do not replace real integrations with fake UI.
+7. Do not hardcode patient-specific responses.
+8. Do not expose sensitive patient information in logs.
+9. Never commit API keys or secrets.
+10. Keep the existing ASHA Sakhi branding.
+
+FINAL DELIVERABLE
+
+After implementation, provide:
+
+1. Root causes identified.
+2. Files modified.
+3. Multilingual improvements.
+4. Google Maps integration details.
+5. AI assistant architecture improvements.
+6. Database and API changes.
+7. Tests performed and their actual results.
+8. Environment variables required.
+9. Any remaining limitations.
+
+The final result should look and behave like a professional government healthcare field operations platform, suitable for a national-level hackathon demonstration.
+
+PRIORITY ORDER:
+
+1. Fix AI responses and database retrieval.
+2. Fix complete multilingual translation.
+3. Fix Google Maps and ambulance routing.
+4. Unify the entire application design.
+5. Complete functional testing.
+
+Start by inspecting the existing codebase. Then implement and verify each task.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-11-21T18:48:19+05:30.
+</ADDITIONAL_METADATA>

@@ -337,6 +337,32 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                         },
                     )
 
+                # 5B. EVENT: assistant_query (Text or recognized question)
+                elif event == "assistant_query":
+                    query_str = data.get("query") or payload.get("query", "")
+                    active_lang = data.get("language") or payload.get("language") or (current_session.language if current_session else "en") or "en"
+                    from app.services.sakhi_assistant import sakhi_assistant
+                    res = sakhi_assistant.process_query(
+                        query_str,
+                        active_lang,
+                        current_session.context if current_session else {}
+                    )
+                    spoken_audio = await tts_adapter.synthesize(res["spoken_text"], language=active_lang)
+                    await send_event(
+                        "assistant_response",
+                        {
+                            "intent": res["intent"],
+                            "spoken_text": res["spoken_text"],
+                            "display_text": res["display_text"],
+                            "records": res.get("records"),
+                            "count": res.get("count"),
+                            "language": active_lang,
+                            "suggested_actions": res.get("suggested_actions"),
+                            "audio_base64": spoken_audio.audio_base64,
+                            "latency_ms": spoken_audio.latency_ms
+                        }
+                    )
+
                 # 6. EVENT: interrupt_audio
                 elif event == "interrupt_audio":
                     logger.info(f"[Session {current_session.session_id if current_session else 'NONE'}] Audio output interrupted.")

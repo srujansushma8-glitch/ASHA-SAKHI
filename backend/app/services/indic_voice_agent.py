@@ -114,6 +114,19 @@ class IndicVoiceAgent:
         if self._is_confirmation(lower_text, session_context, lang):
             return self._handle_confirmation(session_context, lang)
 
+        # 1B. Intent: SAKHI INTELLIGENT FIELD OPERATIONS ASSISTANT (High-risk, Vaccines, ANC, Route, Report, Ambulance, Schemes)
+        from app.services.sakhi_assistant import sakhi_assistant
+        ops_intent = sakhi_assistant._classify_intent(lower_text)
+        if ops_intent not in {"GENERAL_HEALTH_WORKER_SUPPORT", "REGISTER_BENEFICIARY", "SPECIFIC_BENEFICIARY_LOOKUP"}:
+            res = sakhi_assistant.process_query(cleaned_text, lang, session_context)
+            return IndicVoiceAgentResponse(
+                intent=res["intent"],
+                spoken_text=res["spoken_text"],
+                display_text=res["display_text"],
+                language=lang,
+                extracted_data={"records": res.get("records"), "count": res.get("count")}
+            )
+
         # 2. Intent: RETRIEVAL / SEARCH (Past visits, beneficiary history, household lookup)
         if self._is_search_query(lower_text, lang):
             return self._handle_search(cleaned_text, lang)
@@ -597,8 +610,17 @@ class IndicVoiceAgent:
                     target_ben = b
                     break
 
-        if not target_ben and all_beneficiaries:
-            target_ben = all_beneficiaries[0]
+        if not target_ben:
+            # Do NOT default to Lakshmamma! Query sakhi_assistant for cohort or general search
+            from app.services.sakhi_assistant import sakhi_assistant
+            ops_res = sakhi_assistant.process_query(text, lang)
+            return IndicVoiceAgentResponse(
+                intent=ops_res["intent"],
+                spoken_text=ops_res["spoken_text"],
+                display_text=ops_res["display_text"],
+                language=lang,
+                extracted_data={"records": ops_res.get("records"), "count": ops_res.get("count")}
+            )
 
         if not target_ben:
             not_found = {
