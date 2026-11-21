@@ -1,7 +1,7 @@
 /**
  * Text-to-Speech (TTS) & Audio Readback Service
- * Supports AI4Bharat Indic-Speak audio playback and local speech synthesis fallback.
- * Allows interruption with `interrupt_audio` event.
+ * Supports AI4Bharat Indic-Speak audio playback across all 22 scheduled Indian languages
+ * with local Web Speech API synthesis fallback and instantaneous interruption.
  */
 
 class TTSService {
@@ -13,7 +13,21 @@ class TTSService {
   }
 
   /**
-   * Play backend audio URL or base64
+   * Play base64 WAV or MP3 audio from backend Indic-Speak
+   */
+  async playBase64Audio(b64Audio, format = 'wav', onEnd) {
+    this.stop();
+    try {
+      const audioSource = `data:audio/${format};base64,${b64Audio}`;
+      return this.playAudioData(audioSource, onEnd);
+    } catch (err) {
+      console.warn('[TTS] Failed to create audio from base64', err);
+      if (onEnd) onEnd();
+    }
+  }
+
+  /**
+   * Play backend audio URL or base64 data URI
    */
   async playAudioData(audioSource, onEnd) {
     this.stop();
@@ -46,7 +60,7 @@ class TTSService {
   }
 
   /**
-   * Speak text in Kannada using SpeechSynthesis (fallback or demo mode)
+   * Speak text in any of the 22 Indian languages using SpeechSynthesis (fallback or browser engine)
    */
   speakText(text, { language = 'kn-IN', onStart, onEnd } = {}) {
     this.stop();
@@ -63,13 +77,18 @@ class TTSService {
       utterance.rate = 0.95; // Slightly slower for clarity in rural healthcare contexts
       utterance.pitch = 1.0;
 
-      // Find Kannada or Indian English voice if available
-      const voices = this.synth.getVoices();
-      const knVoice = voices.find(v => v.lang.includes('kn') || v.lang.includes('kannada') || v.name.toLowerCase().includes('kannada'));
+      // Find best matching voice for this Indic language
+      const voices = this.synth.getVoices ? this.synth.getVoices() : [];
+      const langPrefix = language.split('-')[0].toLowerCase();
+      
+      const matchedVoice = voices.find(v => 
+        v.lang.toLowerCase().startsWith(langPrefix) || 
+        v.lang.toLowerCase().replace('_', '-').includes(language.toLowerCase())
+      );
       const inVoice = voices.find(v => v.lang === 'en-IN' || v.lang.includes('IN'));
 
-      if (knVoice) {
-        utterance.voice = knVoice;
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
       } else if (inVoice) {
         utterance.voice = inVoice;
       }
@@ -103,7 +122,7 @@ class TTSService {
   }
 
   /**
-   * Stop any playing audio immediately
+   * Interrupt and immediately stop any current playback or utterance
    */
   stop() {
     if (this.currentAudio) {
@@ -124,7 +143,7 @@ class TTSService {
     if (this.onStateChangeCallback) this.onStateChangeCallback(false);
   }
 
-  setOnStateChange(cb) {
+  onStateChange(cb) {
     this.onStateChangeCallback = cb;
   }
 }

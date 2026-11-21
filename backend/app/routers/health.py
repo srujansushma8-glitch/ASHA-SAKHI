@@ -1,11 +1,12 @@
 """
-Health check router.
+Health check and multilingual languages router.
 """
 
 from fastapi import APIRouter
 from app.config import settings
+from app.services.indic_languages import INDIC_LANGUAGES
 
-router = APIRouter(prefix="/api", tags=["Health"])
+router = APIRouter(prefix="/api", tags=["Health & Languages"])
 
 
 @router.get("/health")
@@ -19,4 +20,14 @@ async def health_check():
         "tts_mode": settings.TTS_MODE,
         "extraction_mode": settings.EXTRACTION_MODE,
         "database": "sqlite_connected",
+        "supported_languages_count": len(INDIC_LANGUAGES),
+    }
+
+
+@router.get("/languages")
+async def get_supported_languages():
+    """Returns metadata for all 22 scheduled Indian languages."""
+    return {
+        "total": len(INDIC_LANGUAGES),
+        "languages": [info.model_dump() for info in INDIC_LANGUAGES.values()]
     }

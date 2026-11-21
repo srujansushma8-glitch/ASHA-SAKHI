@@ -1,3 +1,4 @@
+import { getLanguageByCode } from '../services/languages';
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
@@ -33,6 +34,7 @@ export default function Sidebar({
   isRecording = false,
   currentLanguage,
   onLanguageChange,
+  onOpenLanguageSelector,
   onViewLanding,
   isDarkMode = false,
   onToggleDarkMode,
@@ -341,10 +343,13 @@ export default function Sidebar({
             <span>ಭಾಷೆ (Lang)</span>
           </span>
           <button
-            onClick={() => onLanguageChange(currentLanguage === 'kn' ? 'kn-en' : currentLanguage === 'kn-en' ? 'en' : 'kn')}
-            className="px-2.5 py-1 rounded-lg bg-white border border-navy-200 text-xs font-bold text-navy-900 hover:bg-navy-50 active:scale-[0.98] shadow-sm"
+            onClick={onOpenLanguageSelector || (() => onLanguageChange && onLanguageChange(currentLanguage === 'kn' ? 'hi' : currentLanguage === 'hi' ? 'en' : 'kn'))}
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white dark:bg-navy-700 border border-navy-200 dark:border-navy-600 text-xs font-bold text-navy-900 dark:text-white hover:bg-navy-50 dark:hover:bg-navy-600 active:scale-[0.98] shadow-sm"
+            title="ಭಾರತೀಯ ಭಾಷೆಗಳು (22 Languages)"
           >
-            {currentLanguage === 'kn' ? 'ಕನ್ನಡ' : currentLanguage === 'kn-en' ? 'ಕನ್+Eng' : 'English'}
+            <Globe className="w-3 h-3 text-primary" />
+            <span>{getLanguageByCode(currentLanguage).name_native}</span>
+            <span className="text-[10px] bg-primary/10 text-primary px-1 rounded font-mono">22</span>
           </button>
         </div>
 

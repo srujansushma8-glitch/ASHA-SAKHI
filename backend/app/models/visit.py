@@ -42,6 +42,22 @@ class VisitRepository:
             return item
 
     @staticmethod
+    def get_by_beneficiary_id(beneficiary_id: str) -> List[Dict[str, Any]]:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM visits WHERE beneficiary_id = ? ORDER BY created_at DESC", (beneficiary_id,))
+            rows = cursor.fetchall()
+            results = []
+            for row in rows:
+                item = dict(row)
+                item["vaccinations_due"] = json.loads(item["vaccinations_due"]) if item["vaccinations_due"] else []
+                item["vaccinations_completed"] = json.loads(item["vaccinations_completed"]) if item["vaccinations_completed"] else []
+                item["is_confirmed"] = bool(item["is_confirmed"])
+                item["danger_flag"] = bool(item["danger_flag"])
+                results.append(item)
+            return results
+
+    @staticmethod
     def create(data: VisitCreate) -> Dict[str, Any]:
         visit_id = f"VIS-{uuid.uuid4().hex[:8].upper()}"
         with get_db_connection() as conn:
@@ -98,10 +114,7 @@ class VisitRepository:
 
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                f"UPDATE visits SET {field_name} = ? WHERE id = ?",
-                (val_to_store, visit_id),
-            )
+            cursor.execute(f"UPDATE visits SET {field_name} = ? WHERE id = ?", (val_to_store, visit_id))
             cursor.execute("SELECT * FROM visits WHERE id = ?", (visit_id,))
             row = cursor.fetchone()
             if not row:

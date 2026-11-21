@@ -27,6 +27,10 @@ class FollowupRepository:
             return [dict(row) for row in rows]
 
     @staticmethod
+    def get_pending() -> List[Dict[str, Any]]:
+        return FollowupRepository.get_all(status="PENDING")
+
+    @staticmethod
     def create(data: FollowupCreate) -> Dict[str, Any]:
         followup_id = f"FOL-{uuid.uuid4().hex[:8].upper()}"
         with get_db_connection() as conn:

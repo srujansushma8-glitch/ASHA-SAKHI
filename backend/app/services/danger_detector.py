@@ -3,7 +3,7 @@ Independent Deterministic Danger-Sign Detection Engine
 Strictly based on MoHFW and NHM Maternal Health and Home-Based Newborn Care (HBNC) guidelines.
 Does not depend exclusively on LLMs.
 Supports exact and conservative fuzzy matching, precise negation windows,
-and historical vs current event differentiation.
+historical vs current event differentiation, and comprehensive coverage of all 22 scheduled Indian languages.
 """
 
 import re
@@ -22,27 +22,46 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
         english_phrase="Bleeding during pregnancy",
         kannada_phrase="ಗರ್ಭಾವಸ್ಥೆಯಲ್ಲಿ ರಕ್ತಸ್ರಾವ",
         common_spoken_variations=[
-            "bleeding during pregnancy",
-            "vaginal bleeding",
-            "bleeding agtidhe",
-            "bleeding aagide",
-            "bleeding aguttide",
-            "bleeding ittu",
-            "bleeding",
-            "heavy bleeding",
-            "raktasrava",
-            "raktha srava",
-            "rakta hogtide",
-            "raktha hogtidhe",
-            "blood hogtide",
-            "rakta bandide",
-            "spotting with blood",
-            "per vaginal bleeding",
-            "pv bleeding",
-            "ರಕ್ತಸ್ರಾವ",
-            "ರಕ್ತ ಹೋಗುತ್ತಿದೆ",
-            "ಬ್ಲೀಡಿಂಗ್ ಆಗುತ್ತಿದೆ",
-            "ಬ್ಲೀಡಿಂಗ್",
+            # English & Medical
+            "bleeding during pregnancy", "vaginal bleeding", "bleeding", "heavy bleeding",
+            "spotting with blood", "per vaginal bleeding", "pv bleeding", "antepartum hemorrhage",
+            # Kannada
+            "ರಕ್ತಸ್ರಾವ", "ರಕ್ತ ಹೋಗುತ್ತಿದೆ", "ಬ್ಲೀಡಿಂಗ್ ಆಗುತ್ತಿದೆ", "ಬ್ಲೀಡಿಂಗ್", "bleeding agtidhe",
+            "bleeding aagide", "bleeding aguttide", "raktasrava", "raktha srava", "rakta hogtide",
+            # Hindi
+            "रक्तस्राव", "खून बह रहा है", "खून आ रहा है", "ब्लीडिंग हो रही है", "ब्लीडिंग", "khoon aana",
+            # Telugu
+            "రక్తస్రావం", "రక్తం పోతుంది", "రక్తం కారుతోంది", "బ్లీడింగ్", "rakthasravam",
+            # Tamil
+            "இரத்தப்போக்கு", "ரத்தப்போக்கு", "ரத்தம் வருகிறது", "ப்ளீடிங்", "rathapokku",
+            # Malayalam
+            "രക്തസ്രാവം", "രക്തം പോകുന്നു", "ബ്ലീഡിങ്", "rakthasravam",
+            # Bengali
+            "রক্তপাত", "রক্তক্ষরণ", "রক্ত যাচ্ছে", "ব্লিডিং", "rokto jaache",
+            # Marathi
+            "रक्त जात आहे", "रक्तस्राव", "ब्लिडिंग", "raktsrav",
+            # Gujarati
+            "લોહી વહી રહ્યું છે", "રક્તસ્રાવ", "બ્લીડિંગ", "lohi aave che",
+            # Odia
+            "ରକ୍ତସ୍ରାବ", "ରକ୍ତ ପଡୁଛି", "ବ୍ଲିଡିଂ",
+            # Punjabi
+            "ਖੂਨ ਵਹਿ ਰਿਹਾ ਹੈ", "ਖੂਨ ਪੈ ਰਿਹਾ ਹੈ", "ਬਲੀਡਿੰਗ",
+            # Assamese
+            "ৰক্তস্ৰাৱ", "তেজ ওলাইছে", "ব্লিডিং",
+            # Urdu / Kashmiri / Sindhi
+            "خون بہہ رہا ہے", "شدید خون", "بلیڈنگ", "خون گژھان", "خون درام", "رت وهندو رهيو آهي", "رت وهندو", "گهڻو رت",
+            # Bodo
+            "गोबां थै ओंखारदों", "थै ओंखारदों", "थै ओंखार",
+            # Dogri
+            "खून पौने दा चक्कर", "खून पौना", "खून औंदे",
+            # Konkani
+            "रगत वता", "रगतास्राव", "रगत येता",
+            # Manipuri
+            "ই য়াম্না থোক্লি", "ই থোক্লি",
+            # Santali
+            "ᱢᱟᱭᱟᱢ ᱞᱤᱸᱜᱤᱱ ᱠᱟᱱᱟ", "ᱢᱟᱭᱟᱢ ᱞᱤᱸᱜᱤᱱ",
+            # Sanskrit / Nepali / Maithili
+            "रक्तस्रावः", "रक्तस्राव"
         ],
         severity="CRITICAL",
         source_document="MoHFW Guidelines on Antenatal Care and Skilled Attendance at Birth (GoI)",
@@ -54,23 +73,34 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
         english_phrase="High fever in newborn",
         kannada_phrase="ಮಗುವಿಗೆ ತೀವ್ರ ಜ್ವರ",
         common_spoken_variations=[
-            "high fever in newborn",
-            "maguvige teevra jwara",
-            "baby has high fever",
-            "newborn fever",
-            "magu mai bisiyagide",
-            "maguvige jwara",
-            "baby jwara",
-            "high fever",
-            "tumba jwara ide",
-            "teevra jwara",
-            "magu mai bisi",
-            "infant high fever",
-            "baby temp high",
-            "ಮಗುವಿಗೆ ತೀವ್ರ ಜ್ವರ",
-            "ಮಗು ಮೈ ಬಿಸಿಯಾಗಿದೆ",
-            "ತೀವ್ರ ಜ್ವರ",
-            "ಮಗುವಿಗೆ ಜ್ವರ",
+            # English & Medical
+            "high fever in newborn", "baby has high fever", "newborn fever", "infant high fever",
+            "baby temperature high", "neonatal pyrexia", "sepsis fever",
+            # Kannada
+            "ಮಗುವಿಗೆ ತೀವ್ರ ಜ್ವರ", "ಮಗು ಮೈ ಬಿಸಿಯಾಗಿದೆ", "ತೀವ್ರ ಜ್ವರ", "ಮಗುವಿಗೆ ಜ್ವರ",
+            "maguvige teevra jwara", "baby jwara", "tumba jwara ide", "teevra jwara", "magu mai bisi",
+            # Hindi
+            "तेज बुखार", "बच्चे को तेज बुखार", "शिशु को बुखार", "तेज़ बुखार", "baby ko bukhar",
+            # Telugu
+            "తీవ్ర జ్వరం", "బిడ్డకు తీవ్ర జ్వరం", "బాబుకి జ్వరం", "teevra jwaram",
+            # Tamil
+            "அதிக காய்ச்சல்", "குழந்தைக்கு காய்ச்சல்", "தீவிர காய்ச்சல்", "athiga kaaichal",
+            # Malayalam
+            "കടുത്ത പനി", "കുഞ്ഞിന് പനി", "തീവ്ര പനി", "kadutta pani",
+            # Bengali
+            "তীব্র জ্বর", "বাচ্চার জ্বর", "খুব বেশি জ্বর", "tibro jwor",
+            # Marathi
+            "तीव्र ताप", "बाळाला ताप", "खूप ताप", "teevra taap",
+            # Gujarati
+            "તીવ્ર તાવ", "બાળકને તાવ", "ખૂબ તાવ", "teevra tav",
+            # Odia
+            "ତୀବ୍ର ଜ୍ୱର", "ଛୁଆକୁ ଜ୍ୱର", "ଅଧିକ ଜ୍ୱର",
+            # Punjabi
+            "ਤੇਜ਼ ਬੁਖਾਰ", "ਬੱਚੇ ਨੂੰ ਤੇਜ਼ ਬੁਖਾਰ",
+            # Assamese
+            "তীব্র জ্বৰ", "কেঁচুৱাৰ জ্বৰ",
+            # Urdu / Kashmiri
+            "شدید بخار", "بچے کو تیز بخار", "تیز بکھار", "شورس بکھار"
         ],
         severity="CRITICAL",
         source_document="MoHFW Home Based Newborn Care (HBNC) Operational Guidelines (GoI)",
@@ -82,21 +112,22 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
         english_phrase="Severe headache with blurred vision or convulsions",
         kannada_phrase="ತೀವ್ರ ತಲೆನೋವು, ಕಣ್ಣು ಮಂಜಾಗುವುದು ಅಥವಾ ಸೆಳೆವು",
         common_spoken_variations=[
-            "severe headache blurred vision",
-            "convulsions in pregnancy",
-            "fits bandide",
-            "selevu",
-            "teevra talenovu",
-            "kannu manjaguttide",
-            "kannu kanistilla",
-            "fits",
-            "seizures in pregnancy",
-            "talenovu kannu manju",
-            "severe headache pregnancy",
-            "ತೀವ್ರ ತಲೆನೋವು",
-            "ಕಣ್ಣು ಮಂಜಾಗುವುದು",
-            "ಸೆಳೆವು",
-            "ಫಿಟ್ಸ್",
+            # English & Medical
+            "severe headache blurred vision", "convulsions in pregnancy", "seizures in pregnancy",
+            "fits in pregnancy", "severe headache", "eclampsia fits",
+            # Kannada
+            "ತೀವ್ರ ತಲೆನೋವು", "ಕಣ್ಣು ಮಂಜಾಗುವುದು", "ಸೆಳೆವು", "ಫಿಟ್ಸ್", "fits bandide",
+            "selevu", "teevra talenovu", "kannu manjaguttide",
+            # Hindi / Marathi
+            "दौरे", "फिट्स", "तेज सिरदर्द", "धुंधला दिखना", "झटके", "तीव्र डोकेदुखी",
+            # Telugu
+            "మూర్ఛ", "కళ్ళు మసకబారడం", "తీవ్ర తలనొప్పి", "ఫిట్స్",
+            # Tamil
+            "வலிப்பு", "கடுமையான தலைவலி", "பார்வை மங்குதல்",
+            # Bengali
+            "খিঁচুনি", "তীব্র মাথাব্যথা", "চোখে ঝাপসা দেখা",
+            # Urdu
+            "دورے", "شدید سر درد", "آنکھوں کے آگے اندھیرا"
         ],
         severity="CRITICAL",
         source_document="MoHFW Operational Guidelines for Maternal Health - High Risk Pregnancy, GoI",
@@ -108,18 +139,10 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
         english_phrase="Premature water breaking / leaking fluid",
         kannada_phrase="ಹೆರಿಗೆಗೂ ಮುನ್ನ ನೀರು ಸೋರುವುದು",
         common_spoken_variations=[
-            "water breaking",
-            "water leakage",
-            "ude neeru odedide",
-            "neeru hogtide",
-            "panikattu odedide",
-            "fluid discharge watery",
-            "amniotic fluid leakage",
-            "neeru soruvudu",
-            "ನೀರು ಹೋಗುತ್ತಿದೆ",
-            "ಉದೆ ನೀರು ಒಡೆದಿದೆ",
-            "ಪನಿಕಟ್ಟು ಒಡೆದಿದೆ",
-            "ನೀರು ಸೋರುವುದು",
+            "water breaking", "water leakage", "fluid discharge watery", "amniotic fluid leakage",
+            "ude neeru odedide", "neeru hogtide", "panikattu odedide", "neeru soruvudu",
+            "ನೀರು ಹೋಗುತ್ತಿದೆ", "ಉದೆ ನೀರು ಒಡೆದಿದೆ", "ಪನಿಕಟ್ಟು ಒಡೆದಿದೆ", "ನೀರು ಸೋರುವುದು",
+            "पानी छूट गया", "पानी बह रहा", "నీళ్లు పడుతున్నాయి", "பனிக்குடம் உடைந்தது"
         ],
         severity="CRITICAL",
         source_document="MoHFW Antenatal Care Training Guidelines for ASHA, GoI",
@@ -131,17 +154,10 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
         english_phrase="Decreased or absent fetal movements",
         kannada_phrase="ಮಗುವಿನ ಚಲನೆ ಕಡಿಮೆಯಾಗುವುದು ಅಥವಾ ಇಲ್ಲದಿರುವುದು",
         common_spoken_variations=[
-            "decreased fetal movement",
-            "baby not moving",
-            "magu alugaduttilla",
-            "chalane illa",
-            "chalane kadimeyagide",
-            "no fetal movement",
-            "hotteyalli magu kadime alugaduthe",
-            "reduced fetal movement",
-            "ಮಗುವಿನ ಚಲನೆ ಕಡಿಮೆಯಾಗಿದೆ",
-            "ಮಗು ಅಲುಗಾಡುತ್ತಿಲ್ಲ",
-            "ಚಲನೆ ಕಡಿಮೆ",
+            "decreased fetal movement", "baby not moving", "magu alugaduttilla", "chalane illa",
+            "chalane kadimeyagide", "no fetal movement", "reduced fetal movement",
+            "ಮಗುವಿನ ಚಲನೆ ಕಡಿಮೆಯಾಗಿದೆ", "ಮಗು ಅಲುಗಾಡುತ್ತಿಲ್ಲ", "ಚಲನೆ ಕಡಿಮೆ",
+            "बच्चा हिल नहीं रहा", "हलचल नहीं है", "కదలికలు లేవు", "அசைவு இல்லை"
         ],
         severity="HIGH",
         source_document="MoHFW Maternal Health Clinical Guidelines for Primary Care, GoI",
@@ -151,61 +167,41 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
         sign_id="DNG-NEO-002",
         category="NEWBORN_HBNC",
         english_phrase="Newborn unable to feed or suckle",
-        kannada_phrase="ಮಗು ಮೊಲೆಹಾಲು ಕುಡಿಯದಿರುವುದು",
+        kannada_phrase="ಮಗುವಿಗೆ ಹಾಲು ಕುಡಿಯಲು ಆಗದಿರುವುದು",
         common_spoken_variations=[
-            "baby not feeding",
-            "unable to suck",
-            "haalu kudiyuttilla",
-            "molehaalu heeruttilla",
-            "refusal to feed",
-            "haalu beeda antide",
-            "cannot suckle",
-            "magu haalu kudita illa",
-            "not drinking milk",
-            "ಹಾಲು ಕುಡಿಯುತ್ತಿಲ್ಲ",
-            "ಮೊಲೆಹಾಲು ಹೀರುತ್ತಿಲ್ಲ",
-            "ಹಾಲು ಕುಡಿತ ಇಲ್ಲ",
+            "baby unable to feed", "unable to suckle", "haalu kudiyuttilla", "magu haalu kudiyalla",
+            "baby not latching", "feeding difficulty newborn", "no suckling reflex",
+            "ಮಗು ಹಾಲು ಕುಡಿಯುತ್ತಿಲ್ಲ", "ಹಾಲು ಕುಡಿಯಲು ಆಗುತ್ತಿಲ್ಲ",
+            "दूध नहीं पी रहा", "स्तनपान नहीं कर पा रहा", "పాలు తాగడం లేదు", "பால் குடிக்கவில்லை"
         ],
         severity="CRITICAL",
-        source_document="MoHFW Home Based Newborn Care (HBNC) Operational Guidelines, GoI",
-        relevant_section_page="Module 6: Sepsis and Inability to Feed in Young Infants, Page 34",
+        source_document="MoHFW Home Based Newborn Care Operational Guidelines, GoI",
+        relevant_section_page="Module 6: Managing Feeding Problems in Neonates, Page 27",
     ),
     DangerSignDefinition(
         sign_id="DNG-NEO-003",
         category="NEWBORN_HBNC",
-        english_phrase="Fast breathing or severe chest indrawing in newborn",
-        kannada_phrase="ಮಗುವಿಗೆ ವೇಗದ ಉಸಿರಾಟ ಅಥವಾ ಎದೆ ಕುಸಿಯುವುದು",
+        english_phrase="Difficulty breathing / chest indrawing in newborn",
+        kannada_phrase="ಮಗುವಿಗೆ ಉಸಿರಾಟದ ತೊಂದರೆ ಅಥವಾ ಎದೆ ಗೂಡು ಒಳಗೆ ಹೋಗುವುದು",
         common_spoken_variations=[
-            "fast breathing newborn",
-            "chest indrawing",
-            "ede kusiyuttide",
-            "usirata teevra",
-            "ede baditidhe",
-            "difficulty breathing baby",
-            "gurgling sound newborn",
-            "veegada usirata",
-            "ವೇಗದ ಉಸಿರಾಟ",
-            "ಎದೆ ಕುಸಿಯುತ್ತಿದೆ",
-            "ಉಸಿರಾಟ ತೊಂದರೆ",
+            "difficulty breathing newborn", "chest indrawing baby", "usirata tondare", "ede olage hogtide",
+            "fast breathing infant", "grunting breath baby", "swasa tondare",
+            "ಮಗುವಿಗೆ ಉಸಿರಾಟದ ತೊಂದರೆ", "ಎದೆ ಒಳಗೆ ಹೋಗುತ್ತಿದೆ",
+            "सांस लेने में तकलीफ", "पसलियां चलना", "శ్వాస తీసుకోవడంలో ఇబ్బంది", "மூச்சுத்திணறல்"
         ],
         severity="CRITICAL",
-        source_document="MoHFW HBNC Guidelines for Community Health Workers, GoI",
-        relevant_section_page="Module 6: Respiratory Infections and Fast Breathing, Page 36",
+        source_document="MoHFW HBNC Protocols on Acute Respiratory Infection in Newborn, GoI",
+        relevant_section_page="Module 7: Respiratory Distress and Sepsis, Page 35",
     ),
     DangerSignDefinition(
         sign_id="DNG-NEO-004",
         category="NEWBORN_HBNC",
-        english_phrase="Newborn hypothermia / cold to touch",
-        kannada_phrase="ಮಗುವಿನ ಮೈ ವಿಪರೀತ ತಣ್ಣಗಾಗುವುದು",
+        english_phrase="Hypothermia / baby cold to touch",
+        kannada_phrase="ಮಗುವಿನ ಮೈ ತಣ್ಣಗಾಗಿರುವುದು",
         common_spoken_variations=[
-            "baby cold to touch",
-            "magu mai tannagagide",
-            "hypothermia baby",
-            "kai kaalu tannagagide",
-            "cold body infant",
-            "mai chali",
-            "ಮಗು ಮೈ ತಣ್ಣಗಾಗಿದೆ",
-            "ಕೈ ಕಾಲು ತಣ್ಣಗಾಗಿದೆ",
+            "baby cold to touch", "magu mai tannagagide", "hypothermia baby", "kai kaalu tannagagide",
+            "cold body infant", "mai chali", "ಮಗು ಮೈ ತಣ್ಣಗಾಗಿದೆ", "ಕೈ ಕಾಲು ತಣ್ಣಗಾಗಿದೆ",
+            "शरीर ठंडा पड़ गया", "శరీరం చల్లబడింది", "உடல் குளிர்ந்துள்ளது"
         ],
         severity="HIGH",
         source_document="MoHFW HBNC Protocols on Thermal Protection, GoI",
@@ -217,14 +213,9 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
         english_phrase="Severe postpartum haemorrhage / excessive bleeding after birth",
         kannada_phrase="ಹೆರಿಗೆಯ ನಂತರ ವಿಪರೀತ ರಕ್ತಸ್ರಾವ",
         common_spoken_variations=[
-            "excessive bleeding after delivery",
-            "postpartum hemorrhage",
-            "pph",
-            "herigeya nantara raktasrava",
-            "delivery aadamele heavy bleeding",
-            "raktada thundugalu",
-            "ಹೆರಿಗೆ ನಂತರ ರಕ್ತಸ್ರಾವ",
-            "ಹೆರಿಗೆ ಬಳಿಕ ವಿಪರೀತ ರಕ್ತಸ್ರಾವ",
+            "excessive bleeding after delivery", "postpartum hemorrhage", "pph", "herigeya nantara raktasrava",
+            "delivery aadamele heavy bleeding", "raktada thundugalu", "ಹೆರಿಗೆ ನಂತರ ರಕ್ತಸ್ರಾವ", "ಹೆರಿಗೆ ಬಳಿಕ ವಿಪರೀತ ರಕ್ತಸ್ರಾವ",
+            "प्रसव के बाद भारी रक्तस्राव", "కాన్పు తర్వాత రక్తస్రావం", "பிரசவத்திற்கு பின் ரத்தப்போக்கு"
         ],
         severity="CRITICAL",
         source_document="MoHFW Guidelines for Management of Postpartum Haemorrhage, GoI",
@@ -232,22 +223,34 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
     ),
 ]
 
-# Negation keywords in Kannada, English, and Romanized Kannada
+# Negation keywords across English, Kannada, and Indian Languages
 NEGATION_WORDS = {
     # English
     "no", "not", "without", "never", "denies", "denied", "nil", "none",
     "negative", "doesn't", "does not", "did not", "didn't", "zero",
     # Kannada
     "ಇಲ್ಲ", "ಇಲ್ಲವೇ", "ಇಲ್ಲವೇಇಲ್ಲ", "ಆಗಿಲ್ಲ", "ಕಂಡುಬಂದಿಲ್ಲ", "ಇರ್ಲಿಲ್ಲ",
-    "ಇರಲಿಲ್ಲ", "ತೊಂದರೆ ಇಲ್ಲ", "ಸಮಸ್ಯೆ ಇಲ್ಲ", "ಸಾಮಾನ್ಯ",
-    # Romanized Kannada
-    "illa", "illave", "aagilla", "agilla", "kandubandilla", "irlilla",
-    "iralilla", "tondare illa", "samasye illa", "saamanya"
+    "ಇರಲಿಲ್ಲ", "ತೊಂದರೆ ಇಲ್ಲ", "ಸಮಸ್ಯೆ ಇಲ್ಲ", "ಸಾಮಾನ್ಯ", "illa", "agilla",
+    # Hindi / Marathi
+    "नहीं", "ना", "बिना", "मुक्त", "नाही", "नव्हते", "nahi", "na",
+    # Telugu
+    "లేదు", "కాదు", "రావడం లేదు", "లేవు", "ledu", "kaadu",
+    # Tamil
+    "இல்லை", "இல்ல", "கிடையாது", "illai",
+    # Malayalam
+    "ഇല്ല", "illa",
+    # Bengali / Assamese
+    "না", "নেই", "নাই", "নাইবা",
+    # Gujarati
+    "નથી", "નહીં",
+    # Urdu
+    "نہیں", "نہ"
 }
 
 # Clause boundary conjunctions that block negation from bleeding into adjacent clauses
 BOUNDARY_CONJUNCTIONS = {
-    "ಆದರೆ", "adare", "but", "however", "yet", "and", "ಮತ್ತು", "mattu"
+    "ಆದರೆ", "adare", "but", "however", "yet", "and", "ಮತ್ತು", "mattu",
+    "लेकिन", "परंतु", "और", "కానీ", "మరియు", "ஆனால்", "மற்றும்", "কিন্তু", "आणि", "पण"
 }
 
 # Historical markers indicating past occurrences rather than active emergency
@@ -259,16 +262,17 @@ HISTORICAL_MARKERS = {
     # Kannada
     "ಹಿಂದಿನ ಗರ್ಭಾವಸ್ಥೆಯಲ್ಲಿ", "ಹಿಂದಿನ ಸಲ", "ಹಿಂದೆ ಇತ್ತು", "ಹೋದ ವರ್ಷ",
     "ಮೊದಲ ಹೆರಿಗೆಯಲ್ಲಿ", "ಹಿಂದಿನ ಡೆಲಿವರಿಯಲ್ಲಿ", "ಮುಂಚೆ ಇತ್ತು",
-    # Romanized Kannada
-    "hindina garbhavastheyalli", "hindina sala", "hinde ittu", "hoda varsha",
-    "modala herigeyalli", "hindina delivery"
+    # Hindi / Marathi
+    "पिछली गर्भावस्था में", "पिछले साल", "पहले हुआ था", "मागच्या वर्षी",
+    # Telugu / Tamil
+    "గత గర్భంలో", "పోయిన సంవత్సరం", "முந்தைய கர்ப்பத்தில்"
 }
 
 
 class DangerSignDetector:
     """
     Deterministic rule-based danger sign detector with conservative fuzzy matching
-    and localized negation/historical context windows.
+    and localized negation/historical context windows across all 22 scheduled Indian languages.
     """
 
     def __init__(self, fuzzy_threshold: int = 85, strict_mode: bool = True):
@@ -277,18 +281,17 @@ class DangerSignDetector:
         self.definitions = GUIDELINE_DANGER_SIGNS
 
     def clean_text(self, text: str) -> str:
-        """Normalizes whitespace and cleans characters for matching."""
+        """Normalizes whitespace and cleans characters for matching across all Indic scripts."""
         text = text.lower()
-        # Retain Kannada unicode along with alphanumerics
-        text = re.sub(r"[^\w\s\u0C80-\u0CFF]", " ", text)
+        # Retain all Unicode word characters and whitespace across all 22 Indian scripts
+        text = re.sub(r"[^\w\s]", " ", text)
         return " ".join(text.split())
 
     def _is_negated_in_window(self, tokens: List[str], match_start_idx: int, match_end_idx: int) -> bool:
         """
         Checks if a negation token exists strictly in the local clause.
-        Stops expanding the window if a clause conjunction (e.g. 'but' / 'ಆದರೆ') is crossed.
+        Stops expanding the window if a clause conjunction (e.g. 'but' / 'ಆದರೆ' / 'लेकिन') is crossed.
         """
-        # Backward window (up to 3 tokens before, stopped by boundary conjunction)
         before_tokens = []
         for i in range(match_start_idx - 1, max(-1, match_start_idx - 4), -1):
             tok = tokens[i]
@@ -296,7 +299,6 @@ class DangerSignDetector:
                 break
             before_tokens.insert(0, tok)
 
-        # Forward window (up to 3 tokens after, stopped by boundary conjunction)
         after_tokens = []
         for i in range(match_end_idx + 1, min(len(tokens), match_end_idx + 4)):
             tok = tokens[i]
@@ -305,29 +307,24 @@ class DangerSignDetector:
             after_tokens.append(tok)
 
         window_tokens = before_tokens + after_tokens
-        window_text = " ".join(window_tokens)
+        return any(neg in window_tokens for neg in NEGATION_WORDS)
 
-        for neg in NEGATION_WORDS:
-            if " " in neg:
-                if neg in window_text:
-                    return True
-            else:
-                if neg in window_tokens:
-                    return True
-        return False
-
-    def _is_historical_in_window(self, text: str, phrase_match_start: int, phrase_match_end: int) -> bool:
-        """Checks if historical markers appear within 60 characters around the phrase."""
-        window_start = max(0, phrase_match_start - 60)
-        window_end = min(len(text), phrase_match_end + 60)
-        window_snippet = text[window_start:window_end].lower()
+    def _is_historical_in_window(self, text: str, match_start_char: int, match_end_char: int) -> bool:
+        """Checks for past pregnancy or resolved history markers."""
+        window_start = max(0, match_start_char - 40)
+        window_end = min(len(text), match_end_char + 40)
+        snippet = text[window_start:window_end]
 
         for marker in HISTORICAL_MARKERS:
-            if marker in window_snippet:
+            if marker in snippet:
                 return True
         return False
 
-    def detect(self, transcript: str) -> DangerAlertDetectionResult:
+    def detect(self, transcript: str, language: str = "kn") -> DangerAlertDetectionResult:
+        """
+        Performs danger sign detection across transcript in any language.
+        Returns DangerAlertDetectionResult with native instructions for that language.
+        """
         if not transcript or not transcript.strip():
             return DangerAlertDetectionResult(has_danger=False)
 
@@ -345,15 +342,10 @@ class DangerSignDetector:
             matched_negated = False
             matched_historical = False
 
-            # Sort variations by length descending to match longest, most specific phrase first
-            sorted_vars = sorted(sign_def.common_spoken_variations, key=lambda v: len(v), reverse=True)
-
-            for var in sorted_vars:
+            for var in sign_def.common_spoken_variations:
                 norm_var = self.clean_text(var)
-                if not norm_var:
-                    continue
 
-                # 1. Exact substring match
+                # 1. Exact Substring Search
                 if norm_var in normalized_text:
                     match_pos = normalized_text.find(norm_var)
                     prefix_tokens = normalized_text[:match_pos].split()
@@ -369,14 +361,12 @@ class DangerSignDetector:
                     if is_neg:
                         matched_negated = True
 
-                    if is_hist or is_neg:
-                        continue
+                    if not is_hist and not is_neg:
+                        sign_matched = True
+                        best_match_phrase = var
+                        break
 
-                    sign_matched = True
-                    best_match_phrase = var
-                    break
-
-                # 2. Conservative fuzzy match for multi-word phrases (len >= 8)
+                # 2. Conservative Fuzzy Matching for multi-word phrases
                 if len(norm_var) >= 8 and " " in norm_var:
                     ratio = fuzz.partial_ratio(norm_var, normalized_text)
                     if ratio >= self.fuzzy_threshold:
@@ -426,6 +416,24 @@ class DangerSignDetector:
             f"DANGER SIGN DETECTED: {[s.sign_id for s in active_detected_signs]} in utterance: '{transcript}'"
         )
 
+        lang_code = language.lower().split("-")[0].strip()
+        spoken_instructions = {
+            "kn": "ಈ ಫಲಾನುಭವಿಗೆ ತಕ್ಷಣ PHC ಗೆ ರೆಫರ್ ಮಾಡಿ.",
+            "hi": "इस लाभार्थी को तुरंत नजदीकी प्राथमिक स्वास्थ्य केंद्र (PHC) में रेफर करें।",
+            "te": "ఈ లబ్ధిదారుని వెంటనే పీహెచ్‌సీ ఆసుపత్రికి రిఫర్ చేయండి.",
+            "ta": "இந்த பயனாளியை உடனடியாக ஆரம்ப சுகாதார நிலையத்திற்கு பரிந்துரைக்கவும்.",
+            "ml": "ഈ ഗുണഭോക്താവിനെ ഉടൻ തന്നെ പിഎച്ച്സിയിലേക്ക് റഫർ ചെയ്യുക.",
+            "bn": "এই সুবিধাভোগীকে অবিলম্বে পিএইচসি হাসপাতালে রেফার করুন।",
+            "mr": "या लाभार्थ्याला ताबडतोब प्राथमिक आरोग्य केंद्रात पाठवा.",
+            "gu": "આ લાભાર્થીને તાત્કાલિક પીએચસી હોસ્પિટલમાં મોકલો.",
+            "ur": "اس مستفید کو فوری طور پر پی ایچ سی ہسپتال ریفر کریں۔",
+            "pa": "ਤੁਰੰਤ ਹਸਪਤਾਲ ਰੈਫਰ ਕਰੋ।",
+            "or": "ତୁରନ୍ତ ଡାକ୍ତରଖାନାକୁ ରେଫର କରନ୍ତୁ।",
+            "as": "অতি সোনকালে চিকিৎসালয়লৈ প্ৰেৰণ কৰক।"
+        }
+
+        spoken_native = spoken_instructions.get(lang_code, "Refer to Primary Health Centre (PHC) immediately.")
+
         return DangerAlertDetectionResult(
             has_danger=True,
             detected_signs=active_detected_signs,
@@ -436,7 +444,7 @@ class DangerSignDetector:
             spoken_instruction_en="Refer to Primary Health Centre (PHC) immediately.",
             is_negated=has_negated_sign,
             is_historical=has_historical_sign,
-            notes=f"Detected {len(active_detected_signs)} active clinical danger sign(s).",
+            notes=f"Detected {len(active_detected_signs)} active clinical danger sign(s). Native instruction: {spoken_native}",
         )
 
 

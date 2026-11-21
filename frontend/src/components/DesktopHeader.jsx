@@ -1,3 +1,4 @@
+import { getLanguageByCode } from '../services/languages';
 import React, { useState } from 'react';
 import { 
   Bell, 
@@ -25,6 +26,7 @@ export default function DesktopHeader({
   searchValue = '',
   currentLanguage = 'kn',
   onLanguageChange,
+  onOpenLanguageSelector,
   onOpenCommandPalette,
   onViewLanding,
   isDarkMode = false,
@@ -202,27 +204,36 @@ export default function DesktopHeader({
         </div>
 
         {/* Language Selector */}
-        {onLanguageChange && (
-          <div className="flex bg-softblue dark:bg-navy-800 p-0.5 rounded-xl border border-navy-200/60 dark:border-navy-700 text-xs">
-            {[
-              { id: 'kn', label: 'ಕನ್ನಡ' },
-              { id: 'hi', label: 'हिन्दी' },
-              { id: 'en', label: 'Eng' }
-            ].map(l => (
+        <div className="flex items-center space-x-1.5 bg-softblue dark:bg-navy-800 p-1 rounded-xl border border-navy-200/60 dark:border-navy-700 text-xs">
+          {onOpenLanguageSelector && (
+            <button
+              onClick={onOpenLanguageSelector}
+              className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-white dark:bg-navy-700 text-primary dark:text-cyan hover:text-primary-hover font-bold border border-navy-200/50 dark:border-navy-600 shadow-xs transition-all"
+              title="ಭಾರತೀಯ ಭಾಷೆಗಳು (All 22 Scheduled Indic Languages)"
+            >
+              <Globe className="w-3.5 h-3.5 text-primary" />
+              <span>{getLanguageByCode(currentLanguage).name_native}</span>
+              <span className="text-[10px] bg-primary/10 dark:bg-primary/30 px-1 py-0.2 rounded font-mono font-bold">22</span>
+            </button>
+          )}
+
+          {onLanguageChange && ['kn', 'hi', 'en'].map(code => {
+            const l = getLanguageByCode(code);
+            return (
               <button
-                key={l.id}
-                onClick={() => onLanguageChange(l.id)}
-                className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-decelerate ${
-                  currentLanguage === l.id
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-navy-600 dark:text-navy-300 hover:text-navy-900'
+                key={code}
+                onClick={() => onLanguageChange(code)}
+                className={`px-1.5 py-1 rounded-lg text-[11px] font-bold transition-decelerate ${
+                  currentLanguage === code
+                    ? 'bg-primary text-white shadow-xs'
+                    : 'text-navy-600 dark:text-navy-300 hover:text-navy-900 dark:hover:text-white'
                 }`}
               >
-                {l.label}
+                {code === 'en' ? 'EN' : l.name_native}
               </button>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
 
         {/* Emergency Alert Button with Badge */}
         <button

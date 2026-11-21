@@ -107,9 +107,9 @@ class VoiceWebSocketClient {
         this.ws.onmessage = (messageEvent) => {
           try {
             const data = JSON.parse(messageEvent.data);
-            const { event, ...payload } = data;
-            if (event) {
-              this.emit(event, payload);
+            const eventName = data.event || data.type;
+            if (eventName) {
+              this.emit(eventName, data);
             }
           } catch (err) {
             console.error('[WebSocket] Malformed message received', err);

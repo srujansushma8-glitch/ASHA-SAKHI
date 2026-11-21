@@ -1,3 +1,4 @@
+import { INDIC_LANGUAGES } from '../services/languages';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
@@ -28,6 +29,7 @@ export default function CommandPalette({
   onToggleDarkMode,
   isDarkMode,
   onLanguageChange,
+  onOpenLanguageSelector,
   currentLanguage,
   onViewLanding
 }) {
@@ -187,29 +189,29 @@ export default function CommandPalette({
       }
     },
     {
-      id: 'lang_kannada',
-      title: 'ಕನ್ನಡ ಭಾಷೆ (Kannada Language)',
-      subtitle: 'ಕನ್ನಡ ಧ್ವನಿ ಮತ್ತು ಇಂಟರ್ಫೇಸ್',
-      category: 'Language',
+      id: 'open_all_languages',
+      title: '22 ಭಾರತೀಯ ಭಾಷೆಗಳು (All 22 Scheduled Indic Languages)',
+      subtitle: 'AI4Bharat Indic-Transcribe & Indic-Speak Language Selector',
+      category: 'Languages',
       icon: Globe,
       color: 'text-primary bg-primary/10',
       action: () => {
         onClose();
-        if (onLanguageChange) onLanguageChange('kn');
+        if (onOpenLanguageSelector) onOpenLanguageSelector();
       }
     },
-    {
-      id: 'lang_english',
-      title: 'English Language',
-      subtitle: 'English voice & user interface',
-      category: 'Language',
+    ...INDIC_LANGUAGES.map(lang => ({
+      id: `lang_${lang.code}`,
+      title: `${lang.name_native} (${lang.name_en})`,
+      subtitle: `Script: ${lang.script} • Region: ${lang.region}${lang.dir === 'rtl' ? ' • RTL Script' : ''}`,
+      category: '22 Indic Languages',
       icon: Globe,
-      color: 'text-primary bg-primary/10',
+      color: currentLanguage === lang.code ? 'text-primary bg-primary/20 font-bold' : 'text-navy-700 bg-navy-50',
       action: () => {
         onClose();
-        if (onLanguageChange) onLanguageChange('en');
+        if (onLanguageChange) onLanguageChange(lang.code);
       }
-    }
+    }))
   ];
 
   const filtered = allActions.filter(item => {

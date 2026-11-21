@@ -1,3 +1,4 @@
+import { getLanguageByCode } from '../services/languages';
 import React, { useState, useEffect } from 'react';
 import { 
   AlertTriangle, 
@@ -14,6 +15,7 @@ import { isDemoMode, setDemoMode, api } from '../services/api';
 export default function Navbar({
   currentLanguage,
   onLanguageChange,
+  onOpenLanguageSelector,
   activeScreen,
   setActiveScreen,
   emergencyCount = 0,
@@ -137,16 +139,17 @@ export default function Navbar({
             <span className="sm:hidden font-semibold">{demo ? 'Demo' : 'Live'}</span>
           </button>
 
-          {/* Language Toggle: Kannada / Mixed / English */}
+          {/* Language Toggle: 22 Scheduled Indian Languages */}
           <button
-            onClick={() => onLanguageChange(currentLanguage === 'kn' ? 'kn-en' : currentLanguage === 'kn-en' ? 'en' : 'kn')}
-            className="flex items-center space-x-1 bg-ivory-bg hover:bg-navy-50 text-navy-800 text-xs px-2.5 py-1 rounded-lg border border-navy-200 active:scale-[0.98] transition-decelerate"
-            title="ಭಾಷೆ ಬದಲಿಸಿ / Change Language"
+            onClick={onOpenLanguageSelector || (() => onLanguageChange && onLanguageChange(currentLanguage === 'kn' ? 'hi' : currentLanguage === 'hi' ? 'en' : 'kn'))}
+            className="flex items-center space-x-1.5 bg-ivory-bg hover:bg-navy-50 text-navy-800 text-xs px-2.5 py-1 rounded-xl border border-navy-200 active:scale-[0.98] transition-decelerate shadow-xs"
+            title="ಭಾಷೆ ಬದಲಿಸಿ / Change Language (22 Languages)"
           >
             <Globe className="w-3.5 h-3.5 text-primary" />
             <span className="font-semibold">
-              {currentLanguage === 'kn' ? 'ಕನ್ನಡ' : currentLanguage === 'kn-en' ? 'ಕನ್+Eng' : 'English'}
+              {getLanguageByCode(currentLanguage).name_native}
             </span>
+            <span className="text-[10px] bg-primary/10 text-primary px-1 rounded font-mono font-bold">22</span>
           </button>
         </div>
       </div>

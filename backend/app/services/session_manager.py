@@ -1,11 +1,11 @@
 """
 Live Voice Session Manager for ASHA Worker Interaction.
-Maintains stateful visit record throughout the audio conversational lifecycle:
-1. Structured Extraction ->
-2. Spoken Record Readback ->
-3. Voice Correction Handling ->
-4. Explicit Confirmation & Database Commitment ->
-5. High-Priority Emergency Interruption & Simulated Ambulance Dispatch.
+Maintains stateful visit record and conversational context throughout the audio lifecycle across all 22 scheduled Indian languages:
+1. Multilingual Structured Extraction & Intent Resolution
+2. Spoken Record Readback in active Indic language
+3. Multi-turn Voice Correction & Follow-up Handling
+4. Explicit Confirmation & SQLite Database Commitment
+5. High-Priority Emergency Interruption & Simulated 108 Ambulance Dispatch.
 """
 
 import uuid
@@ -18,6 +18,7 @@ from app.services.llm_extractor import clinical_extractor
 from app.services.tts_adapter import get_tts_adapter, BaseTTSAdapter, TTSResult
 from app.services.followup_engine import followup_engine
 from app.services.ambulance_service import ambulance_service
+from app.services.indic_languages import INDIC_LANGUAGES, get_language_info
 from app.models.visit import VisitRepository
 from app.models.followup import FollowupRepository
 from app.models.danger_alert import DangerAlertRepository
@@ -29,53 +30,64 @@ logger = logging.getLogger(__name__)
 class VoiceSession:
     """Represents a single active voice session with an ASHA worker."""
 
-    def __init__(self, session_id: str):
+    def __init__(self, session_id: str, language: str = "kn"):
         self.session_id = session_id
+        self.language = language
         self.status = "IDLE"  # IDLE, RECORDING, PROCESSING, AWAITING_CONFIRMATION, COMPLETED, INTERRUPTED_EMERGENCY
         self.audio_buffer = bytearray()
         self.transcript_history = []
+        self.context: Dict[str, Any] = {}
         self.current_record: Optional[StructuredVisitExtraction] = None
         self.danger_result: Optional[DangerAlertDetectionResult] = None
         self.is_confirmed = False
         self.saved_visit_id: Optional[str] = None
         self.simulated_ambulance: Optional[Dict[str, Any]] = None
 
-    def build_confirmation_text_kn(self) -> str:
-        """Constructs a natural Kannada readback of the extracted structured record."""
+    def build_confirmation_text(self, language: Optional[str] = None) -> str:
+        """Constructs a natural spoken readback of the extracted record in the active language."""
+        lang = (language or self.language or "kn").lower().split("-")[0].strip()
         if not self.current_record:
-            return "ಯಾವುದೇ ವಿವರಗಳು ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಮಾತನಾಡಿ."
+            fallbacks = {
+                "kn": "ಯಾವುದೇ ವಿವರಗಳು ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಮಾತನಾಡಿ.",
+                "hi": "कोई विवरण उपलब्ध नहीं है। कृपया पुनः बोलें।",
+                "te": "ఎలాంటి వివరాలు అందుబాటులో లేవు. దయచేసి మళ్లీ మాట్లాడండి.",
+                "ta": "எந்த விவரமும் கிடைக்கவில்லை. தயவுசெய்து மீண்டும் பேசவும்.",
+                "ur": "کوئی تفصیلات دستیاب نہیں ہیں۔ برائے مہربانی دوبارہ بولیں۔"
+            }
+            return fallbacks.get(lang, "No details recorded. Please speak again.")
 
         r = self.current_record
-        parts = []
+        ben_name = r.beneficiary_name or r.beneficiary_id or "Beneficiary"
+        v_type = r.visit_type or "Visit"
+        wt = f"{r.weight} kg" if r.weight else "Not weighed"
+        vac = ", ".join(r.vaccinations_completed) if r.vaccinations_completed else "None"
+        next_d = r.next_visit_date or "Next month"
 
-        if r.beneficiary_name or r.beneficiary_id:
-            name_str = r.beneficiary_name or r.beneficiary_id
-            parts.append(f"ಫಲಾನುಭವಿ {name_str}")
+        templates = {
+            "kn": f"ದಾಖಲಿಸಿದ ವಿವರಗಳು: ಫಲಾನುಭವಿ {ben_name}, ಭೇಟಿ {v_type}, ತೂಕ {wt}, ನೀಡಿದ ಲಸಿಕೆ {vac}, ಮುಂದಿನ ದಿನಾಂಕ {next_d}. ಈ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?",
+            "hi": f"दर्ज विवरण: लाभार्थी {ben_name}, जांच {v_type}, वजन {wt}, टीका {vac}, आगामी तिथि {next_d}। क्या यह विवरण सही है?",
+            "te": f"నమోదైన వివరాలు: లబ్ధిదారుడు {ben_name}, తనిఖీ {v_type}, బరువు {wt}, టీకా {vac}, తదుపరి తేదీ {next_d}. ఈ వివరాలు సరిగ్గా ఉన్నాయా?",
+            "ta": f"பதிவு செய்யப்பட்ட விவரங்கள்: பயனாளி {ben_name}, பரிசோதனை {v_type}, எடை {wt}, தடுப்பூசி {vac}, அடுத்த தேதி {next_d}. விவரங்கள் சரியா?",
+            "ml": f"രേഖപ്പെടുത്തിയ വിവരങ്ങൾ: {ben_name}, സന്ദർശനം {v_type}, ഭാരം {wt}, വാക്സിൻ {vac}, അടുത്ത തീയതി {next_d}. വിവരങ്ങൾ ശരിയാണോ?",
+            "bn": f"নথিভুক্ত বিবরণ: সুবিধাভোগী {ben_name}, ভিজিট {v_type}, ওজন {wt}, টিকা {vac}, পরবর্তী তারিখ {next_d}। বিবরণ কি সঠিক?",
+            "mr": f"नोंदवलेली माहिती: लाभार्थी {ben_name}, तपासणी {v_type}, वजन {wt}, लस {vac}, पुढील तारीख {next_d}. ही माहिती बरोबर आहे का?",
+            "gu": f"નોંધાયેલ વિગતો: લાભાર્થી {ben_name}, મુલાકાત {v_type}, વજન {wt}, રસી {vac}, આગામી તારીખ {next_d}. શું વિગતો બરાબર છે?",
+            "ur": f"درج شدہ تفصیلات: مستفید {ben_name}، معائنہ {v_type}، وزن {wt}، ٹیکہ {vac}، اگلی تاریخ {next_d}۔ کیا یہ تفصیلات درست ہیں؟",
+            "pa": f"ਦਰਜ ਕੀਤੇ ਵੇਰਵੇ: ਲਾਭਪਾਤਰੀ {ben_name}, ਜਾਂਚ {v_type}, ਭਾਰ {wt}, ਟੀਕਾ {vac}, ਅਗਲੀ ਤਾਰੀਖ {next_d}। ਕੀ ਇਹ ਸਹੀ ਹੈ?",
+            "or": f"ଦର୍ଜ ବିବରଣୀ: ହିତାଧିକାରୀ {ben_name}, ଯାଞ୍ଚ {v_type}, ଓଜନ {wt}, ଟିକା {vac}, ପରବର୍ତ୍ତୀ ତାରିଖ {next_d}। ଏହା ଠିକ ଅଛି କି?",
+            "as": f"নথিবদ্ধ তথ্য: হিতাধিকাৰী {ben_name}, পৰীক্ষা {v_type}, ওজন {wt}, টিকাকৰণ {vac}, পৰৱৰ্তী তাৰিখ {next_d}। এই তথ্য সঠিক নে?"
+        }
+        return templates.get(lang, f"Recorded details: {ben_name}, {v_type}, weight {wt}, vaccines {vac}, next due {next_d}. Are these details correct?")
 
-        if r.visit_type:
-            parts.append(f"ಭೇಟಿ {r.visit_type}")
+    def build_confirmation_text_kn(self) -> str:
+        """Backward-compatible helper for Kannada readback."""
+        return self.build_confirmation_text("kn")
 
-        if r.weight:
-            parts.append(f"ತೂಕ {r.weight} ಕೆಜಿ")
-
-        if r.vaccinations_completed:
-            vacs = ", ".join(r.vaccinations_completed)
-            parts.append(f"ನೀಡಿದ ಲಸಿಕೆ {vacs}")
-
-        if r.vaccinations_due:
-            due_vacs = ", ".join(r.vaccinations_due)
-            parts.append(f"ಬಾಕಿ ಇರುವ ಲಸಿಕೆ {due_vacs}")
-
-        if r.next_visit_date:
-            parts.append(f"ಮುಂದಿನ ಭೇಟಿ ದಿನಾಂಕ {r.next_visit_date}")
-
-        details_summary = ", ".join(parts)
-        return f"ದಾಖಲಿಸಿದ ವಿವರಗಳು: {details_summary}. ನೀವು ದಾಖಲಿಸಿರುವ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?"
-
-    def apply_correction(self, field_name: str, new_value: Any) -> Tuple[bool, str]:
-        """Applies a field correction and returns natural Kannada voice acknowledgment."""
+    def apply_correction(self, field_name: str, new_value: Any, language: Optional[str] = None) -> Tuple[bool, str]:
+        """Applies a field correction and returns voice acknowledgment in the active language."""
+        lang = (language or self.language or "kn").lower().split("-")[0].strip()
         if not self.current_record:
-            return False, "ಯಾವುದೇ ದಾಖಲೆ ಸಕ್ರಿಯವಾಗಿಲ್ಲ."
+            return False, "ಯಾವುದೇ ದಾಖಲೆ ಸಕ್ರಿಯವಾಗಿಲ್ಲ." if lang == "kn" else "No active record found."
 
         valid_fields = {
             "weight", "beneficiary_name", "beneficiary_id", "visit_type",
@@ -83,30 +95,27 @@ class VoiceSession:
         }
 
         if field_name not in valid_fields:
-            return False, f"ಕ್ಷಮಿಸಿ, '{field_name}' ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ."
+            return False, f"Cannot modify '{field_name}'"
 
-        # Type conversion & validation
         if field_name == "weight":
             try:
                 new_value = float(new_value)
                 if not (0.5 <= new_value <= 200.0):
-                    return False, "ತೂಕದ ಮೌಲ್ಯ ಅಮಾನ್ಯವಾಗಿದೆ (0.5 ರಿಂದ 200 ಕೆಜಿ ಒಳಗೆ ಇರಬೇಕು)."
+                    return False, "Weight must be between 0.5 and 200 kg."
             except ValueError:
-                return False, "ತೂಕ ಸಂಖ್ಯೆಯಲ್ಲಿರಬೇಕು."
+                return False, "Weight must be a numerical value."
 
         setattr(self.current_record, field_name, new_value)
-        logger.info(f"[Session {self.session_id}] Field '{field_name}' updated to '{new_value}'")
+        logger.info(f"[Session {self.session_id}] Field '{field_name}' updated to '{new_value}' in '{lang}'")
 
-        field_labels_kn = {
-            "weight": "ತೂಕವನ್ನು",
-            "beneficiary_name": "ಹೆಸರನ್ನು",
-            "beneficiary_id": "ಐಡಿಯನ್ನು",
-            "visit_type": "ಭೇಟಿ ಪ್ರಕಾರವನ್ನು",
-            "next_visit_date": "ಮುಂದಿನ ದಿನಾಂಕವನ್ನು",
+        acks = {
+            "kn": f"{field_name} ಮೌಲ್ಯವನ್ನು {new_value} ಎಂದು ಬದಲಾಯಿಸಲಾಗಿದೆ. ಈಗ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?",
+            "hi": f"{field_name} को बदलकर {new_value} कर दिया गया है। क्या अब यह सही है?",
+            "te": f"{field_name} విలువను {new_value} గా మార్చాము. ఇప్పుడు వివరాలు సరిగ్గా ఉన్నాయా?",
+            "ta": f"{field_name} மதிப்பு {new_value} என மாற்றப்பட்டது. இப்போது விவரம் சரியா?",
+            "ur": f"{field_name} کو تبدیل کر کے {new_value} کر دیا گیا۔ کیا اب یہ ٹھیک ہے؟"
         }
-        label = field_labels_kn.get(field_name, field_name)
-        ack_text = f"{label} {new_value} ಎಂದು ಬದಲಾಯಿಸಲಾಗಿದೆ. ಈಗ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?"
-        return True, ack_text
+        return True, acks.get(lang, f"Field '{field_name}' updated to {new_value}. Please confirm.")
 
     def commit_visit_to_db(self) -> Dict[str, Any]:
         """
@@ -203,11 +212,14 @@ class SessionManager:
     def __init__(self):
         self._sessions: Dict[str, VoiceSession] = {}
 
-    def get_or_create_session(self, session_id: Optional[str] = None) -> VoiceSession:
+    def get_or_create_session(self, session_id: Optional[str] = None, language: str = "kn") -> VoiceSession:
         if not session_id:
             session_id = f"SES-{uuid.uuid4().hex[:8].upper()}"
         if session_id not in self._sessions:
-            self._sessions[session_id] = VoiceSession(session_id)
+            self._sessions[session_id] = VoiceSession(session_id, language=language)
+        else:
+            if language and self._sessions[session_id].language != language:
+                self._sessions[session_id].language = language
         return self._sessions[session_id]
 
     def remove_session(self, session_id: str) -> None:

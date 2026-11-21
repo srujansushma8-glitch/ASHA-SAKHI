@@ -3,40 +3,43 @@ import {
   Mic, 
   Square, 
   RotateCcw, 
-  Check, 
   Play, 
   Pause, 
-  Sparkles, 
-  ArrowRight, 
-  CheckCircle2, 
-  ChevronDown, 
+  Check, 
+  AlertTriangle, 
   Volume2, 
-  ArrowLeft, 
-  FileText, 
-  Activity, 
-  Layers, 
-  ShieldCheck,
-  AlertTriangle,
-  RefreshCw
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  FileText,
+  Clock,
+  Sparkles,
+  Info,
+  Globe,
+  Radio,
+  MessageSquare
 } from 'lucide-react';
-import WaveformVisualizer from '../components/WaveformVisualizer';
-import MicrophonePermissionModal from '../components/MicrophonePermissionModal';
 import { audioRecorder } from '../services/audioRecorder';
 import { voiceWs } from '../services/websocket';
 import { ttsService } from '../services/ttsService';
 import { isDemoMode } from '../services/api';
 import { DEMO_SCENARIOS } from '../services/mockData';
+import { getLanguageByCode, INDIC_LANGUAGES } from '../services/languages';
+import WaveformVisualizer from '../components/WaveformVisualizer';
+import MicrophonePermissionModal from '../components/MicrophonePermissionModal';
 
 export default function VoiceRecordingScreen({ 
   onRecordExtracted, 
   onDangerAlert, 
   onBack,
-  initialScenarioId = 'anc_routine'
+  initialScenarioId = 'anc_routine',
+  currentLanguage = 'kn',
+  onOpenLanguageSelector
 }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [language, setLanguage] = useState('kn'); // 'kn', 'kn-en', 'en'
+  const [language, setLanguage] = useState(currentLanguage);
   const [processingStatus, setProcessingStatus] = useState('ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಮಾಡಲು ಸಿದ್ಧ (Ready to Record)');
   const [partialTranscript, setPartialTranscript] = useState('');
   const [finalTranscript, setFinalTranscript] = useState('');
@@ -50,9 +53,17 @@ export default function VoiceRecordingScreen({
   const [isDemo, setIsDemo] = useState(isDemoMode());
   const [extractedRecordData, setExtractedRecordData] = useState(null);
   const [activeDangerAlert, setActiveDangerAlert] = useState(null);
+  const [agentResponse, setAgentResponse] = useState(null);
 
   const timerRef = useRef(null);
   const audioPlayerRef = useRef(null);
+
+  const langInfo = getLanguageByCode(language);
+  const isRtl = langInfo.dir === 'rtl';
+
+  useEffect(() => {
+    setLanguage(currentLanguage);
+  }, [currentLanguage]);
 
   useEffect(() => {
     setIsDemo(isDemoMode());
@@ -62,7 +73,7 @@ export default function VoiceRecordingScreen({
     });
 
     const unsubSession = voiceWs.on('session_started', (payload) => {
-      setProcessingStatus('ಧ್ವನಿ ಸ್ವೀಕರಿಸಲಾಗುತ್ತಿದೆ... (Listening...)');
+      setProcessingStatus(`ಧ್ವನಿ ಸ್ವೀಕರಿಸಲಾಗುತ್ತಿದೆ... (Listening in ${langInfo.name_en})...`);
     });
 
     const unsubPartial = voiceWs.on('transcript_partial', (payload) => {
@@ -74,7 +85,7 @@ export default function VoiceRecordingScreen({
     const unsubFinal = voiceWs.on('transcript_final', (payload) => {
       setFinalTranscript(payload.text || '');
       setPartialTranscript('');
-      setProcessingStatus('AI4Bharat ಮಾದರಿಯಿಂದ ಪೂರ್ಣ ಪಠ್ಯ ಪಡೆಯಲಾಗಿದೆ. ಕ್ಷೇತ್ರಗಳನ್ನು ಪ್ರತ್ಯೇಕಿಸಲಾಗುತ್ತಿದೆ...');
+      setProcessingStatus(`AI4Bharat ಮಾದರಿಯಿಂದ ಪೂರ್ಣ ಪಠ್ಯ ಪಡೆಯಲಾಗಿದೆ (${langInfo.name_native}).`);
     });
 
     const unsubExtracted = voiceWs.on('record_extracted', (payload) => {
@@ -88,11 +99,38 @@ export default function VoiceRecordingScreen({
       if (onDangerAlert) onDangerAlert(payload.alert);
     });
 
-    const unsubTTS = voiceWs.on('confirmation_audio', (payload) => {
-      if (payload.transcript_kannada) {
+    const unsubAgent = voiceWs.on('agent_response', (payload) => {
+      setAgentResponse(payload);
+      if (payload.spoken_text) {
+        setProcessingStatus(payload.spoken_text);
+      }
+      if (payload.danger_flag && payload.alert && onDangerAlert) {
+        setActiveDangerAlert(payload.alert);
+        onDangerAlert(payload.alert);
+      }
+    });
+
+    const unsubTTSAudio = voiceWs.on('tts_audio', (payload) => {
+      if (payload.audio_b64) {
         setIsPlayingTTS(true);
-        ttsService.speakText(payload.transcript_kannada, {
-          language: 'kn-IN',
+        ttsService.playBase64Audio(payload.audio_b64, payload.audio_format || 'wav', () => {
+          setIsPlayingTTS(false);
+        });
+      } else if (payload.text) {
+        setIsPlayingTTS(true);
+        ttsService.speakText(payload.text, {
+          language: langInfo.bcp47,
+          onEnd: () => setIsPlayingTTS(false)
+        });
+      }
+    });
+
+    const unsubTTS = voiceWs.on('confirmation_audio', (payload) => {
+      const textToSpeak = payload.transcript_kannada || payload.text;
+      if (textToSpeak) {
+        setIsPlayingTTS(true);
+        ttsService.speakText(textToSpeak, {
+          language: langInfo.bcp47,
           onEnd: () => setIsPlayingTTS(false)
         });
       }
@@ -110,13 +148,15 @@ export default function VoiceRecordingScreen({
       unsubFinal();
       unsubExtracted();
       unsubDanger();
+      unsubAgent();
+      unsubTTSAudio();
       unsubTTS();
       unsubError();
       clearInterval(timerRef.current);
       audioRecorder.cleanup();
       ttsService.stop();
     };
-  }, []);
+  }, [language]);
 
   const formatDuration = (secs) => {
     const m = Math.floor(secs / 60);
@@ -129,6 +169,7 @@ export default function VoiceRecordingScreen({
       ttsService.stop();
       setExtractedRecordData(null);
       setActiveDangerAlert(null);
+      setAgentResponse(null);
       setPartialTranscript('');
       setFinalTranscript('');
       setWindowCount(0);
@@ -156,7 +197,7 @@ export default function VoiceRecordingScreen({
       });
 
       setIsRecording(true);
-      setProcessingStatus('ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ... (Listening...)');
+      setProcessingStatus(`ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ (${langInfo.name_native})...`);
 
       timerRef.current = setInterval(() => {
         setDuration(prev => prev + 1);
@@ -175,7 +216,7 @@ export default function VoiceRecordingScreen({
     clearInterval(timerRef.current);
     setIsRecording(false);
     setIsProcessing(true);
-    setProcessingStatus('ಆಡಿಯೋ ವಿಂಡೋಗಳನ್ನು ಸಂಸ್ಕರಿಸಲಾಗುತ್ತಿದೆ... (Processing with Indic-Transcribe...)');
+    setProcessingStatus(`ಆಡಿಯೋ ವಿಂಡೋಗಳನ್ನು ಸಂಸ್ಕರಿಸಲಾಗುತ್ತಿದೆ (${langInfo.name_en} Indic-Transcribe)...`);
 
     try {
       const { blob, url } = await audioRecorder.stopRecording();
@@ -202,6 +243,7 @@ export default function VoiceRecordingScreen({
     setRecordedAudioUrl(null);
     setExtractedRecordData(null);
     setActiveDangerAlert(null);
+    setAgentResponse(null);
     setProcessingStatus('ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಮಾಡಲು ಸಿದ್ಧ (Ready to Record)');
   };
 
@@ -217,12 +259,21 @@ export default function VoiceRecordingScreen({
   };
 
   const handlePlayVoiceReadback = () => {
+    if (agentResponse?.spoken_text) {
+      setIsPlayingTTS(true);
+      ttsService.speakText(agentResponse.spoken_text, {
+        language: langInfo.bcp47,
+        onEnd: () => setIsPlayingTTS(false)
+      });
+      return;
+    }
+
     if (!extractedRecordData) return;
     const text = extractedRecordData.spoken_confirmation_kn || 
       `${extractedRecordData.beneficiary_name} ಅವರ ಭೇಟಿ ವಿವರ ದಾಖಲಾಗಿದೆ. ತೂಕ ${extractedRecordData.weight || ''} kg.`;
     setIsPlayingTTS(true);
     ttsService.speakText(text, {
-      language: 'kn-IN',
+      language: langInfo.bcp47,
       onEnd: () => setIsPlayingTTS(false)
     });
   };
@@ -236,52 +287,44 @@ export default function VoiceRecordingScreen({
   return (
     <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
       {/* 1. Top Header Navigation Strip */}
-      <div className="bg-white rounded-3xl p-5 lg:p-6 border border-navy-200/60 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-navy-900 rounded-3xl p-5 lg:p-6 border border-navy-200/60 dark:border-navy-700 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
-            className="p-2.5 rounded-2xl bg-softblue border border-navy-200/70 text-navy-800 hover:bg-navy-100 active:scale-[0.98] transition-decelerate"
+            className="p-2.5 rounded-2xl bg-softblue dark:bg-navy-800 border border-navy-200/70 dark:border-navy-700 text-navy-800 dark:text-white hover:bg-navy-100 dark:hover:bg-navy-700 active:scale-[0.98] transition-decelerate"
             title="ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ (Back to Home)"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg lg:text-xl font-bold font-kannada text-navy-900 leading-tight">
-                ಧ್ವನಿ ಕ್ಷೇತ್ರ ದಿನಚರಿ (Voice Field Assistant)
+              <h1 className="text-lg lg:text-xl font-bold font-kannada text-navy-900 dark:text-white leading-tight">
+                ಧ್ವನಿ ಕ್ಷೇತ್ರ ದಿನಚರಿ (Multilingual Voice Assistant)
               </h1>
-              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200">
+              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/40 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-700">
                 AI4Bharat VAD
               </span>
             </div>
-            <p className="text-xs text-navy-500 font-medium mt-0.5">
-              Indic-Transcribe ASR (Kannada/Code-Mixed) & Indic-Speak TTS
+            <p className="text-xs text-navy-500 dark:text-navy-400 font-medium mt-0.5">
+              Indic-Transcribe ASR & Indic-Speak TTS across 22 Scheduled Indian Languages
             </p>
           </div>
         </div>
 
-        {/* Language Selection Chips */}
+        {/* 22 Indic Languages Pill Button */}
         <div className="flex items-center space-x-2 self-start sm:self-auto">
-          <span className="text-xs text-navy-500 font-bold hidden sm:inline font-kannada">ಭಾಷೆ:</span>
-          <div className="flex bg-softblue p-1 rounded-2xl border border-navy-200/60">
-            {[
-              { id: 'kn', label: 'ಕನ್ನಡ' },
-              { id: 'kn-en', label: 'ಕನ್+Eng' },
-              { id: 'en', label: 'English' }
-            ].map((lang) => (
-              <button
-                key={lang.id}
-                onClick={() => setLanguage(lang.id)}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-decelerate active:scale-[0.98] ${
-                  language === lang.id
-                    ? 'bg-primary text-white shadow-touch'
-                    : 'text-navy-600 hover:text-navy-900'
-                }`}
-              >
-                {lang.label}
-              </button>
-            ))}
-          </div>
+          {onOpenLanguageSelector && (
+            <button
+              onClick={onOpenLanguageSelector}
+              className="flex items-center space-x-2 px-3.5 py-2 rounded-2xl bg-softblue dark:bg-navy-800 hover:bg-cream-100 dark:hover:bg-navy-700 border border-primary/30 text-navy-900 dark:text-white text-xs font-bold transition-all shadow-xs group"
+              title="Change language among 22 scheduled Indian languages"
+            >
+              <Globe className="w-4 h-4 text-primary group-hover:rotate-45 transition-transform" />
+              <span className="font-semibold">{langInfo.name_native}</span>
+              <span className="text-navy-400 dark:text-navy-500 font-normal">({langInfo.name_en})</span>
+              <span className="text-[10px] bg-primary text-white px-1.5 py-0.2 rounded-md font-mono font-bold">22</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -292,9 +335,19 @@ export default function VoiceRecordingScreen({
         {/* ======================================================== */}
         <div className="lg:col-span-5 space-y-6">
           {/* Main Hero Recording Card */}
-          <div className="bg-white rounded-3xl p-6 lg:p-8 border border-navy-200/60 shadow-card text-center relative overflow-hidden space-y-5">
+          <div className="bg-white dark:bg-navy-900 rounded-3xl p-6 lg:p-8 border border-navy-200/60 dark:border-navy-700 shadow-card text-center relative overflow-hidden space-y-5">
+            {/* Active Language Badge */}
+            <div className="flex items-center justify-center gap-1.5">
+              <span className="text-xs px-3 py-1 rounded-full bg-softblue dark:bg-navy-800 text-navy-700 dark:text-navy-200 border border-navy-200 dark:border-navy-700 font-semibold flex items-center gap-1.5">
+                <Radio className="w-3.5 h-3.5 text-secondary animate-pulse" />
+                <span dir={isRtl ? 'rtl' : 'ltr'}>{langInfo.name_native}</span>
+                <span className="text-navy-400 font-mono text-[10px]">[{langInfo.bcp47}]</span>
+                {isRtl && <span className="text-[9px] bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 px-1 rounded font-bold">RTL</span>}
+              </span>
+            </div>
+
             {/* Duration Counter Pill */}
-            <div className="inline-flex items-center space-x-2.5 px-6 py-2 rounded-full bg-softblue border border-navy-200/70 text-navy-900 font-mono text-lg font-bold shadow-inner">
+            <div className="inline-flex items-center space-x-2.5 px-6 py-2 rounded-full bg-softblue dark:bg-navy-800 border border-navy-200/70 dark:border-navy-700 text-navy-900 dark:text-white font-mono text-lg font-bold shadow-inner">
               <span className={`w-3 h-3 rounded-full ${isRecording ? 'bg-emergency animate-ping' : 'bg-primary'}`}></span>
               <span>{formatDuration(duration)}</span>
             </div>
@@ -302,17 +355,17 @@ export default function VoiceRecordingScreen({
             {/* Large Interactive Microphone Button */}
             <div className="relative flex items-center justify-center py-4">
               {isRecording && (
-                <div className="absolute w-48 h-48 rounded-full bg-emergency-100 animate-ping pointer-events-none"></div>
+                <div className="absolute w-48 h-48 rounded-full bg-emergency-100 dark:bg-emergency/20 animate-ping pointer-events-none"></div>
               )}
               {isRecording && (
-                <div className="absolute w-40 h-40 rounded-full bg-emergency-200 animate-pulse pointer-events-none"></div>
+                <div className="absolute w-40 h-40 rounded-full bg-emergency-200 dark:bg-emergency/30 animate-pulse pointer-events-none"></div>
               )}
 
               <button
                 onClick={isRecording ? handleStopRecording : handleStartRecording}
                 disabled={isProcessing}
                 aria-label={isRecording ? 'Stop Recording' : 'Start Recording'}
-                className={`relative z-10 w-28 h-28 rounded-full flex flex-col items-center justify-center shadow-card border-4 border-white active:scale-95 transition-decelerate touch-manipulation ${
+                className={`relative z-10 w-28 h-28 rounded-full flex flex-col items-center justify-center shadow-card border-4 border-white dark:border-navy-800 active:scale-95 transition-decelerate touch-manipulation ${
                   isRecording
                     ? 'bg-emergency hover:bg-emergency-hover text-white shadow-emergency animate-pulse'
                     : isProcessing
@@ -336,23 +389,23 @@ export default function VoiceRecordingScreen({
 
             {/* Processing Status Text */}
             <div className="space-y-1">
-              <div className="flex items-center justify-center space-x-2 text-xs font-bold text-navy-900">
+              <div className="flex items-center justify-center space-x-2 text-xs font-bold text-navy-900 dark:text-white">
                 {isProcessing && <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce"></div>}
-                <span>{processingStatus}</span>
+                <span dir={isRtl ? 'rtl' : 'ltr'}>{processingStatus}</span>
               </div>
-              <p className="text-xs text-navy-400 font-kannada font-medium">
+              <p className="text-xs text-navy-400 dark:text-navy-500 font-medium" dir={isRtl ? 'rtl' : 'ltr'}>
                 {isRecording
-                  ? 'ಸ್ಪಷ್ಟವಾಗಿ ಕನ್ನಡದಲ್ಲಿ ಅಥವಾ ವೈದ್ಯಕೀಯ ಪದಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ'
-                  : 'ಭೇಟಿ ವಿವರಗಳನ್ನು ಧ್ವನಿ ಮೂಲಕ ನಮೂದಿಸಲು ಮೈಕ್ ಬಟನ್ ಒತ್ತಿ'}
+                  ? `ಸ್ಪಷ್ಟವಾಗಿ ${langInfo.name_native} ದಲ್ಲಿ ಅಥವಾ ವೈದ್ಯಕೀಯ ಪದಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ`
+                  : `Speak in ${langInfo.name_en} (${langInfo.name_native}) to record visits, register beneficiaries, or ask health questions.`}
               </p>
             </div>
 
             {/* Primary Action Controls: Retry, Stop, Playback */}
-            <div className="flex items-center justify-center gap-3 pt-4 border-t border-navy-100">
+            <div className="flex items-center justify-center gap-3 pt-4 border-t border-navy-100 dark:border-navy-800">
               <button
                 onClick={handleRetry}
                 disabled={isRecording && duration < 1}
-                className="flex-1 py-3 px-4 rounded-2xl border border-navy-200 text-navy-800 font-semibold text-xs hover:bg-softblue active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
+                className="flex-1 py-3 px-4 rounded-2xl border border-navy-200 dark:border-navy-700 text-navy-800 dark:text-navy-200 font-semibold text-xs hover:bg-softblue dark:hover:bg-navy-800 active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
               >
                 <RotateCcw className="w-4 h-4 text-navy-500" />
                 <span>ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ</span>
@@ -371,7 +424,7 @@ export default function VoiceRecordingScreen({
               {recordedAudioUrl && !isRecording && (
                 <button
                   onClick={toggleAudioPlayback}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-cyan-50 text-cyan-800 border border-cyan-200 font-bold text-xs hover:bg-cyan-100 active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
+                  className="flex-1 py-3 px-4 rounded-2xl bg-cyan-50 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-200 border border-cyan-200 dark:border-cyan-700 font-bold text-xs hover:bg-cyan-100 active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
                 >
                   {isPlayingAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
                   <span>{isPlayingAudio ? 'ವಿರಾಮ' : 'ಕೇಳಿ (Play)'}</span>
@@ -403,14 +456,14 @@ export default function VoiceRecordingScreen({
         <div className="lg:col-span-7 space-y-6">
           {/* Evaluation Preset Selector */}
           {isDemo && (
-            <div className="bg-white rounded-3xl p-5 border border-navy-200/60 shadow-card space-y-3">
-              <div className="flex items-center justify-between border-b border-navy-100 pb-2.5">
-                <span className="text-xs font-bold text-navy-900 flex items-center space-x-2">
+            <div className="bg-white dark:bg-navy-900 rounded-3xl p-5 border border-navy-200/60 dark:border-navy-700 shadow-card space-y-3">
+              <div className="flex items-center justify-between border-b border-navy-100 dark:border-navy-800 pb-2.5">
+                <span className="text-xs font-bold text-navy-900 dark:text-white flex items-center space-x-2">
                   <Sparkles className="w-4 h-4 text-primary" />
                   <span>ಪರೀಕ್ಷಾ ಸನ್ನಿವೇಶಗಳು (Evaluation Presets for Judges):</span>
                 </span>
-                <span className="text-[10px] bg-cyan-50 text-cyan-800 font-mono px-2.5 py-0.5 rounded-full font-bold border border-cyan-200">
-                  AI4Bharat Mock Active
+                <span className="text-[10px] bg-cyan-50 dark:bg-cyan-900/40 text-cyan-800 dark:text-cyan-300 font-mono px-2.5 py-0.5 rounded-full font-bold border border-cyan-200 dark:border-cyan-700">
+                  AI4Bharat Multilingual
                 </span>
               </div>
 
@@ -418,7 +471,7 @@ export default function VoiceRecordingScreen({
                 value={demoScenario}
                 onChange={(e) => setDemoScenario(e.target.value)}
                 disabled={isRecording || isProcessing}
-                className="w-full bg-softblue text-navy-900 text-xs font-bold border border-navy-200 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary font-kannada"
+                className="w-full bg-softblue dark:bg-navy-800 text-navy-900 dark:text-white text-xs font-bold border border-navy-200 dark:border-navy-700 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary font-kannada"
               >
                 {DEMO_SCENARIOS.map((sc) => (
                   <option key={sc.id} value={sc.id}>
@@ -426,39 +479,91 @@ export default function VoiceRecordingScreen({
                   </option>
                 ))}
               </select>
-              <p className="text-[11px] text-navy-500 font-medium">
-                *ಮೈಕ್ರೊಫೋನ್ ಬಟನ್ ಒತ್ತಿದಾಗ ಈ ಸನ್ನಿವೇಶದ ಆಡಿಯೋ ವಿಂಡೋಗಳನ್ನು Indic-Transcribe ಮಾದರಿಗೆ ರವಾನಿಸಲಾಗುತ್ತದೆ.
+              <p className="text-[11px] text-navy-500 dark:text-navy-400 font-medium">
+                *Selected language: <strong>{langInfo.name_native} ({langInfo.name_en})</strong>. Indic-Transcribe & Indic-Speak active.
               </p>
             </div>
           )}
 
+          {/* AI4Bharat Conversational Agent Response Card (If Turn Active) */}
+          {agentResponse && (
+            <div className={`rounded-3xl p-5 border shadow-card space-y-3 animate-fade-in ${
+              agentResponse.danger_flag
+                ? 'bg-emergency-50/80 dark:bg-emergency/20 border-emergency-300'
+                : 'bg-gradient-to-r from-mint-50/80 via-white to-softblue dark:from-navy-800 dark:to-navy-900 border-mint-200 dark:border-navy-700'
+            }`}>
+              <div className="flex items-center justify-between border-b border-navy-100 dark:border-navy-700 pb-2.5">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-white ${
+                    agentResponse.danger_flag ? 'bg-emergency' : 'bg-primary'
+                  }`}>
+                    {agentResponse.danger_flag ? <AlertTriangle className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-navy-900 dark:text-white">
+                      ಆಶಾ ಸಖಿ ಉತ್ತರ (Agent Spoken Response)
+                    </h4>
+                    <span className="text-[10px] font-mono text-navy-500 dark:text-navy-400">
+                      Intent: {agentResponse.intent}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handlePlayVoiceReadback}
+                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-navy-800 hover:bg-mint-100 dark:hover:bg-navy-700 text-navy-800 dark:text-white text-xs font-bold border border-navy-200 dark:border-navy-700 flex items-center space-x-1.5 shadow-xs"
+                >
+                  <Volume2 className={`w-3.5 h-3.5 text-primary ${isPlayingTTS ? 'animate-bounce' : ''}`} />
+                  <span>{isPlayingTTS ? 'ನುಡಿಯುತ್ತಿದೆ...' : 'ಕೇಳಿ (Play Voice)'}</span>
+                </button>
+              </div>
+
+              <p 
+                className="text-navy-900 dark:text-white font-semibold text-base leading-relaxed"
+                dir={isRtl ? 'rtl' : 'ltr'}
+              >
+                {agentResponse.spoken_text}
+              </p>
+
+              {agentResponse.saved_entity_id && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-healthcare-50 dark:bg-healthcare/20 text-healthcare font-mono text-xs font-bold border border-healthcare-200">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Saved Entity: {agentResponse.saved_entity_id}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Live / Received Transcript Box */}
-          <div className="bg-white rounded-3xl p-6 border border-navy-200/60 shadow-card space-y-3">
-            <div className="flex items-center justify-between border-b border-navy-100 pb-3">
+          <div className="bg-white dark:bg-navy-900 rounded-3xl p-6 border border-navy-200/60 dark:border-navy-700 shadow-card space-y-3">
+            <div className="flex items-center justify-between border-b border-navy-100 dark:border-navy-800 pb-3">
               <div className="flex items-center space-x-2.5">
                 <span className="w-3 h-3 rounded-full bg-primary"></span>
                 <div>
-                  <h3 className="font-bold text-sm text-navy-900 font-kannada">
+                  <h3 className="font-bold text-sm text-navy-900 dark:text-white font-kannada">
                     ಸ್ವೀಕೃತ ಪಠ್ಯ (Live / Received Transcript)
                   </h3>
                   <span className="text-[11px] text-navy-400 font-mono">
-                    AI4Bharat Indic-Transcribe Window
+                    AI4Bharat Indic-Transcribe Window • {langInfo.name_en} ({langInfo.bcp47})
                   </span>
                 </div>
               </div>
 
-              <span className="text-xs font-mono font-bold text-healthcare bg-healthcare-50 px-3 py-1 rounded-full border border-healthcare-100">
+              <span className="text-xs font-mono font-bold text-healthcare bg-healthcare-50 dark:bg-healthcare/20 px-3 py-1 rounded-full border border-healthcare-100 dark:border-healthcare/30">
                 {windowCount > 0 ? `Audio Window #${windowCount}` : 'VAD Active'}
               </span>
             </div>
 
-            <div className="min-h-[160px] p-4 rounded-2xl bg-softblue border border-navy-100 text-sm leading-relaxed font-kannada flex flex-col justify-between">
+            <div 
+              className="min-h-[160px] p-4 rounded-2xl bg-softblue dark:bg-navy-950 border border-navy-100 dark:border-navy-800 text-sm leading-relaxed flex flex-col justify-between"
+              dir={isRtl ? 'rtl' : 'ltr'}
+            >
               {finalTranscript ? (
                 <div className="space-y-3">
-                  <p className="text-navy-900 font-semibold text-base leading-relaxed">{finalTranscript}</p>
-                  <div className="flex items-center text-xs text-healthcare font-bold pt-2 border-t border-navy-200/50">
+                  <p className="text-navy-900 dark:text-white font-semibold text-base leading-relaxed">{finalTranscript}</p>
+                  <div className="flex items-center text-xs text-healthcare font-bold pt-2 border-t border-navy-200/50 dark:border-navy-800">
                     <CheckCircle2 className="w-4 h-4 mr-1.5 text-healthcare shrink-0" />
-                    <span>AI4Bharat Indic-Transcribe ನಿಂದ ಧ್ವನಿ ಯಶಸ್ವಿಯಾಗಿ ಗುರುತಿಸಲಾಗಿದೆ (ವಿಶ್ವಾಸಾರ್ಹತೆ: 94%)</span>
+                    <span>AI4Bharat Indic-Transcribe ನಿಂದ ಧ್ವನಿ ಯಶಸ್ವಿಯಾಗಿ ಗುರುತಿಸಲಾಗಿದೆ ({langInfo.name_native})</span>
                   </div>
                 </div>
               ) : partialTranscript ? (
@@ -466,12 +571,12 @@ export default function VoiceRecordingScreen({
                   {partialTranscript}
                 </p>
               ) : isRecording ? (
-                <p className="text-navy-400 font-medium">
+                <p className="text-navy-400 dark:text-navy-500 font-medium">
                   ಮಾತನಾಡುತ್ತಿರಿ... ಮೊದಲ ಆಡಿಯೋ ವಿಂಡೋ ಪೂರ್ಣಗೊಂಡ ನಂತರ ಪಠ್ಯ ಇಲ್ಲಿ ನೈಜ ಸಮಯದಲ್ಲಿ ಮೂಡುತ್ತದೆ.
                 </p>
               ) : (
-                <p className="text-navy-400 font-medium">
-                  ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಾರಂಭಿಸಿದ ನಂತರ ಕನ್ನಡ ಮತ್ತು ವೈದ್ಯಕೀಯ ಪಠ್ಯ ಇಲ್ಲಿ ದಾಖಲಾಗುತ್ತದೆ.
+                <p className="text-navy-400 dark:text-navy-500 font-medium">
+                  ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಾರಂಭಿಸಿದ ನಂತರ {langInfo.name_native} ಮತ್ತು ವೈದ್ಯಕೀಯ ಪಠ್ಯ ಇಲ್ಲಿ ದಾಖಲಾಗುತ್ತದೆ.
                 </p>
               )}
             </div>
@@ -479,14 +584,14 @@ export default function VoiceRecordingScreen({
 
           {/* Extracted Beneficiary Information & Actions Card */}
           {extractedRecordData && (
-            <div className="bg-white rounded-3xl p-6 border-2 border-healthcare-200 shadow-card space-y-4 animate-fade-in">
-              <div className="flex items-center justify-between border-b border-navy-100 pb-3">
+            <div className="bg-white dark:bg-navy-900 rounded-3xl p-6 border-2 border-healthcare-200 dark:border-healthcare-700 shadow-card space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between border-b border-navy-100 dark:border-navy-800 pb-3">
                 <div className="flex items-center space-x-2">
                   <div className="w-7 h-7 rounded-lg bg-healthcare text-white flex items-center justify-center">
                     <Check className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-navy-900 font-kannada">
+                    <h4 className="font-bold text-sm text-navy-900 dark:text-white font-kannada">
                       ರಚನಾತ್ಮಕ ಮಾಹಿತಿ ಸಿದ್ಧವಾಗಿದೆ (Extracted Clinical Data)
                     </h4>
                     <span className="text-[10px] text-navy-400 font-mono">
@@ -498,7 +603,7 @@ export default function VoiceRecordingScreen({
                 {/* Voice Read-back Button */}
                 <button
                   onClick={handlePlayVoiceReadback}
-                  className="px-3 py-1.5 rounded-xl bg-softblue hover:bg-cyan-50 text-navy-800 text-xs font-bold border border-navy-200 flex items-center space-x-1.5 active:scale-95 transition-decelerate"
+                  className="px-3 py-1.5 rounded-xl bg-softblue dark:bg-navy-800 hover:bg-cyan-50 dark:hover:bg-navy-700 text-navy-800 dark:text-white text-xs font-bold border border-navy-200 dark:border-navy-700 flex items-center space-x-1.5 active:scale-95 transition-decelerate"
                   title="ಧ್ವನಿ ಖಚಿತತೆ ಕೇಳಿ"
                 >
                   <Volume2 className={`w-4 h-4 text-primary ${isPlayingTTS ? 'animate-bounce' : ''}`} />
@@ -508,19 +613,19 @@ export default function VoiceRecordingScreen({
 
               {/* Extracted Fields Summary Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-2.5 rounded-xl bg-softblue border border-navy-100">
+                <div className="p-2.5 rounded-xl bg-softblue dark:bg-navy-950 border border-navy-100 dark:border-navy-800">
                   <span className="text-[10px] text-navy-400 block font-medium">ಫಲಾನುಭವಿ</span>
-                  <span className="font-bold text-navy-900 font-kannada">{extractedRecordData.beneficiary_name}</span>
+                  <span className="font-bold text-navy-900 dark:text-white font-kannada">{extractedRecordData.beneficiary_name}</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-softblue border border-navy-100">
+                <div className="p-2.5 rounded-xl bg-softblue dark:bg-navy-950 border border-navy-100 dark:border-navy-800">
                   <span className="text-[10px] text-navy-400 block font-medium">ಭೇಟಿ ಪ್ರಕಾರ</span>
                   <span className="font-bold text-primary">{extractedRecordData.visit_type}</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-softblue border border-navy-100">
+                <div className="p-2.5 rounded-xl bg-softblue dark:bg-navy-950 border border-navy-100 dark:border-navy-800">
                   <span className="text-[10px] text-navy-400 block font-medium">ತೂಕ (Weight)</span>
-                  <span className="font-bold font-mono text-navy-900">{extractedRecordData.weight || 'N/A'} kg</span>
+                  <span className="font-bold font-mono text-navy-900 dark:text-white">{extractedRecordData.weight || 'N/A'} kg</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-softblue border border-navy-100">
+                <div className="p-2.5 rounded-xl bg-softblue dark:bg-navy-950 border border-navy-100 dark:border-navy-800">
                   <span className="text-[10px] text-navy-400 block font-medium">ಮುಂದಿನ ಭೇಟಿ</span>
                   <span className="font-bold font-mono text-healthcare">{extractedRecordData.next_visit_date || 'N/A'}</span>
                 </div>

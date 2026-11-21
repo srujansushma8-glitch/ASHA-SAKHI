@@ -1,12 +1,13 @@
 """
 WebSocket Voice Interaction Router (/ws/voice).
-Handles full conversational duplex communication between frontend and backend:
+Handles full conversational duplex communication between frontend and backend across all 22 scheduled Indian languages:
 - Utterance streaming & VAD-based chunk processing
-- AI4Bharat ASR transcription
+- AI4Bharat Indic-Transcribe multilingual ASR transcription
+- Multilingual Indic Conversational Voice Agent (Intent, Registration, History Search, Follow-ups, Corrections)
 - Independent MoHFW danger sign detection with immediate emergency interruption
 - Automated simulated ambulance dispatch creation
 - Structured clinical extraction
-- Spoken Kannada confirmation & voice correction lifecycle
+- Spoken native language confirmation & voice correction lifecycle in active Indic language
 - Database persistence and automated follow-up task generation.
 """
 
@@ -24,8 +25,10 @@ from app.services.ai4bharat_asr import get_asr_adapter
 from app.services.tts_adapter import BaseTTSAdapter, get_tts_adapter
 from app.services.danger_detector import danger_detector
 from app.services.llm_extractor import clinical_extractor
+from app.services.indic_voice_agent import indic_voice_agent
 from app.services.audio_manager import audio_manager
 from app.services.ambulance_service import ambulance_service
+from app.services.indic_languages import get_language_info, INDIC_LANGUAGES
 
 logger = logging.getLogger(__name__)
 
@@ -68,16 +71,29 @@ async def voice_websocket_endpoint(websocket: WebSocket):
 
                 # 1. EVENT: start_session
                 if event == "start_session":
-                    current_session = session_manager.get_or_create_session(session_id)
+                    # Determine active language (defaults to Kannada)
+                    req_lang = data.get("language") or payload.get("language") or "kn"
+                    norm_lang = req_lang.lower().split("-")[0].strip()
+                    if norm_lang not in INDIC_LANGUAGES:
+                        norm_lang = "kn"
+
+                    current_session = session_manager.get_or_create_session(session_id, language=norm_lang)
                     current_session.status = "RECORDING"
                     current_session.audio_buffer.clear()
+                    current_session.language = norm_lang
+
                     if "beneficiary_id" in data:
                         current_session.current_record = None
+
+                    lang_info = get_language_info(norm_lang)
                     await send_event(
                         "session_started",
                         {
                             "status": "ready",
                             "beneficiary_id": data.get("beneficiary_id"),
+                            "language": norm_lang,
+                            "language_name": lang_info.name_en,
+                            "language_native": lang_info.name_native,
                             "sample_rate": 16000,
                             "format": "wav_pcm",
                         },
@@ -103,9 +119,10 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                     current_session.audio_buffer.clear()
 
                     wav_audio = audio_manager.validate_or_wrap_wav(raw_audio)
+                    active_lang = current_session.language or "kn"
 
-                    # A. Speech Recognition (AI4Bharat / Mock)
-                    asr_res = await asr_adapter.transcribe(wav_audio, language="kn")
+                    # A. Speech Recognition (AI4Bharat Indic-Transcribe / Mock)
+                    asr_res = await asr_adapter.transcribe(wav_audio, language=active_lang)
                     transcript = asr_res.transcript
                     current_session.transcript_history.append(transcript)
 
@@ -113,6 +130,8 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                         "transcript_final",
                         {
                             "transcript": transcript,
+                            "text": transcript,
+                            "language": active_lang,
                             "latency_ms": asr_res.latency_ms,
                             "is_mock": asr_res.is_mock,
                             "model_name": asr_res.model_name,
@@ -120,33 +139,38 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                     )
 
                     # B. Independent Deterministic Danger-Sign Detection
-                    danger_res = danger_detector.detect(transcript)
+                    danger_res = danger_detector.detect(transcript, language=active_lang)
                     current_session.danger_result = danger_res
 
-                    # C. Structured Clinical Extraction
-                    extracted = clinical_extractor.extract(transcript)
-                    current_session.current_record = extracted
+                    # C. Process Conversational Turn with Indic Voice Agent
+                    agent_resp = indic_voice_agent.process_turn(
+                        transcript=transcript,
+                        language=active_lang,
+                        session_context=current_session.context
+                    )
 
                     # If danger detected: generate simulated ambulance request & emergency alert
                     sim_amb = None
                     if danger_res.has_danger:
                         current_session.status = "INTERRUPTED_EMERGENCY"
-                        emergency_tts = tts_adapter.get_emergency_audio()
+                        emergency_tts = tts_adapter.get_emergency_audio(language=active_lang)
 
                         # Automatically trigger simulated ambulance dispatch
-                        ben_id = extracted.beneficiary_id
+                        ben_id = "BEN-KA-001"
+                        if current_session.current_record and current_session.current_record.beneficiary_id:
+                            ben_id = current_session.current_record.beneficiary_id
+
                         pickup = "Hoskote Village"
-                        if ben_id:
-                            from app.models.beneficiary import BeneficiaryRepository
-                            ben = BeneficiaryRepository.get_by_id(ben_id)
-                            if ben and ben.get("village"):
-                                pickup = ben["village"]
+                        from app.models.beneficiary import BeneficiaryRepository
+                        ben = BeneficiaryRepository.get_by_id(ben_id)
+                        if ben and ben.get("village"):
+                            pickup = ben["village"]
 
                         sim_amb = ambulance_service.create_request(
                             beneficiary_id=ben_id,
                             emergency_id=danger_res.detected_signs[0].sign_id if danger_res.detected_signs else None,
                             pickup_location=pickup,
-                            notes=f"Auto-triggered simulated 108 dispatch for danger sign: {danger_res.highest_severity}",
+                            notes=f"Auto-triggered simulated 108 dispatch for danger sign: {danger_res.highest_severity} ({active_lang})",
                         )
                         current_session.simulated_ambulance = sim_amb
 
@@ -158,37 +182,64 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                                 "detected_phrases": danger_res.detected_phrases,
                                 "instruction_kn": danger_res.spoken_instruction_kn,
                                 "instruction_en": danger_res.spoken_instruction_en,
+                                "spoken_native": emergency_tts.text,
                                 "referral_action": danger_res.referral_action,
                                 "audio_base64": emergency_tts.audio_base64,
                                 "simulated_ambulance": sim_amb,
                             },
                         )
 
-                    await send_event(
-                        "record_extracted",
-                        {
-                            "record": extracted.model_dump(),
-                            "requires_clarification": extracted.requires_clarification,
-                            "clarification_prompt": extracted.clarification_prompt,
-                            "danger_flag": danger_res.has_danger,
-                        },
-                    )
-
-                    # Normal Confirmation Audio (Only if not interrupted by emergency)
-                    if not danger_res.has_danger:
-                        current_session.status = "AWAITING_CONFIRMATION"
-                        readback_text = current_session.build_confirmation_text_kn()
-                        confirm_tts = await tts_adapter.synthesize(readback_text, language="kn")
+                    # D. If Agent handled Registration, Search, Tasks, or Greeting
+                    if agent_resp.intent in {"BENEFICIARY_REGISTERED", "REGISTRATION_READY", "AWAITING_REGISTRATION_DETAILS", "SEARCH_RESULT", "SEARCH_NOT_FOUND", "TASKS_SUMMARY", "GREETING", "VISIT_SAVED", "CORRECTION_APPLIED"}:
+                        # Synthesize natural voice response in active language
+                        spoken_audio = await tts_adapter.synthesize(agent_resp.spoken_text, language=active_lang)
 
                         await send_event(
-                            "confirmation_audio",
+                            "agent_response",
                             {
-                                "text": readback_text,
-                                "audio_base64": confirm_tts.audio_base64,
-                                "latency_ms": confirm_tts.latency_ms,
-                                "is_mock": confirm_tts.is_mock,
+                                "intent": agent_resp.intent,
+                                "spoken_text": agent_resp.spoken_text,
+                                "display_text": agent_resp.display_text,
+                                "language": active_lang,
+                                "audio_base64": spoken_audio.audio_base64,
+                                "latency_ms": spoken_audio.latency_ms,
+                                "extracted_data": agent_resp.extracted_data,
+                                "saved_entity_id": agent_resp.saved_entity_id,
                             },
                         )
+
+                    # E. Standard Clinical Visit Extraction Flow
+                    if agent_resp.intent in {"VISIT_AWAITING_CONFIRMATION", "CLINICAL_VISIT"} or not agent_resp.intent:
+                        extracted = clinical_extractor.extract(transcript)
+                        current_session.current_record = extracted
+
+                        await send_event(
+                            "record_extracted",
+                            {
+                                "record": extracted.model_dump(),
+                                "requires_clarification": extracted.requires_clarification,
+                                "clarification_prompt": extracted.clarification_prompt,
+                                "danger_flag": danger_res.has_danger,
+                                "language": active_lang,
+                            },
+                        )
+
+                        # Normal Confirmation Audio in Active Language (if not interrupted by emergency)
+                        if not danger_res.has_danger:
+                            current_session.status = "AWAITING_CONFIRMATION"
+                            readback_text = agent_resp.spoken_text or current_session.build_confirmation_text(language=active_lang)
+                            confirm_tts = await tts_adapter.synthesize(readback_text, language=active_lang)
+
+                            await send_event(
+                                "confirmation_audio",
+                                {
+                                    "text": readback_text,
+                                    "language": active_lang,
+                                    "audio_base64": confirm_tts.audio_base64,
+                                    "latency_ms": confirm_tts.latency_ms,
+                                    "is_mock": confirm_tts.is_mock,
+                                },
+                            )
 
                 # 4. EVENT: correct_field
                 elif event == "correct_field":
@@ -198,26 +249,30 @@ async def voice_websocket_endpoint(websocket: WebSocket):
 
                     field = data.get("field_name")
                     val = data.get("new_value")
-                    success, ack_msg = current_session.apply_correction(field, val)
+                    active_lang = current_session.language or "kn"
+                    success, ack_msg = current_session.apply_correction(field, val, language=active_lang)
 
                     if not success:
                         await send_event("error", {"message": ack_msg})
                         continue
 
-                    await send_event(
-                        "record_updated",
-                        {
-                            "record": current_session.current_record.model_dump(),
-                            "field_name": field,
-                            "new_value": val,
-                        },
-                    )
+                    if current_session.current_record:
+                        await send_event(
+                            "record_updated",
+                            {
+                                "record": current_session.current_record.model_dump(),
+                                "field_name": field,
+                                "new_value": val,
+                                "language": active_lang,
+                            },
+                        )
 
-                    ack_tts = await tts_adapter.synthesize(ack_msg, language="kn")
+                    ack_tts = await tts_adapter.synthesize(ack_msg, language=active_lang)
                     await send_event(
                         "confirmation_audio",
                         {
                             "text": ack_msg,
+                            "language": active_lang,
                             "audio_base64": ack_tts.audio_base64,
                             "latency_ms": ack_tts.latency_ms,
                         },
@@ -225,13 +280,49 @@ async def voice_websocket_endpoint(websocket: WebSocket):
 
                 # 5. EVENT: confirm_record
                 elif event == "confirm_record":
-                    if not current_session or not current_session.current_record:
+                    if not current_session:
+                        await send_event("error", {"message": "No active session."})
+                        continue
+
+                    active_lang = current_session.language or "kn"
+
+                    # Check if there is a pending agent-level action (like registration)
+                    if current_session.context.get("pending_action"):
+                        agent_resp = indic_voice_agent.process_turn("confirm", active_lang, current_session.context)
+                        ack_save = agent_resp.spoken_text
+                        save_tts = await tts_adapter.synthesize(ack_save, language=active_lang)
+                        await send_event(
+                            "visit_saved",
+                            {
+                                "confirmation_text": ack_save,
+                                "audio_base64": save_tts.audio_base64,
+                                "language": active_lang,
+                            },
+                        )
+                        continue
+
+                    if not current_session.current_record:
                         await send_event("error", {"message": "No record available to confirm."})
                         continue
 
                     saved_result = current_session.commit_visit_to_db()
-                    ack_save = "ದಾಖಲೆ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ."
-                    save_tts = await tts_adapter.synthesize(ack_save, language="kn")
+
+                    ack_translations = {
+                        "kn": "ದಾಖಲೆ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ.",
+                        "hi": "स्वास्थ्य रिकॉर्ड सफलतापूर्वक सुरक्षित कर लिया गया है।",
+                        "te": "రికార్డు విజయవంతంగా సేవ్ చేయబడింది.",
+                        "ta": "பதிவு வெற்றிகரமாக சேமிக்கப்பட்டது.",
+                        "ml": "റെക്കോർഡ് വിജയകരമായി സേവ് ചെയ്തു.",
+                        "bn": "রেকর্ড সফলভাবে সংরক্ষিত হয়েছে।",
+                        "mr": "नोंद यशस्वीपणे सेव्ह झाली आहे.",
+                        "gu": "રેકોર્ડ સફળતાપૂર્વક સાચવી લીધો છે.",
+                        "ur": "ریکارڈ کامیابی سے محفوظ کر لیا گیا۔",
+                        "pa": "ਰਿਕਾਰਡ ਸੇਵ ਹੋ ਗਿਆ ਹੈ।",
+                        "or": "ରେକର୍ଡ ସଫଳତାର ସହ ସେଭ ହୋଇଛି।",
+                        "as": "ৰেকৰ্ড সফলভাৱে সংৰক্ষণ কৰা হ'ল।"
+                    }
+                    ack_save = ack_translations.get(active_lang, "Record successfully saved to field register.")
+                    save_tts = await tts_adapter.synthesize(ack_save, language=active_lang)
 
                     await send_event(
                         "visit_saved",
@@ -242,6 +333,7 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                             "simulated_ambulance": saved_result.get("simulated_ambulance"),
                             "audio_base64": save_tts.audio_base64,
                             "confirmation_text": ack_save,
+                            "language": active_lang,
                         },
                     )
 

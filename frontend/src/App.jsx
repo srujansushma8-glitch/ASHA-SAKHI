@@ -16,6 +16,8 @@ import IncentivesReportScreen from './screens/IncentivesReportScreen';
 import LandingPage from './components/landing/LandingPage';
 import AuthModal from './components/auth/AuthModal';
 import CommandPalette from './components/CommandPalette';
+import LanguageSelectorModal from './components/LanguageSelectorModal';
+import { isRtlLanguage } from './services/languages';
 import { api } from './services/api';
 import { voiceWs } from './services/websocket';
 
@@ -28,6 +30,7 @@ export default function App() {
   const [userRole, setUserRole] = useState('asha'); // 'asha', 'anm', 'mo'
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -42,6 +45,13 @@ export default function App() {
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState(null);
   const [initialScenarioId, setInitialScenarioId] = useState('anc_routine');
   const [globalSearch, setGlobalSearch] = useState('');
+
+  // Synchronize RTL and Language with html element
+  useEffect(() => {
+    const isRtl = isRtlLanguage(currentLanguage);
+    document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+    document.documentElement.lang = currentLanguage;
+  }, [currentLanguage]);
 
   // Synchronize Dark Mode with html element
   useEffect(() => {
@@ -142,6 +152,7 @@ export default function App() {
           onOpenAuth={() => setIsAuthModalOpen(true)}
           currentLanguage={currentLanguage}
           onLanguageChange={setCurrentLanguage}
+          onOpenLanguageSelector={() => setIsLangModalOpen(true)}
           isDarkMode={isDarkMode}
           onToggleDarkMode={toggleDarkMode}
         />
@@ -156,6 +167,7 @@ export default function App() {
             isRecording={activeScreen === 'record'}
             currentLanguage={currentLanguage}
             onLanguageChange={setCurrentLanguage}
+            onOpenLanguageSelector={() => setIsLangModalOpen(true)}
             onViewLanding={() => handleSetViewMode('landing')}
             isDarkMode={isDarkMode}
             onToggleDarkMode={toggleDarkMode}
@@ -170,6 +182,7 @@ export default function App() {
               <Navbar
                 currentLanguage={currentLanguage}
                 onLanguageChange={setCurrentLanguage}
+                onOpenLanguageSelector={() => setIsLangModalOpen(true)}
                 activeScreen={activeScreen}
                 setActiveScreen={setActiveScreen}
                 emergencyCount={emergencyAlerts.length}
@@ -190,6 +203,7 @@ export default function App() {
               }}
               currentLanguage={currentLanguage}
               onLanguageChange={setCurrentLanguage}
+              onOpenLanguageSelector={() => setIsLangModalOpen(true)}
               onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
               onViewLanding={() => handleSetViewMode('landing')}
               isDarkMode={isDarkMode}
@@ -236,6 +250,8 @@ export default function App() {
               {activeScreen === 'record' && (
                 <VoiceRecordingScreen
                   initialScenarioId={initialScenarioId}
+                  currentLanguage={currentLanguage}
+                  onOpenLanguageSelector={() => setIsLangModalOpen(true)}
                   onRecordExtracted={handleRecordExtracted}
                   onDangerAlert={handleDangerAlertReceived}
                   onBack={() => setActiveScreen('home')}
@@ -311,7 +327,16 @@ export default function App() {
         isDarkMode={isDarkMode}
         onLanguageChange={setCurrentLanguage}
         currentLanguage={currentLanguage}
+        onOpenLanguageSelector={() => setIsLangModalOpen(true)}
         onViewLanding={() => handleSetViewMode('landing')}
+      />
+
+      {/* 22 Indic Languages Selector Modal */}
+      <LanguageSelectorModal
+        isOpen={isLangModalOpen}
+        onClose={() => setIsLangModalOpen(false)}
+        currentLanguage={currentLanguage}
+        onSelectLanguage={setCurrentLanguage}
       />
 
       {/* OTP Authentication & Role Selection Modal */}

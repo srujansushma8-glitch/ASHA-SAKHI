@@ -1,3 +1,4 @@
+import { getLanguageByCode } from '../../services/languages';
 import React, { useState } from 'react';
 import { 
   HeartPulse, 
@@ -34,6 +35,7 @@ export default function LandingPage({
   onOpenAuth, 
   currentLanguage = 'en', 
   onLanguageChange,
+  onOpenLanguageSelector,
   isDarkMode = false,
   onToggleDarkMode
 }) {
@@ -93,24 +95,34 @@ export default function LandingPage({
           {/* Right Action Controls: Lang Switcher, Dark Mode, CTAs */}
           <div className="flex items-center space-x-3">
             {/* Language Selector Dropdown */}
-            <div className="flex bg-white dark:bg-navy-900 p-1 rounded-xl border border-navy-200/70 dark:border-navy-700 shadow-sm text-xs">
-              {[
-                { code: 'en', label: 'English' },
-                { code: 'hi', label: 'हिन्दी' },
-                { code: 'kn', label: 'ಕನ್ನಡ' },
-              ].map(lang => (
+            <div className="flex items-center space-x-1 bg-white dark:bg-navy-900 p-1 rounded-xl border border-navy-200/70 dark:border-navy-700 shadow-sm text-xs">
+              {onOpenLanguageSelector && (
                 <button
-                  key={lang.code}
-                  onClick={() => onLanguageChange(lang.code)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                    currentLanguage === lang.code
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-navy-600 dark:text-navy-300 hover:text-navy-900'
-                  }`}
+                  onClick={onOpenLanguageSelector}
+                  className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-softblue dark:bg-navy-800 text-primary dark:text-cyan hover:bg-cream-100 font-bold border border-primary/20 transition-all"
+                  title="All 22 Scheduled Indian Languages"
                 >
-                  {lang.label}
+                  <Globe className="w-3.5 h-3.5 text-primary" />
+                  <span>{getLanguageByCode(currentLanguage).name_native}</span>
+                  <span className="text-[10px] bg-primary/10 text-primary px-1 rounded font-mono font-bold">22</span>
                 </button>
-              ))}
+              )}
+              {['en', 'hi', 'kn'].map(code => {
+                const l = getLanguageByCode(code);
+                return (
+                  <button
+                    key={code}
+                    onClick={() => onLanguageChange(code)}
+                    className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                      currentLanguage === code
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-navy-600 dark:text-navy-300 hover:text-navy-900'
+                    }`}
+                  >
+                    {code === 'en' ? 'EN' : l.name_native}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Dark Mode Toggle */}
