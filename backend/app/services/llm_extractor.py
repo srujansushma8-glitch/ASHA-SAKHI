@@ -224,6 +224,68 @@ class DeterministicExtractor:
 
         return "; ".join(notes) if notes else None
 
+    def extract_pregnancy_status(self, text: str, v_type: str) -> Optional[str]:
+        """Classifies pregnancy status from text and visit context."""
+        lower = text.lower()
+        if "anc" in lower or "ಗರ್ಭಿಣಿ" in text or "antenatal" in lower or v_type == "ANC checkup":
+            return "Pregnant"
+        if "pnc" in lower or "ಬಾಣಂತಿ" in text or "postnatal" in lower or v_type == "PNC visit":
+            return "Postpartum"
+        if "newborn" in lower or "ನವಜಾತ" in text or "ಶಿಶು" in text or "baby of" in lower or v_type == "Newborn home visit":
+            return "Infant"
+        return "Unknown"
+
+    def extract_gestational_age(self, text: str) -> Optional[str]:
+        """Extracts gestational age or infant age milestone."""
+        clean = self._convert_kannada_digits(text)
+        m = re.search(r"\b(ಮೂರನೇ ತಿಂಗಳು|ನಾಲ್ಕನೇ ತಿಂಗಳು|ಐದನೇ ತಿಂಗಳು|ಆರನೇ ತಿಂಗಳು|ಏಳನೇ ತಿಂಗಳು|ಎಂಟನೇ ತಿಂಗಳು|ಒಂಬತ್ತನೇ ತಿಂಗಳು)\b", text)
+        if m:
+            return m.group(1)
+        m2 = re.search(r"\b(\d+)\s*(?:weeks?|months?|days?|ತಿಂಗಳು|ವಾರ|ದಿನ)\b", clean, re.IGNORECASE)
+        if m2:
+            return m2.group(0)
+        m3 = re.search(r"\b(day\s*\d+|1st trimester|2nd trimester|3rd trimester)\b", clean, re.IGNORECASE)
+        if m3:
+            return m3.group(0)
+        return None
+
+    def extract_symptoms(self, text: str):
+        """Extracts clinically documented maternal and neonatal symptoms and duration."""
+        lower = text.lower()
+        symptoms = []
+        if "bleeding" in lower or "ರಕ್ತಸ್ರಾವ" in text:
+            symptoms.append("Vaginal bleeding")
+        if "fever" in lower or "ಜ್ವರ" in text or "jwara" in lower:
+            symptoms.append("Fever")
+        if "headache" in lower or "ತಲೆನೋವು" in text:
+            symptoms.append("Severe headache")
+        if "vomiting" in lower or "ವಾಂತಿ" in text:
+            symptoms.append("Vomiting")
+        if "swelling" in lower or "ಊತ" in text or "edema" in lower:
+            symptoms.append("Edema / swelling")
+        if "pain" in lower or "ಹೊಟ್ಟೆನೋವು" in text:
+            symptoms.append("Abdominal pain")
+        if "ಹಾಲು ಕುಡಿಯುತ್ತಿಲ್ಲ" in text or "unable to suckle" in lower or "not feeding" in lower:
+            symptoms.append("Poor feeding / unable to suckle")
+
+        dur_match = re.search(r"(\d+)\s*(?:days?|weeks?|ದಿನ|ವಾರ)\b", self._convert_kannada_digits(text), re.IGNORECASE)
+        dur = dur_match.group(0) if dur_match else None
+        return symptoms, dur
+
+    def extract_medications(self, text: str) -> List[str]:
+        """Extracts medications distributed to beneficiary."""
+        meds = []
+        lower = text.lower()
+        if "ifa" in lower or "iron" in lower or "ಐಎಫ್ಎ" in text:
+            meds.append("IFA tablets (Iron & Folic Acid)")
+        if "calcium" in lower or "ಕ್ಯಾಲ್ಸಿಯಂ" in text:
+            meds.append("Calcium tablets")
+        if "albendazole" in lower or "ಅಲ್ಬೆಂಡಾಜೋಲ್" in text:
+            meds.append("Albendazole")
+        if "paracetamol" in lower or "ಪ್ಯಾರಸಿಟಮಾಲ್" in text:
+            meds.append("Paracetamol")
+        return meds
+
     def extract(self, transcript: str) -> StructuredVisitExtraction:
         """Performs full deterministic extraction on transcript."""
         if not transcript or not transcript.strip():
@@ -250,6 +312,16 @@ class DeterministicExtractor:
         elif weight is None and v_type in ["ANC checkup", "Newborn home visit"]:
             uncertainties.append("Weight measurement not explicitly stated.")
 
+        preg_status = self.extract_pregnancy_status(transcript, v_type)
+        gest_age = self.extract_gestational_age(transcript)
+        symptoms, dur = self.extract_symptoms(transcript)
+        meds = self.extract_medications(transcript)
+        measurements = {}
+        if weight:
+            measurements["weight_kg"] = weight
+        if "bp normal" in transcript.lower() or "ಬಿಪಿ ನಾರ್ಮಲ್" in transcript:
+            measurements["blood_pressure"] = "Normal (120/80)"
+
         return StructuredVisitExtraction(
             beneficiary_id=ben_id,
             beneficiary_name=ben_name,
@@ -262,6 +334,14 @@ class DeterministicExtractor:
             uncertainty_notes=uncertainties,
             requires_clarification=requires_clarification,
             clarification_prompt=clarification_prompt,
+            pregnancy_status=preg_status,
+            gestational_age=gest_age,
+            symptoms=symptoms,
+            symptom_duration=dur,
+            measurements=measurements,
+            medications=meds,
+            observations=notes,
+            confidence_score=0.70 if requires_clarification else 0.96,
         )
 
 

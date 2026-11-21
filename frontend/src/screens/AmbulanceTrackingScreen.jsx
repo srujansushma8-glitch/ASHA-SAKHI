@@ -259,6 +259,19 @@ export default function AmbulanceTrackingScreen({
         </div>
       </div>
 
+      {/* Prominent Mandatory Simulation Disclaimer */}
+      <div className="bg-[#FFF8F0] border-2 border-amber-400 rounded-2xl p-4 shadow-subtle flex items-start space-x-3 text-xs font-bold">
+        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <div>
+          <span className="block text-xs font-bold text-amber-900">
+            SIMULATED DEMONSTRATION ONLY — No real ambulance or 108 emergency service has been contacted.
+          </span>
+          <span className="text-[11px] font-normal text-amber-800 block mt-0.5">
+            This tracking interface visualizes mock road waypoints along the Mandya sector. Never rely on this screen for actual emergency dispatch.
+          </span>
+        </div>
+      </div>
+
       {/* Mode Disclaimer Banner */}
       {activeMode === 'DEMO_SIMULATION' ? (
         <div className="bg-[#FEF9EF] border border-[#F2B84B]/40 rounded-2xl p-4 shadow-subtle flex items-start space-x-3 text-xs">

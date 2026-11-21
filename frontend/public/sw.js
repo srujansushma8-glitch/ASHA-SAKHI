@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asha-voice-v1';
+const CACHE_NAME = 'asha-sakhi-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -27,21 +27,30 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Let API and WebSocket bypass service worker
+  // Let API and WebSocket bypass service worker completely
   if (event.request.url.includes('/api/') || event.request.url.includes('/ws/')) {
     return;
   }
   
+  // For navigation requests: network first, then cache
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // For static assets: network first, fall back to cache
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         }
-      });
-    })
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

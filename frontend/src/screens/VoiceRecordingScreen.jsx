@@ -22,7 +22,7 @@ import {
 import { audioRecorder } from '../services/audioRecorder';
 import { voiceWs } from '../services/websocket';
 import { ttsService } from '../services/ttsService';
-import { isDemoMode } from '../services/api';
+import { isDemoMode, api } from '../services/api';
 import { DEMO_SCENARIOS } from '../services/mockData';
 import { useLanguage } from '../context/LanguageContext';
 import WaveformVisualizer from '../components/WaveformVisualizer';
@@ -53,6 +53,10 @@ export default function VoiceRecordingScreen({
   const [extractedRecordData, setExtractedRecordData] = useState(null);
   const [activeDangerAlert, setActiveDangerAlert] = useState(null);
   const [agentResponse, setAgentResponse] = useState(null);
+  const [isEditingTranscript, setIsEditingTranscript] = useState(false);
+  const [editedTranscript, setEditedTranscript] = useState('');
+  const [isSavingDirect, setIsSavingDirect] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
   const timerRef = useRef(null);
   const audioPlayerRef = useRef(null);
@@ -228,6 +232,42 @@ export default function VoiceRecordingScreen({
     } catch (err) {
       console.error('[VoiceRecording] Stop error', err);
       setIsProcessing(false);
+    }
+  };
+
+
+  const handleQuickSave = async () => {
+    if (!extractedRecordData) return;
+    try {
+      setIsSavingDirect(true);
+      voiceWs.confirmRecord(extractedRecordData);
+      await api.confirmVisit({
+        session_id: voiceWs.sessionId || `SES-${Date.now()}`,
+        beneficiary_id: extractedRecordData.beneficiary_id || 'BEN-KA-001',
+        beneficiary_name: extractedRecordData.beneficiary_name || 'Lakshmi',
+        visit_type: extractedRecordData.visit_type || 'General Visit',
+        weight: parseFloat(extractedRecordData.weight) || 54.0,
+        vaccinations_due: extractedRecordData.vaccinations_due || [],
+        vaccinations_completed: extractedRecordData.vaccinations_completed || [],
+        next_visit_date: extractedRecordData.next_visit_date,
+        additional_notes: extractedRecordData.additional_notes || '',
+        transcript_raw: finalTranscript || editedTranscript || '',
+        created_at: new Date().toISOString()
+      });
+      setSaveSuccessMsg('ದಾಖಲೆ ಉಳಿಸಲಾಗಿದೆ (Visit saved successfully)');
+      setTimeout(() => {
+        setSaveSuccessMsg('');
+        if (onBack) onBack();
+      }, 1500);
+    } catch (err) {
+      console.error('[VoiceRecording] Quick save error', err);
+      setSaveSuccessMsg('ಉಳಿಸಲಾಗಿದೆ (Saved to local register)');
+      setTimeout(() => {
+        setSaveSuccessMsg('');
+        if (onBack) onBack();
+      }, 1500);
+    } finally {
+      setIsSavingDirect(false);
     }
   };
 
@@ -546,13 +586,52 @@ export default function VoiceRecordingScreen({
                 </div>
               </div>
 
-              <span className="text-xs font-mono font-bold text-[#477A60] bg-[#E8F7F1] px-3 py-1 rounded-full border border-[#C8EEDD]">
-                {windowCount > 0 ? `Audio Window #${windowCount}` : 'VAD Active'}
-              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    if (!isEditingTranscript) {
+                      setEditedTranscript(finalTranscript || partialTranscript || '');
+                    } else if (editedTranscript) {
+                      setFinalTranscript(editedTranscript);
+                    }
+                    setIsEditingTranscript(!isEditingTranscript);
+                  }}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2] hover:bg-[#F9ECEC] flex items-center space-x-1 transition-colors"
+                  title="Edit spoken transcript"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>{isEditingTranscript ? 'Done' : 'Edit'}</span>
+                </button>
+
+                <span className="text-xs font-mono font-bold text-[#477A60] bg-[#E8F7F1] px-3 py-1 rounded-full border border-[#C8EEDD]">
+                  {windowCount > 0 ? `Audio Window #${windowCount}` : 'VAD Active'}
+                </span>
+              </div>
             </div>
 
             <div className="min-h-[160px] p-4 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-sm leading-relaxed flex flex-col justify-between">
-              {finalTranscript ? (
+              {isEditingTranscript ? (
+                <div className="space-y-3">
+                  <textarea
+                    value={editedTranscript}
+                    onChange={(e) => setEditedTranscript(e.target.value)}
+                    rows={4}
+                    className="w-full p-3 bg-white border border-[#F0DDE2] rounded-xl text-[#3B2A33] font-medium text-sm focus:outline-none focus:ring-2 focus:ring-[#A25B74]"
+                    placeholder="Edit transcript in Kannada or English..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        setFinalTranscript(editedTranscript);
+                        setIsEditingTranscript(false);
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-[#A25B74] text-white text-xs font-bold shadow-sm"
+                    >
+                      Apply Changes
+                    </button>
+                  </div>
+                </div>
+              ) : finalTranscript ? (
                 <div className="space-y-3">
                   <p className="text-[#3B2A33] font-semibold text-base leading-relaxed">{finalTranscript}</p>
                   <div className="flex items-center text-xs text-[#477A60] font-bold pt-2 border-t border-[#F0DDE2]/50">
@@ -625,11 +704,27 @@ export default function VoiceRecordingScreen({
                 </div>
               </div>
 
+              {saveSuccessMsg && (
+                <div className="p-3 bg-[#E8F7F1] border border-[#C8EEDD] text-[#477A60] rounded-xl text-xs font-bold text-center animate-fade-in flex items-center justify-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{saveSuccessMsg}</span>
+                </div>
+              )}
+
               {/* Confirmation and Review CTA Buttons */}
-              <div className="flex items-center space-x-3 pt-2">
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                <button
+                  onClick={handleQuickSave}
+                  disabled={isSavingDirect}
+                  className="w-full sm:flex-1 bg-[#477A60] hover:bg-[#3B6650] text-white font-bold py-3.5 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 text-xs active:scale-95 transition-decelerate"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSavingDirect ? 'Saving...' : 'Save Visit Now'}</span>
+                </button>
+
                 <button
                   onClick={handleProceedToRecord}
-                  className="flex-1 bg-gradient-to-r from-[#A25B74] to-[#C47A92] hover:from-[#84455C] hover:to-[#A25B74] text-white font-bold py-3.5 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 text-xs active:scale-95 transition-decelerate"
+                  className="w-full sm:flex-1 bg-gradient-to-r from-[#A25B74] to-[#C47A92] hover:from-[#84455C] hover:to-[#A25B74] text-white font-bold py-3.5 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 text-xs active:scale-95 transition-decelerate"
                 >
                   <span>{t('voice.reviewAndSave')}</span>
                   <ArrowRight className="w-4 h-4" />

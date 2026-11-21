@@ -48,6 +48,32 @@ async def confirm_visit(req: VisitConfirmRequest, request: Request):
             detail="Cannot confirm record without beneficiary identification.",
         )
 
+    # Preserve rich clinical extraction details in notes
+    notes = rec.additional_notes or ""
+    clinical_extras = []
+    if rec.pregnancy_status:
+        clinical_extras.append(f"Status: {rec.pregnancy_status}")
+    if rec.gestational_age:
+        clinical_extras.append(f"Gestational: {rec.gestational_age}")
+    if rec.symptoms:
+        clinical_extras.append(f"Symptoms: {', '.join(rec.symptoms)}")
+    if rec.symptom_duration:
+        clinical_extras.append(f"Duration: {rec.symptom_duration}")
+    if rec.measurements:
+        clinical_extras.append(f"Measurements: {rec.measurements}")
+    if rec.medications:
+        clinical_extras.append(f"Medications: {', '.join(rec.medications)}")
+    if rec.observations:
+        clinical_extras.append(f"Observations: {rec.observations}")
+
+    if clinical_extras:
+        extra_str = " | ".join(clinical_extras)
+        if notes:
+            if extra_str not in notes:
+                notes = f"{notes} [{extra_str}]"
+        else:
+            notes = extra_str
+
     visit_data = VisitCreate(
         beneficiary_id=rec.beneficiary_id,
         beneficiary_name=rec.beneficiary_name,
@@ -56,7 +82,7 @@ async def confirm_visit(req: VisitConfirmRequest, request: Request):
         vaccinations_due=rec.vaccinations_due,
         vaccinations_completed=rec.vaccinations_completed,
         next_visit_date=rec.next_visit_date,
-        additional_notes=rec.additional_notes,
+        additional_notes=notes,
         transcript_raw=req.transcript_raw,
         is_confirmed=True,
         danger_flag=req.danger_flag,

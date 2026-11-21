@@ -268,9 +268,12 @@ export default function EmergencyAlertScreen({
             </div>
 
             {/* Simulation Disclaimer Banner */}
-            <div className="bg-[#FFF8F0] border border-[#FFE6CC] rounded-2xl p-3 text-[11px] text-[#8C5200] leading-relaxed flex items-start space-x-2 font-medium">
-              <span className="font-bold shrink-0">⚠️ Demonstration Notice:</span>
-              <span>Architectural prototype demonstration. No actual 108 emergency vehicle is contacted or dispatched.</span>
+            <div className="bg-[#FFF8F0] border-2 border-amber-400 rounded-2xl p-3.5 text-xs text-[#8C5200] leading-relaxed flex items-start space-x-2.5 font-bold shadow-sm">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="block text-xs font-bold text-amber-900">SIMULATED DEMONSTRATION ONLY — No real ambulance or 108 emergency service has been contacted.</span>
+                <span className="text-[11px] font-normal text-amber-800 block mt-0.5">Simulates triage escalation, priority PHC/FRU routing, and 108 emergency dispatch telemetry for healthcare demonstration.</span>
+              </div>
             </div>
 
             {/* Stepper Status Progression */}

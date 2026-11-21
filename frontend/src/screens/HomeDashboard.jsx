@@ -45,10 +45,11 @@ export default function HomeDashboard({
   const { t, currentLanguage, formatDate, formatNumber } = useLanguage();
 
   const [stats, setStats] = useState({
-    totalBeneficiaries: 48,
-    todayVisits: 6,
-    pendingFollowups: 5,
-    emergencyReferrals: 2
+    totalBeneficiaries: 0,
+    todayVisits: 0,
+    pendingFollowups: 0,
+    emergencyReferrals: 0,
+    pendingSync: 0
   });
   const [recentVisits, setRecentVisits] = useState([]);
   const [todayFollowups, setTodayFollowups] = useState([]);
@@ -81,6 +82,13 @@ export default function HomeDashboard({
 
   useEffect(() => {
     loadDashboardData();
+
+    const handleSyncUpdate = (e) => {
+      const count = e?.detail?.count ?? 0;
+      setStats(prev => ({ ...prev, pendingSync: count }));
+    };
+    window.addEventListener('asha_sync_updated', handleSyncUpdate);
+    return () => window.removeEventListener('asha_sync_updated', handleSyncUpdate);
   }, []);
 
   const loadDashboardData = async () => {
@@ -99,11 +107,13 @@ export default function HomeDashboard({
       const todayVisitsCount = visits.filter(v => (v.created_at || '').startsWith(todayStr)).length;
       const pendingCount = followups.filter(f => f.status === 'pending' || f.due_date <= todayStr).length;
 
+      const queue = api.getPendingSyncQueue ? api.getPendingSyncQueue() : [];
       setStats({
-        totalBeneficiaries: beneficiaries.length > 0 ? beneficiaries.length : 48,
-        todayVisits: todayVisitsCount > 0 ? todayVisitsCount : 6,
-        pendingFollowups: pendingCount > 0 ? pendingCount : 5,
-        emergencyReferrals: emergencyAlerts.length > 0 ? emergencyAlerts.length : 2
+        totalBeneficiaries: beneficiaries ? beneficiaries.length : 0,
+        todayVisits: todayVisitsCount,
+        pendingFollowups: pendingCount,
+        emergencyReferrals: emergencyAlerts ? emergencyAlerts.length : 0,
+        pendingSync: queue.length
       });
 
       setRecentVisits(visits.slice(0, 5));
@@ -178,6 +188,20 @@ export default function HomeDashboard({
           <span className="flex items-center bg-[#FDF6F5] px-3.5 py-2.5 rounded-xl border border-[#F0DDE2]">
             <MapPin className="w-4 h-4 mr-1.5 text-[#A25B74]" />
             <span>{t("common.mandyaSector")}</span>
+          </span>
+
+          <span className="flex items-center bg-[#FDF6F5] px-3.5 py-2.5 rounded-xl border border-[#F0DDE2]">
+            {stats.pendingSync > 0 ? (
+              <span className="flex items-center text-[#B94A58] font-bold">
+                <Clock className="w-4 h-4 mr-1.5 text-[#B94A58] animate-pulse" />
+                <span>{stats.pendingSync} Pending Sync</span>
+              </span>
+            ) : (
+              <span className="flex items-center text-[#477A60] font-bold">
+                <CheckCircle2 className="w-4 h-4 mr-1.5 text-[#477A60]" />
+                <span>PHC Sync: Active</span>
+              </span>
+            )}
           </span>
         </div>
       </div>

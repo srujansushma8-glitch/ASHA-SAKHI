@@ -121,7 +121,7 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                 elif event == "audio_chunk":
                     if not current_session:
                         current_session = session_manager.get_or_create_session(session_id)
-                    b64_str = data.get("audio_base64", "")
+                    b64_str = data.get("audio_base64") or payload.get("audio_data") or payload.get("audio_base64") or ""
                     if b64_str:
                         chunk_bytes = base64.b64decode(b64_str)
                         current_session.audio_buffer.extend(chunk_bytes)
@@ -265,8 +265,8 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                         await send_event("error", {"message": "No active session found."})
                         continue
 
-                    field = data.get("field_name")
-                    val = data.get("new_value")
+                    field = data.get("field_name") or payload.get("field_name")
+                    val = data.get("new_value") if "new_value" in data else payload.get("new_value")
                     active_lang = current_session.language or "kn"
                     success, ack_msg = current_session.apply_correction(field, val, language=active_lang)
 

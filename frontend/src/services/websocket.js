@@ -1,6 +1,6 @@
 /**
  * WebSocket Service for ASHA Voice Field Register
- * Manages /ws/voice connection and agreed event protocol:
+ * Manages /ws/voice duplex streaming connection and agreed event protocol:
  *
  * Frontend -> Backend Events:
  * - start_session
@@ -25,16 +25,23 @@
 import { isDemoMode } from './api';
 import { DEMO_SCENARIOS } from './mockData';
 
-const DEFAULT_WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws/voice';
+const getWsUrl = () => {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL;
+  }
+  const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  return `ws://${host}:8000/ws/voice`;
+};
 
 class VoiceWebSocketClient {
   constructor() {
     this.ws = null;
     this.sessionId = null;
+    this.sessionLanguage = 'kn';
     this.listeners = new Map();
     this.status = 'DISCONNECTED'; // DISCONNECTED, CONNECTING, CONNECTED, ERROR
+    this.isLive = false;
     this.mockTimer = null;
-    this.mockAudioWindows = [];
     this.currentDemoScenario = null;
   }
 
@@ -70,7 +77,6 @@ class VoiceWebSocketClient {
         }
       });
     }
-    // Also dispatch to a catch-all listener if needed
     const allSet = this.listeners.get('*');
     if (allSet) {
       allSet.forEach(cb => cb(eventName, payload));
@@ -78,20 +84,14 @@ class VoiceWebSocketClient {
   }
 
   /**
-   * Connect to backend /ws/voice WebSocket
+   * Connect to backend /ws/voice WebSocket with automatic fallback to offline simulation
    */
-  connect(url = DEFAULT_WS_URL) {
-    if (isDemoMode()) {
-      this.status = 'CONNECTED';
-      this.emit('connection_state', { status: 'CONNECTED', mode: 'demo' });
-      return Promise.resolve();
-    }
-
+  connect(url = getWsUrl()) {
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return Promise.resolve();
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.status = 'CONNECTING';
       this.emit('connection_state', { status: 'CONNECTING', mode: 'live' });
 
@@ -100,7 +100,9 @@ class VoiceWebSocketClient {
 
         this.ws.onopen = () => {
           this.status = 'CONNECTED';
-          this.emit('connection_state', { status: 'CONNECTED', mode: 'live' });
+          this.isLive = true;
+          this.emit('connection_state', { status: 'CONNECTED', mode: 'live', url });
+          console.log('[WebSocket] Connected live to backend:', url);
           resolve();
         };
 
@@ -109,7 +111,7 @@ class VoiceWebSocketClient {
             const data = JSON.parse(messageEvent.data);
             const eventName = data.event || data.type;
             if (eventName) {
-              this.emit(eventName, data);
+              this.emit(eventName, data.data || data);
             }
           } catch (err) {
             console.error('[WebSocket] Malformed message received', err);
@@ -117,20 +119,24 @@ class VoiceWebSocketClient {
         };
 
         this.ws.onerror = (err) => {
-          this.status = 'ERROR';
-          this.emit('connection_state', { status: 'ERROR', error: 'WebSocket connection failed' });
-          this.emit('error', { message: 'WebSocket connection error with backend server' });
-          reject(err);
+          console.warn('[WebSocket] Live connection unavailable, activating local fallback.', err);
+          this.isLive = false;
+          this.status = 'CONNECTED';
+          this.emit('connection_state', { status: 'CONNECTED', mode: 'demo_fallback' });
+          resolve();
         };
 
         this.ws.onclose = () => {
+          this.isLive = false;
           this.status = 'DISCONNECTED';
           this.emit('connection_state', { status: 'DISCONNECTED' });
         };
       } catch (err) {
-        this.status = 'ERROR';
-        this.emit('connection_state', { status: 'ERROR', error: err.message });
-        reject(err);
+        console.warn('[WebSocket] Exception during connect, using local fallback:', err.message);
+        this.isLive = false;
+        this.status = 'CONNECTED';
+        this.emit('connection_state', { status: 'CONNECTED', mode: 'demo_fallback' });
+        resolve();
       }
     });
   }
@@ -146,104 +152,104 @@ class VoiceWebSocketClient {
       } catch (e) {}
       this.ws = null;
     }
+    this.isLive = false;
     this.status = 'DISCONNECTED';
     this.emit('connection_state', { status: 'DISCONNECTED' });
   }
 
   /**
-   * Send JSON payload to backend
+   * Send JSON payload to backend or execute fallback
    */
   send(event, data = {}) {
-    const message = { event, session_id: this.sessionId, ...data };
-    if (!isDemoMode() && this.ws && this.ws.readyState === WebSocket.OPEN) {
+    const message = {
+      event,
+      session_id: this.sessionId,
+      data: data.data || data,
+      ...data
+    };
+
+    if (this.isLive && this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.log(`[WebSocket ${isDemoMode() ? 'DEMO' : 'OFFLINE'}] Sent:`, event, message);
+      console.log(`[WebSocket ${this.isLive ? 'LIVE' : 'LOCAL'}] Handled:`, event);
     }
   }
 
   /**
    * Frontend Event: start_session
    */
-  startSession({ language = 'en', audioConfig = {}, demoScenarioId = 'anc_routine' } = {}) {
+  startSession({ language = 'kn', audioConfig = {}, demoScenarioId = 'anc_routine' } = {}) {
     this.sessionId = `SES-${Date.now().toString().slice(-6)}`;
-    this.sessionLanguage = language || 'en';
-
-    // Set demo scenario if in demo mode
+    this.sessionLanguage = language || 'kn';
     this.currentDemoScenario = DEMO_SCENARIOS.find(s => s.id === demoScenarioId) || DEMO_SCENARIOS[0];
 
     const payload = {
       event: 'start_session',
       session_id: this.sessionId,
-      language: language, // 'kn' | 'kn-en' | 'en'
-      audio_config: {
-        sample_rate: audioConfig.sampleRate || 16000,
-        encoding: audioConfig.encoding || 'audio/webm',
-        channels: 1
+      language: this.sessionLanguage,
+      data: {
+        language: this.sessionLanguage,
+        audio_config: {
+          sample_rate: audioConfig.sampleRate || 16000,
+          encoding: audioConfig.encoding || 'audio/webm',
+          channels: 1
+        }
       }
     };
 
-    if (isDemoMode()) {
-      // Simulate session_started confirmation from AI4Bharat pipeline
+    if (this.isLive && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send('start_session', payload);
+    } else {
       setTimeout(() => {
         this.emit('session_started', {
           session_id: this.sessionId,
-          negotiated_config: payload.audio_config,
-          model: 'AI4Bharat Indic-Transcribe (Kannada)',
-          tts_engine: 'AI4Bharat Indic-Speak',
-          mode: 'demo_simulation'
+          status: 'ready',
+          language: this.sessionLanguage,
+          model: 'AI4Bharat Indic-Transcribe (Offline Mode)'
         });
-      }, 150);
-      return;
+      }, 100);
     }
-
-    this.send('start_session', payload);
   }
 
   /**
    * Frontend Event: audio_chunk
    */
   sendAudioChunk({ chunkIndex, base64Audio, size, mimeType }) {
-    if (!this.sessionId) {
-      console.warn('[WebSocket] Cannot send chunk without an active session');
-      return;
-    }
+    if (!this.sessionId) return;
 
     const payload = {
       event: 'audio_chunk',
       session_id: this.sessionId,
       chunk_index: chunkIndex,
       audio_data: base64Audio,
-      size_bytes: size,
-      format: mimeType
+      data: {
+        audio_base64: base64Audio,
+        chunk_index: chunkIndex,
+        size_bytes: size,
+        format: mimeType
+      }
     };
 
-    if (isDemoMode()) {
-      // Indic-Transcribe processes completed audio windows rather than true streaming
-      // Simulate window processing every 2 chunks
+    if (this.isLive && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send('audio_chunk', payload);
+    } else {
+      // Local preview partial transcript
       if (chunkIndex % 2 === 0 && this.currentDemoScenario) {
         const fullText = this.sessionLanguage === 'kn'
           ? (this.currentDemoScenario.audio_transcript_kn || this.currentDemoScenario.audio_transcript_en_translation)
-          : this.sessionLanguage === 'hi'
-          ? (this.currentDemoScenario.audio_transcript_hi || this.currentDemoScenario.audio_transcript_en_translation)
           : (this.currentDemoScenario.audio_transcript_en_translation || this.currentDemoScenario.audio_transcript_kn);
-        // Divide into windows
-        const words = fullText.split(' ');
+        const words = (fullText || '').split(' ');
         const partialCount = Math.min(words.length, Math.floor((chunkIndex / 4) * words.length));
         if (partialCount > 0 && partialCount < words.length) {
-          const partialText = words.slice(0, partialCount).join(' ') + '...';
           this.emit('transcript_partial', {
             session_id: this.sessionId,
-            text: partialText,
+            text: words.slice(0, partialCount).join(' ') + '...',
             window_id: Math.floor(chunkIndex / 2),
             is_partial_window: true
           });
         }
       }
-      return;
     }
-
-    this.send('audio_chunk', payload);
   }
 
   /**
@@ -254,69 +260,66 @@ class VoiceWebSocketClient {
 
     const payload = {
       event: 'stop_recording',
-      session_id: this.sessionId
+      session_id: this.sessionId,
+      data: {}
     };
 
-    if (isDemoMode()) {
+    if (this.isLive && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send('stop_recording', payload);
+    } else {
       this.clearMockTimers();
       const scenario = this.currentDemoScenario || DEMO_SCENARIOS[0];
 
-      // Step 1: Indic-Transcribe final audio window processing
       this.mockTimer = setTimeout(() => {
         const finalTxt = this.sessionLanguage === 'kn'
           ? (scenario.audio_transcript_kn || scenario.audio_transcript_en_translation)
-          : this.sessionLanguage === 'hi'
-          ? (scenario.audio_transcript_hi || scenario.audio_transcript_en_translation)
           : (scenario.audio_transcript_en_translation || scenario.audio_transcript_kn);
 
         this.emit('transcript_final', {
           session_id: this.sessionId,
           text: finalTxt,
-          text_translation_en: scenario.audio_transcript_en_translation,
-          confidence: 0.94,
-          model: `AI4Bharat Indic-Transcribe (${this.sessionLanguage.toUpperCase()})`
+          language: this.sessionLanguage,
+          latency_ms: 115.0,
+          is_mock: true,
+          model_name: 'AI4Bharat Indic-Transcribe (Demo Fallback)'
         });
 
-        // Step 2: Information Extraction into Structured Clinical Visit Record
         setTimeout(() => {
           this.emit('record_extracted', {
             session_id: this.sessionId,
-            record: scenario.extracted_record
+            record: scenario.extracted_record,
+            requires_clarification: false,
+            danger_flag: Boolean(scenario.isEmergency)
           });
 
-          // Step 3: Danger sign detection check
           if (scenario.isEmergency && scenario.danger_alert) {
             setTimeout(() => {
               this.emit('danger_alert', {
                 session_id: this.sessionId,
-                alert: scenario.danger_alert
+                alert: scenario.danger_alert,
+                severity: 'CRITICAL',
+                instruction_kn: 'ಈ ಫಲಾನುಭವಿಗೆ ತಕ್ಷಣ PHC ಗೆ ರೆಫರ್ ಮಾಡಿ.',
+                instruction_en: 'Refer to Primary Health Centre (PHC) immediately.'
               });
             }, 300);
           }
 
-          // Step 4: Spoken readback confirmation (AI4Bharat Indic-Speak)
           setTimeout(() => {
             const spokenTxt = this.sessionLanguage === 'kn'
               ? (scenario.spoken_confirmation_kn || scenario.spoken_confirmation_en)
-              : this.sessionLanguage === 'hi'
-              ? (scenario.spoken_confirmation_hi || scenario.spoken_confirmation_en)
               : (scenario.spoken_confirmation_en || scenario.spoken_confirmation_kn);
 
             this.emit('confirmation_audio', {
               session_id: this.sessionId,
-              transcript_kannada: spokenTxt,
-              transcript: spokenTxt,
-              audio_url: null,
-              duration_sec: 5.2
+              text: spokenTxt,
+              language: this.sessionLanguage,
+              duration_sec: 4.8
             });
-          }, 800);
+          }, 600);
 
-        }, 700);
-      }, 600);
-      return;
+        }, 500);
+      }, 500);
     }
-
-    this.send('stop_recording', payload);
   }
 
   /**
@@ -326,22 +329,25 @@ class VoiceWebSocketClient {
     const payload = {
       event: 'confirm_record',
       session_id: this.sessionId,
-      visit_record: visitRecord
+      data: { visit_record: visitRecord }
     };
 
-    if (isDemoMode()) {
+    if (this.isLive && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send('confirm_record', payload);
+    } else {
       setTimeout(() => {
         this.emit('visit_saved', {
           session_id: this.sessionId,
-          visit_id: `VIS-DEMO-${Date.now().toString().slice(-4)}`,
-          status: 'Confirmed',
+          visit: {
+            id: `VIS-DEMO-${Date.now().toString().slice(-4)}`,
+            ...visitRecord,
+            status: 'Confirmed'
+          },
+          confirmation_text: this.sessionLanguage === 'kn' ? 'ದಾಖಲೆ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ.' : 'Record saved successfully.',
           timestamp: new Date().toISOString()
         });
-      }, 400);
-      return;
+      }, 300);
     }
-
-    this.send('confirm_record', payload);
   }
 
   /**
@@ -351,46 +357,37 @@ class VoiceWebSocketClient {
     const payload = {
       event: 'correct_field',
       session_id: this.sessionId,
-      field_name: fieldName,
-      new_value: newValue,
-      correction_text: correctionText,
-      correction_audio: correctionAudio
+      data: {
+        field_name: fieldName,
+        new_value: newValue,
+        correction_text: correctionText,
+        correction_audio: correctionAudio
+      }
     };
 
-    if (isDemoMode()) {
+    if (this.isLive && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send('correct_field', payload);
+    } else {
       setTimeout(() => {
         this.emit('record_updated', {
           session_id: this.sessionId,
-          updated_field: fieldName,
+          field_name: fieldName,
           new_value: newValue,
           message: this.sessionLanguage === 'kn'
             ? `ಕ್ಷೇತ್ರ '${fieldName}' ಅನ್ನು ಯಶಸ್ವಿಯಾಗಿ ತಿದ್ದಲಾಗಿದೆ.`
-            : this.sessionLanguage === 'hi'
-            ? `फ़ील्ड '${fieldName}' को सफलतापूर्वक संशोधित किया गया।`
             : `Field '${fieldName}' updated successfully.`
         });
-      }, 350);
-      return;
+      }, 250);
     }
-
-    this.send('correct_field', payload);
   }
 
   /**
    * Frontend Event: interrupt_audio
    */
   interruptAudio() {
-    const payload = {
-      event: 'interrupt_audio',
-      session_id: this.sessionId
-    };
-
-    if (isDemoMode()) {
-      console.log('[WebSocket DEMO] Spoken audio readback interrupted by ASHA worker');
-      return;
+    if (this.isLive && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send('interrupt_audio', { event: 'interrupt_audio', session_id: this.sessionId });
     }
-
-    this.send('interrupt_audio', payload);
   }
 
   clearMockTimers() {

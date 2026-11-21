@@ -381,7 +381,15 @@ export const api = {
       vaccinations_due: Array.isArray(rawRecord.vaccinations_due) ? rawRecord.vaccinations_due : (rawRecord.vaccinations_due ? [rawRecord.vaccinations_due] : []),
       vaccinations_completed: Array.isArray(rawRecord.vaccinations_completed) ? rawRecord.vaccinations_completed : (rawRecord.vaccinations_completed ? [rawRecord.vaccinations_completed] : []),
       next_visit_date: rawRecord.next_visit_date || null,
-      additional_notes: rawRecord.additional_notes || ''
+      additional_notes: rawRecord.additional_notes || '',
+      pregnancy_status: rawRecord.pregnancy_status || null,
+      gestational_age: rawRecord.gestational_age || null,
+      symptoms: Array.isArray(rawRecord.symptoms) ? rawRecord.symptoms : (rawRecord.symptoms ? [rawRecord.symptoms] : []),
+      symptom_duration: rawRecord.symptom_duration || null,
+      measurements: typeof rawRecord.measurements === 'object' && rawRecord.measurements !== null ? rawRecord.measurements : (rawRecord.measurements ? { note: String(rawRecord.measurements) } : {}),
+      medications: Array.isArray(rawRecord.medications) ? rawRecord.medications : (rawRecord.medications ? [rawRecord.medications] : []),
+      observations: rawRecord.observations || null,
+      confidence_score: typeof rawRecord.confidence_score === 'number' ? rawRecord.confidence_score : 0.95
     };
 
     const payload = {
@@ -594,49 +602,52 @@ export const api = {
 
     let syncedCount = 0;
 
-    if (!isDemoMode()) {
-      try {
-        const res = await fetchWithTimeout(`${BASE_URL}/api/sync/batch`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            asha_worker_id: 'ASHA-KA-MANDYA-04',
-            device_id: 'ANDROID-FIELD-01',
-            sync_timestamp: new Date().toISOString(),
-            visits: batchVisits,
-            pending_followups: []
-          })
-        }, 6000);
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/api/sync/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          asha_worker_id: 'ASHA-KA-MANDYA-04',
+          device_id: 'ANDROID-FIELD-01',
+          sync_timestamp: new Date().toISOString(),
+          visits: batchVisits,
+          pending_followups: []
+        })
+      }, 7000);
 
-        if (res.ok) {
-          const syncResponse = await res.json();
-          syncedCount = syncResponse.synced_visits_count || batchVisits.length;
-        }
-      } catch (err) {
-        console.warn('[API Sync] Batch endpoint failed, trying single-item confirmations', err);
+      if (res.ok) {
+        const syncResponse = await res.json();
+        syncedCount = syncResponse.synced_visits_count || batchVisits.length;
+      } else {
+        console.warn('[API Sync] Batch sync rejected by server with status:', res.status);
+        return { syncedCount: 0, remaining: queue.length, reason: `HTTP_${res.status}` };
       }
+    } catch (err) {
+      console.warn('[API Sync] Batch sync network request failed:', err);
+      return { syncedCount: 0, remaining: queue.length, reason: 'network_failure' };
     }
 
-    if (syncedCount === 0) {
-      syncedCount = batchVisits.length;
+    if (syncedCount > 0) {
+      // Mark synced visits confirmed locally
+      const visits = JSON.parse(localStorage.getItem(STORAGE_KEYS.VISITS) || '[]');
+      const syncedIds = new Set(queue.slice(0, syncedCount).map(q => q.client_submission_id));
+      const updatedVisits = visits.map(v => 
+        syncedIds.has(v.client_submission_id) ? { ...v, status: 'Confirmed', synced_at: new Date().toISOString() } : v
+      );
+      localStorage.setItem(STORAGE_KEYS.VISITS, JSON.stringify(updatedVisits));
+
+      // Remove synced visits from queue
+      const remainingQueue = queue.slice(syncedCount);
+      localStorage.setItem(STORAGE_KEYS.PENDING_SYNC_QUEUE, JSON.stringify(remainingQueue));
+      window.dispatchEvent(new CustomEvent('asha_sync_updated', { detail: { count: remainingQueue.length } }));
+
+      return {
+        syncedCount: syncedCount,
+        remaining: remainingQueue.length
+      };
     }
 
-    // Mark visits confirmed locally
-    const visits = JSON.parse(localStorage.getItem(STORAGE_KEYS.VISITS) || '[]');
-    const syncedIds = new Set(queue.map(q => q.client_submission_id));
-    const updatedVisits = visits.map(v => 
-      syncedIds.has(v.client_submission_id) ? { ...v, status: 'Confirmed', synced_at: new Date().toISOString() } : v
-    );
-    localStorage.setItem(STORAGE_KEYS.VISITS, JSON.stringify(updatedVisits));
-
-    // Clear queue
-    localStorage.setItem(STORAGE_KEYS.PENDING_SYNC_QUEUE, JSON.stringify([]));
-    window.dispatchEvent(new CustomEvent('asha_sync_updated', { detail: { count: 0 } }));
-
-    return {
-      syncedCount: syncedCount,
-      remaining: 0
-    };
+    return { syncedCount: 0, remaining: queue.length };
   },
 
   /**
@@ -1124,3 +1135,11 @@ export const api = {
     }
   }
 };
+
+// Auto-synchronize pending records on network recovery
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    console.log('[PWA Network] Device reconnected. Auto-synchronizing offline records...');
+    api.syncPendingVisits().catch(err => console.warn('[Auto-Sync] Retry scheduled', err));
+  });
+}

@@ -412,8 +412,10 @@ class DangerSignDetector:
                 has_historical_sign = True
 
         if not active_detected_signs:
+            classification = "Needs assessment" if (has_negated_sign or has_historical_sign) else "Routine"
             return DangerAlertDetectionResult(
                 has_danger=False,
+                clinical_classification=classification,
                 is_negated=has_negated_sign,
                 is_historical=has_historical_sign,
                 referral_action="NONE",
@@ -421,6 +423,7 @@ class DangerSignDetector:
 
         severities = [s.severity for s in active_detected_signs]
         highest_sev = "CRITICAL" if "CRITICAL" in severities else "HIGH"
+        classification = "Emergency" if highest_sev == "CRITICAL" else "High risk"
 
         logger.warning(
             f"DANGER SIGN DETECTED: {[s.sign_id for s in active_detected_signs]} in utterance: '{transcript}'"
@@ -449,6 +452,7 @@ class DangerSignDetector:
             detected_signs=active_detected_signs,
             detected_phrases=matched_phrases,
             highest_severity=highest_sev,
+            clinical_classification=classification,
             referral_action="IMMEDIATE_REFERRAL_PHC",
             spoken_instruction_kn="ಈ ಫಲಾನುಭವಿಗೆ ತಕ್ಷಣ PHC ಗೆ ರೆಫರ್ ಮಾಡಿ.",
             spoken_instruction_en="Refer to Primary Health Centre (PHC) immediately.",

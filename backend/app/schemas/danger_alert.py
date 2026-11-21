@@ -29,6 +29,7 @@ class DangerAlertDetectionResult(BaseModel):
     detected_signs: List[DangerSignDefinition] = Field(default_factory=list)
     detected_phrases: List[str] = Field(default_factory=list)
     highest_severity: Optional[str] = None
+    clinical_classification: str = Field(default="Routine", description="Routine, Needs assessment, High risk, Emergency")
     referral_action: str = "NONE"
     spoken_instruction_kn: str = "ಈ ಫಲಾನುಭವಿಗೆ ತಕ್ಷಣ PHC ಗೆ ರೆಫರ್ ಮಾಡಿ."
     spoken_instruction_en: str = "Refer to PHC immediately."

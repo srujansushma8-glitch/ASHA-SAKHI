@@ -3,7 +3,7 @@ Pydantic schemas for Visit records and Extraction results.
 """
 
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 
 
@@ -46,6 +46,30 @@ class StructuredVisitExtraction(BaseModel):
     )
     clarification_prompt: Optional[str] = Field(
         default=None, description="Specific question to ask ASHA worker if clarification needed"
+    )
+    pregnancy_status: Optional[str] = Field(
+        default=None, description="Maternal/neonatal status: Pregnant, Postpartum, Infant, Non-pregnant, Unknown"
+    )
+    gestational_age: Optional[str] = Field(
+        default=None, description="Gestational age or newborn day/week"
+    )
+    symptoms: List[str] = Field(
+        default_factory=list, description="Reported clinical symptoms"
+    )
+    symptom_duration: Optional[str] = Field(
+        default=None, description="Duration of symptoms e.g. 2 days"
+    )
+    measurements: Dict[str, Any] = Field(
+        default_factory=dict, description="Structured clinical measurements (weight_kg, bp, etc.)"
+    )
+    medications: List[str] = Field(
+        default_factory=list, description="Prescribed or distributed medications (IFA, Calcium, Albendazole)"
+    )
+    observations: Optional[str] = Field(
+        default=None, description="Objective health worker observations"
+    )
+    confidence_score: float = Field(
+        default=0.95, ge=0.0, le=1.0, description="Confidence score of clinical extraction"
     )
 
     @field_validator("next_visit_date")

@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#087F8C" />
-    <meta name="description" content="ASHA Sakhi - Digital Companion for Community Healthcare Workers across India. Offline data capture, voice visit logging, immunization schedules, and supervisor reporting." />
+    <meta name="theme-color" content="#A25B74" />
+    <meta name="description" content="ASHA Sakhi - AI-Powered Multilingual Voice Field Register for Community Health Workers in India. Structured clinical data capture, danger sign detection, and offline-first synchronization." />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ASHA Sakhi" />
@@ -16,37 +16,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     
-    <title>ASHA Sakhi | आशा सखी | ಆಶಾ ಸಖಿ - Empowering Community Healthcare at the Last Mile</title>
+    <title>ASHA Sakhi | ಆಶಾ ಸಖಿ | आशा सखी - Community Healthcare AI Assistant</title>
   </head>
-  <body class="bg-[#FAF9F5] text-[#142B45] antialiased selection:bg-[#19B8D5]/20 selection:text-[#142B45] min-h-screen font-sans">
+  <body class="bg-[#FAF9F5] text-[#3B2A33] antialiased min-h-screen font-sans">
     <div id="root"></div>
-
-    <script>
-      window.addEventListener('error', function(e) {
-        console.error('[GLOBAL ERROR]', e.message, e.filename, e.lineno, e.error);
-        var el = document.getElementById('root');
-        if (el) {
-          el.innerHTML = '<div style="padding:30px;color:#900;font-family:sans-serif;background:#fff0f0;border:2px solid red;margin:20px;border-radius:12px;"><h2>JavaScript Runtime Error</h2><p><b>' + e.message + '</b></p><pre style="white-space:pre-wrap;background:#fff;padding:15px;border-radius:8px;">' + (e.error ? e.error.stack : '') + '</pre></div>';
-        }
-      });
-      window.addEventListener('unhandledrejection', function(e) {
-        console.error('[UNHANDLED REJECTION]', e.reason);
-        var el = document.getElementById('root');
-        if (el) {
-          el.innerHTML = '<div style="padding:30px;color:#900;font-family:sans-serif;background:#fff0f0;border:2px solid red;margin:20px;border-radius:12px;"><h2>Unhandled Promise Rejection</h2><pre style="white-space:pre-wrap;background:#fff;padding:15px;border-radius:8px;">' + (e.reason ? (e.reason.stack || e.reason) : e) + '</pre></div>';
-        }
-      });
-    </script>
 
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Register PWA Service Worker if supported
+      // Register PWA Service Worker for offline resilience (production or standalone)
       if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(
-            (reg) => console.log('[PWA] ServiceWorker registered:', reg.scope),
-            (err) => console.warn('[PWA] ServiceWorker registration failed:', err)
-          );
+          // Avoid registering aggressive caching worker on localhost during development
+          if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            navigator.serviceWorker.register('/sw.js').then(
+              (reg) => console.log('[PWA] ServiceWorker registered:', reg.scope),
+              (err) => console.warn('[PWA] ServiceWorker registration skipped:', err)
+            );
+          }
         });
       }
     </script>
