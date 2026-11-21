@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle, 
   Edit3, 
@@ -15,7 +15,9 @@ import {
   ArrowLeft,
   X,
   Sparkles,
-  Check
+  Check,
+  BookmarkCheck,
+  WifiOff
 } from 'lucide-react';
 import { voiceWs } from '../services/websocket';
 import { api } from '../services/api';
@@ -27,16 +29,18 @@ export default function StructuredVisitRecordScreen({
   onBack, 
   onTriggerEmergency 
 }) {
+  const existingDraft = api.getDraftVisit();
+
   // Local state for extracted fields
   const [formData, setFormData] = useState({
-    beneficiary_id: record?.beneficiary_id || 'ASHA-KA-2024-0101',
-    beneficiary_name: record?.beneficiary_name || 'Lakshmamma K.',
-    visit_type: record?.visit_type || 'ANC (Antenatal Care)',
-    weight: record?.weight || '58.5',
-    vaccinations_due: record?.vaccinations_due || 'TT-2 / TD-2 Booster',
-    vaccinations_completed: record?.vaccinations_completed || 'TT-1, Albendazole',
-    next_visit_date: record?.next_visit_date || '2026-12-05',
-    additional_notes: record?.additional_notes || 'Normal fetal movement felt. IFA tablets refilled for 30 days.'
+    beneficiary_id: record?.beneficiary_id || existingDraft?.beneficiary_id || 'ASHA-KA-2024-0101',
+    beneficiary_name: record?.beneficiary_name || existingDraft?.beneficiary_name || 'Lakshmamma K.',
+    visit_type: record?.visit_type || existingDraft?.visit_type || 'ANC (Antenatal Care)',
+    weight: record?.weight || existingDraft?.weight || '58.5',
+    vaccinations_due: record?.vaccinations_due || existingDraft?.vaccinations_due || 'TT-2 / TD-2 Booster',
+    vaccinations_completed: record?.vaccinations_completed || existingDraft?.vaccinations_completed || 'TT-1, Albendazole',
+    next_visit_date: record?.next_visit_date || existingDraft?.next_visit_date || '2026-12-05',
+    additional_notes: record?.additional_notes || existingDraft?.additional_notes || 'Normal fetal movement felt. IFA tablets refilled for 30 days.'
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -48,6 +52,30 @@ export default function StructuredVisitRecordScreen({
   const [voiceCorrectionField, setVoiceCorrectionField] = useState(null);
   const [voiceCorrectionInput, setVoiceCorrectionInput] = useState('');
   const [successToast, setSuccessToast] = useState('');
+  const [hasDraftRestored, setHasDraftRestored] = useState(false);
+
+  // Auto-save draft locally on change
+  useEffect(() => {
+    if (formData.beneficiary_id) {
+      api.saveDraftVisit(formData);
+    }
+  }, [formData]);
+
+  const handleRestoreDraft = () => {
+    const draft = api.getDraftVisit();
+    if (draft) {
+      setFormData(draft);
+      setHasDraftRestored(true);
+      setSuccessToast('ಹಿಂದೆ ಉಳಿಸಿದ ಅಪೂರ್ಣ ಭೇಟಿ ಕರಡು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ (Draft Restored).');
+      setTimeout(() => setSuccessToast(''), 3500);
+    }
+  };
+
+  const handleManualSaveDraft = () => {
+    api.saveDraftVisit(formData);
+    setSuccessToast('ಕರಡು ಮೊಬೈಲ್‌ನಲ್ಲಿ ಸುರಕ್ಷಿತವಾಗಿ ಸಂಗ್ರಹಿಸಲಾಗಿದೆ (Saved as Local Draft).');
+    setTimeout(() => setSuccessToast(''), 3000);
+  };
 
   // Spoken readback in Kannada (AI4Bharat Indic-Speak representation)
   const generateKannadaReadback = () => {
@@ -143,7 +171,7 @@ export default function StructuredVisitRecordScreen({
       // Notify WebSocket confirm_record
       voiceWs.confirmRecord(formData);
 
-      // Save via REST API
+      // Save via REST API (with offline fallback and deduplication check)
       const result = await api.confirmVisit({
         session_id: voiceWs.sessionId,
         visit_record: formData
@@ -184,8 +212,34 @@ export default function StructuredVisitRecordScreen({
           </h2>
           <p className="text-[11px] text-navy-500 font-mono">Structured Visit Record</p>
         </div>
-        <div className="w-9 h-9"></div> {/* Balancer */}
+        
+        {/* Save Draft Action */}
+        <button
+          onClick={handleManualSaveDraft}
+          className="p-2 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 hover:bg-teal-100 touch-manipulation"
+          title="ಕರಡು ಉಳಿಸಿ (Save Draft)"
+        >
+          <BookmarkCheck className="w-5 h-5" />
+        </button>
       </div>
+
+      {/* Restore Draft Pill if draft exists and was not passed in record */}
+      {existingDraft && !hasDraftRestored && !record && (
+        <div className="bg-teal-50 border border-teal-200 rounded-2xl p-3 flex items-center justify-between">
+          <div className="text-xs">
+            <span className="font-bold text-teal-900 font-kannada">ಉಳಿಸಲಾದ ಕರಡು ಲಭ್ಯವಿದೆ</span>
+            <p className="text-[11px] text-teal-700">
+              ಫಲಾನುಭವಿ: {existingDraft.beneficiary_name} ({existingDraft.visit_type})
+            </p>
+          </div>
+          <button
+            onClick={handleRestoreDraft}
+            className="bg-teal-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-sm hover:bg-teal-800 active:scale-95 touch-manipulation"
+          >
+            ಮರುಪಡೆಯಿರಿ
+          </button>
+        </div>
+      )}
 
       {/* Success Toast */}
       {successToast && (
@@ -311,12 +365,22 @@ export default function StructuredVisitRecordScreen({
           )}
         </button>
 
-        <button
-          onClick={onBack}
-          className="w-full py-2.5 px-4 rounded-xl border border-navy-200 text-navy-700 font-semibold text-xs hover:bg-navy-50 active:scale-98 transition-all touch-manipulation"
-        >
-          ಮತ್ತೆ ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಮಾಡಿ (Record Again)
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={handleManualSaveDraft}
+            className="flex-1 py-2.5 px-3 rounded-xl border border-teal-200 text-teal-800 bg-teal-50 font-semibold text-xs hover:bg-teal-100 active:scale-98 transition-all touch-manipulation flex items-center justify-center space-x-1"
+          >
+            <BookmarkCheck className="w-4 h-4" />
+            <span>ಕರಡು ಉಳಿಸಿ (Draft)</span>
+          </button>
+
+          <button
+            onClick={onBack}
+            className="flex-1 py-2.5 px-3 rounded-xl border border-navy-200 text-navy-700 font-semibold text-xs hover:bg-navy-50 active:scale-98 transition-all touch-manipulation"
+          >
+            ಮತ್ತೆ ರೆಕಾರ್ಡ್ ಮಾಡಿ
+          </button>
+        </div>
       </div>
 
       {/* Manual Field Edit Modal */}

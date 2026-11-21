@@ -1,6 +1,16 @@
-import React from 'react';
-import { Activity, AlertTriangle, Globe, Wifi, WifiOff, Volume2, ShieldCheck } from 'lucide-react';
-import { isDemoMode, setDemoMode } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { 
+  Activity, 
+  AlertTriangle, 
+  Globe, 
+  Wifi, 
+  WifiOff, 
+  Volume2, 
+  RefreshCw,
+  CheckCircle2,
+  Ambulance
+} from 'lucide-react';
+import { isDemoMode, setDemoMode, api } from '../services/api';
 
 export default function Navbar({
   currentLanguage,
@@ -10,24 +20,65 @@ export default function Navbar({
   emergencyCount = 0,
   isRecording = false
 }) {
-  const [demo, setDemo] = React.useState(isDemoMode());
-  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const [demo, setDemo] = useState(isDemoMode());
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncToast, setSyncToast] = useState('');
 
-  React.useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+  useEffect(() => {
+    // Check initial pending queue
+    const updateQueueCount = () => {
+      const queue = api.getPendingSyncQueue();
+      setPendingSyncCount(queue.length);
+    };
+    updateQueueCount();
+
+    const handleOnline = async () => {
+      setIsOnline(true);
+      // Auto-synchronize pending records on network return
+      triggerSync();
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     const handleDemoChange = (e) => setDemo(e.detail.enabled);
     window.addEventListener('asha_demo_mode_changed', handleDemoChange);
 
+    const handleSyncUpdated = (e) => {
+      setPendingSyncCount(e.detail?.count || 0);
+    };
+    window.addEventListener('asha_sync_updated', handleSyncUpdated);
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('asha_demo_mode_changed', handleDemoChange);
+      window.removeEventListener('asha_sync_updated', handleSyncUpdated);
     };
   }, []);
+
+  const triggerSync = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    try {
+      const res = await api.syncPendingVisits();
+      if (res.syncedCount > 0) {
+        setSyncToast(`${res.syncedCount} ಆಫ್‌ಲೈನ್ ದಾಖಲೆಗಳು ಯಶಸ್ವಿಯಾಗಿ ಸಿಂಕ್ ಆಗಿವೆ!`);
+        setTimeout(() => setSyncToast(''), 4000);
+      }
+    } catch (e) {
+      console.warn('Sync failed', e);
+    } finally {
+      setIsSyncing(false);
+      setPendingSyncCount(api.getPendingSyncQueue().length);
+    }
+  };
 
   const toggleDemoMode = () => {
     const next = !demo;
@@ -111,22 +162,54 @@ export default function Navbar({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
           <span>ಮಂಡ್ಯ ತಾಲೂಕು PHC (Mandya Sector 4)</span>
         </div>
+
         <div className="flex items-center space-x-2">
+          {/* Online / Offline & Sync Indicator */}
           {isOnline ? (
-            <span className="flex items-center text-emerald-400 space-x-1">
-              <Wifi className="w-3 h-3" />
-              <span>Online</span>
-            </span>
+            <div className="flex items-center space-x-1.5">
+              <span className="flex items-center text-emerald-400 space-x-1">
+                <Wifi className="w-3 h-3" />
+                <span>Online</span>
+              </span>
+              {pendingSyncCount > 0 && (
+                <button
+                  onClick={triggerSync}
+                  disabled={isSyncing}
+                  className="flex items-center space-x-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] hover:bg-amber-500/30 touch-manipulation font-mono"
+                  title="ಬಾಕಿ ದಾಖಲೆಗಳನ್ನು ಸರ್ವರ್‌ಗೆ ಸಿಂಕ್ ಮಾಡಿ"
+                >
+                  <RefreshCw className={`w-2.5 h-2.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>{pendingSyncCount} Syncing</span>
+                </button>
+              )}
+            </div>
           ) : (
-            <span className="flex items-center text-amber-400 space-x-1">
+            <div className="flex items-center text-amber-400 space-x-1">
               <WifiOff className="w-3 h-3" />
-              <span>Offline Cache</span>
-            </span>
+              <span>Offline ({pendingSyncCount} Queued)</span>
+            </div>
           )}
+
           <span className="text-navy-400">•</span>
           <span className="text-teal-300 font-mono text-[10px]">Indic-Transcribe</span>
         </div>
       </div>
+
+      {/* Sync Toast Notification */}
+      {syncToast && (
+        <div className="bg-emerald-600 text-white text-xs px-4 py-1.5 flex items-center justify-center space-x-2 font-medium animate-fade-in border-t border-emerald-500">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>{syncToast}</span>
+        </div>
+      )}
+
+      {/* Offline Alert Strip */}
+      {!isOnline && (
+        <div className="bg-amber-600/90 text-white text-[11px] px-4 py-1 flex items-center justify-center space-x-1.5 font-medium">
+          <WifiOff className="w-3.5 h-3.5" />
+          <span>ಆಫ್‌ಲೈನ್ ಮೋಡ್ ಸಕ್ರಿಯವಾಗಿದೆ. ದಾಖಲೆಗಳು ಸುರಕ್ಷಿತವಾಗಿ ಮೊಬೈಲ್‌ನಲ್ಲಿ ಉಳಿಯುತ್ತವೆ.</span>
+        </div>
+      )}
     </header>
   );
 }

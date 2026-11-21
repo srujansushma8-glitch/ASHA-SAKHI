@@ -10,11 +10,12 @@ import {
   ArrowLeft,
   ChevronRight,
   ExternalLink,
+  Navigation,
   UserCheck
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function EmergencyAlertScreen({ onBack, alertData }) {
+export default function EmergencyAlertScreen({ onBack, alertData, onTrackAmbulance }) {
   const [alerts, setAlerts] = useState([]);
   const [selectedAlert, setSelectedAlert] = useState(alertData || null);
   const [actionStatusToast, setActionStatusToast] = useState('');
@@ -166,21 +167,30 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
               <span className="w-3 h-3 rounded-full bg-amber-400 animate-ping"></span>
             </div>
 
-            {/* Large Mobile Touch Action Buttons */}
+            {/* Mobile Touch Action Buttons */}
             <div className="space-y-2.5 pt-1">
+              {/* Ambulance Map Tracking Button */}
+              <button
+                onClick={() => onTrackAmbulance && onTrackAmbulance(selectedAlert.id)}
+                className="w-full bg-teal-500 hover:bg-teal-400 active:scale-[0.98] text-navy-950 font-black py-3.5 px-4 rounded-2xl shadow-xl flex items-center justify-center space-x-2 text-sm touch-manipulation transition-transform"
+              >
+                <Navigation className="w-5 h-5 text-navy-950" />
+                <span>ಆಂಬ್ಯುಲೆನ್ಸ್ ಲೈವ್ ಮ್ಯಾಪ್ ನೋಡಿ (Track Ambulance Map)</span>
+              </button>
+
               <button
                 onClick={handleCallAmbulance}
-                className="w-full bg-white hover:bg-emergency-50 active:scale-[0.98] text-emergency-700 font-black py-4 px-4 rounded-2xl shadow-xl flex items-center justify-center space-x-3 text-base touch-manipulation transition-transform"
+                className="w-full bg-white hover:bg-emergency-50 active:scale-[0.98] text-emergency-700 font-black py-3.5 px-4 rounded-2xl shadow-md flex items-center justify-center space-x-2.5 text-sm touch-manipulation transition-transform"
               >
-                <div className="w-8 h-8 rounded-full bg-emergency-600 text-white flex items-center justify-center">
-                  <Ambulance className="w-5 h-5" />
+                <div className="w-7 h-7 rounded-full bg-emergency-600 text-white flex items-center justify-center">
+                  <Ambulance className="w-4 h-4" />
                 </div>
-                <span>108 ತುರ್ತು ಆಂಬ್ಯುಲೆನ್ಸ್‌ಗೆ ಕರೆ ಮಾಡಿ (Call 108)</span>
+                <span>108 ತುರ್ತು ಆಂಬ್ಯುಲೆನ್ಸ್‌ಗೆ ಕರೆ (Call 108)</span>
               </button>
 
               <button
                 onClick={handleCallMedicalOfficer}
-                className="w-full bg-emergency-800/90 hover:bg-emergency-900 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-2xl border border-emergency-400 flex items-center justify-center space-x-2 text-xs touch-manipulation"
+                className="w-full bg-emergency-800/90 hover:bg-emergency-900 active:scale-[0.98] text-white font-bold py-2.5 px-4 rounded-2xl border border-emergency-400 flex items-center justify-center space-x-2 text-xs touch-manipulation"
               >
                 <PhoneCall className="w-4 h-4 text-emergency-200" />
                 <span>PHC ವೈದ್ಯಾಧಿಕಾರಿಗೆ ಕರೆ (Call Medical Officer)</span>
