@@ -11,12 +11,22 @@ import {
   RotateCcw, 
   Radio, 
   ChevronRight, 
-  ShieldAlert
+  ShieldAlert,
+  Play,
+  Pause,
+  Building2,
+  UserCheck
 } from 'lucide-react';
 import { api, INITIAL_AMBULANCE_TRACKING } from '../services/api';
 import { voiceWs } from '../services/websocket';
+import GoogleAmbulanceMap from '../components/ambulance/GoogleAmbulanceMap';
+import { t } from '../services/i18n';
 
-export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-108-001' }) {
+export default function AmbulanceTrackingScreen({ 
+  onBack, 
+  requestId = 'AMB-REQ-108-001',
+  currentLanguage = 'kn'
+}) {
   const [trackingData, setTrackingData] = useState(INITIAL_AMBULANCE_TRACKING);
   const [autoSimulate, setAutoSimulate] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -57,7 +67,11 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
         const next = await api.simulateNextAmbulanceStep(requestId);
         if (next.status?.toUpperCase() === 'COMPLETED') {
           setAutoSimulate(false);
-          setStatusMessage('ಆಂಬ್ಯುಲೆನ್ಸ್ ಸಿಮ್ಯುಲೇಶನ್ ಪೂರ್ಣಗೊಂಡಿದೆ (Simulation completed)');
+          setStatusMessage(
+            currentLanguage === 'kn' ? 'ಆಂಬ್ಯುಲೆನ್ಸ್ ಸಿಮ್ಯುಲೇಶನ್ ಪೂರ್ಣಗೊಂಡಿದೆ' :
+            currentLanguage === 'hi' ? 'एम्बुलेंस सिमुलेशन पूरा हुआ' :
+            'Ambulance simulation completed'
+          );
         }
       }, 3500);
     } else {
@@ -67,12 +81,17 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
     return () => {
       if (autoSimTimerRef.current) clearInterval(autoSimTimerRef.current);
     };
-  }, [autoSimulate, requestId]);
+  }, [autoSimulate, requestId, currentLanguage]);
 
   const handleNextStep = async () => {
     const updated = await api.simulateNextAmbulanceStep(requestId);
     setTrackingData(updated);
-    setStatusMessage(`ಸ್ಥಿತಿ ನವೀಕರಿಸಲಾಗಿದೆ: ${formatStatusDisplay(updated.status)}`);
+    const statusLabel = formatStatusDisplay(updated.status);
+    setStatusMessage(
+      currentLanguage === 'kn' ? `ಸ್ಥಿತಿ ನವೀಕರಿಸಲಾಗಿದೆ: ${statusLabel}` :
+      currentLanguage === 'hi' ? `स्थिति अपडेट: ${statusLabel}` :
+      `Status updated: ${statusLabel}`
+    );
     setTimeout(() => setStatusMessage(''), 3000);
   };
 
@@ -80,65 +99,47 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
     setAutoSimulate(false);
     const resetData = api.resetAmbulanceSimulation ? api.resetAmbulanceSimulation() : INITIAL_AMBULANCE_TRACKING;
     setTrackingData(resetData);
-    setStatusMessage('ಸಿಮ್ಯುಲೇಶನ್ ಪ್ರಾರಂಭಿಕ ಹಂತಕ್ಕೆ ಮರುಹೊಂದಿಸಲಾಗಿದೆ.');
+    setStatusMessage(
+      currentLanguage === 'kn' ? 'ಸಿಮ್ಯುಲೇಶನ್ ಪ್ರಾರಂಭಿಕ ಹಂತಕ್ಕೆ ಮರುಹೊಂದಿಸಲಾಗಿದೆ.' :
+      currentLanguage === 'hi' ? 'सिमुलेशन प्रारंभिक स्थिति पर रीसेट किया गया।' :
+      'Simulation reset to initial state.'
+    );
     setTimeout(() => setStatusMessage(''), 3000);
   };
 
   const statuses = [
-    { keys: ['REQUESTED', 'Requested'], label_en: 'Requested', label_kn: 'ವಿನಂತಿಸಲಾಗಿದೆ' },
-    { keys: ['DISPATCHED', 'Dispatched'], label_en: 'Dispatched', label_kn: 'ಹೊರಟಿದೆ' },
-    { keys: ['ON_THE_WAY', 'On the way', 'ON THE WAY'], label_en: 'On the way', label_kn: 'ಮಾರ್ಗದಲ್ಲಿದೆ' },
-    { keys: ['ARRIVED', 'Arrived'], label_en: 'Arrived', label_kn: 'ಸ್ಥಳ ತಲುಪಿದೆ' },
-    { keys: ['COMPLETED', 'Completed'], label_en: 'Completed', label_kn: 'ಪೂರ್ಣಗೊಂಡಿದೆ' }
+    { key: 'REQUESTED', label: t('ambulance.requested', currentLanguage) },
+    { key: 'DISPATCHED', label: t('ambulance.dispatched', currentLanguage) },
+    { key: 'ON_THE_WAY', label: t('ambulance.onTheWay', currentLanguage) },
+    { key: 'ARRIVED', label: t('ambulance.arrived', currentLanguage) },
+    { key: 'COMPLETED', label: t('ambulance.completed', currentLanguage) }
   ];
 
   const currentStatusUpper = (trackingData.status || 'REQUESTED').toUpperCase().replace(/\s+/g, '_');
-  const currentIdx = statuses.findIndex(s => 
-    s.keys.some(k => k.toUpperCase().replace(/\s+/g, '_') === currentStatusUpper)
-  );
+  const currentIdx = statuses.findIndex(s => s.key === currentStatusUpper);
 
   const formatStatusDisplay = (statusStr) => {
-    if (!statusStr) return 'Requested';
+    if (!statusStr) return t('ambulance.requested', currentLanguage);
+    const cleanKey = statusStr.toUpperCase().replace(/\s+/g, '_');
+    const matched = statuses.find(s => s.key === cleanKey);
+    if (matched) return matched.label;
     return statusStr.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
   };
 
-  const waypoints = trackingData.route_waypoints || [
-    { lat: 12.5240, lng: 76.8980, label: 'PHC Mandya Base' },
-    { lat: 12.5350, lng: 76.9020, label: 'Kallalli Circle' },
-    { lat: 12.5450, lng: 76.9090, label: 'Sugar Town Cross' },
-    { lat: 12.5580, lng: 76.9150, label: 'Shivalli Gate' },
-    { lat: 12.5710, lng: 76.9220, label: 'Keregodu Main Road' },
-    { lat: 12.5835, lng: 76.9280, label: 'Beneficiary Home' }
-  ];
-
-  const minLat = 12.5200;
-  const maxLat = 12.5880;
-  const minLng = 76.8950;
-  const maxLng = 76.9320;
-
-  const projectToSvg = (lat, lng) => {
-    const x = 30 + (((lng || 76.91) - minLng) / (maxLng - minLng)) * 340;
-    const y = 200 - (((lat || 12.55) - minLat) / (maxLat - minLat)) * 160;
-    return { x: Math.max(20, Math.min(380, x)), y: Math.max(20, Math.min(220, y)) };
+  const ambulanceLoc = {
+    lat: Number(trackingData.current_latitude) || 12.5450,
+    lng: Number(trackingData.current_longitude) || 76.9090
   };
 
-  const hospitalPos = projectToSvg(
-    trackingData.base_hospital?.lat || 12.5240, 
-    trackingData.base_hospital?.lng || 76.8980
-  );
-  const pickupPos = projectToSvg(
-    trackingData.pickup_lat || 12.5835, 
-    trackingData.pickup_lng || 76.9280
-  );
-  const ambulancePos = projectToSvg(
-    trackingData.current_latitude || 12.5450, 
-    trackingData.current_longitude || 76.9090
-  );
+  const patientLoc = {
+    lat: Number(trackingData.pickup_lat) || 12.5835,
+    lng: Number(trackingData.pickup_lng) || 76.9280
+  };
 
-  const pathD = waypoints.reduce((acc, wp, i) => {
-    const p = projectToSvg(wp.lat, wp.lng);
-    return i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`;
-  }, '');
+  const hospitalLoc = {
+    lat: Number(trackingData.base_hospital?.lat) || 12.5240,
+    lng: Number(trackingData.base_hospital?.lng) || 76.8980
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
@@ -147,25 +148,35 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
-            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-navy-100 active:scale-95 transition-decelerate"
-            title="ಹಿಂದೆ / Back"
+            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#F9ECEC] active:scale-95 transition-decelerate"
+            title={t('common.back', currentLanguage)}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-lg lg:text-xl font-bold font-kannada text-[#3B2A33] leading-tight flex items-center space-x-2">
-                <Ambulance className="w-5 h-5 text-[#B94A58]" />
-                <span>108 ತುರ್ತು ವಾಹನ ಲೈವ್ ಟ್ರ್ಯಾಕಿಂಗ್ (Ambulance Simulation)</span>
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] flex items-center justify-center text-[#B94A58]">
+                <Ambulance className="w-5 h-5" />
+              </div>
+              <h1 className="text-lg lg:text-xl font-bold font-serif text-[#3B2A33] leading-tight">
+                {t('ambulance.title', currentLanguage)}
               </h1>
               <span className="text-xs font-mono font-bold bg-[#FDF6F5] text-[#A25B74] px-2.5 py-0.5 rounded-full border border-[#F0DDE2]">
                 GPS Telemetry
               </span>
             </div>
-            <p className="text-xs text-[#7A6670] font-medium mt-0.5">
-              ನೈಜ ಸಮಯದ ಮಾರ್ಗ ಪ್ರಗತಿ ಮತ್ತು ಚಾಲಕರ ಸಂವಹನ
+            <p className="text-xs text-[#7A6670] font-medium mt-1">
+              {t('ambulance.subtitle', currentLanguage)}
             </p>
           </div>
+        </div>
+
+        {/* Live Status Badge */}
+        <div className="flex items-center space-x-2 self-start sm:self-auto">
+          <span className="flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2]">
+            <Radio className="w-3 h-3 text-[#B94A58] animate-pulse" />
+            <span>108 SIMULATION</span>
+          </span>
         </div>
       </div>
 
@@ -174,11 +185,11 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
         <div className="flex items-start space-x-3">
           <AlertTriangle className="w-5 h-5 text-[#B88745] shrink-0 mt-0.5 animate-pulse" />
           <div className="text-xs">
-            <span className="font-bold text-[#3B2A33] block font-kannada">
-              ⚠️ ತರಬೇತಿ ಮತ್ತು ಪ್ರಾತ್ಯಕ್ಷಿಕೆ ಸಿಮ್ಯುಲೇಶನ್ ಮಾತ್ರ (TRAINING & EVALUATION SIMULATION ONLY)
+            <span className="font-bold text-[#3B2A33] block">
+              ⚠️ {t('ambulance.disclaimerTitle', currentLanguage)}
             </span>
             <p className="text-[#3B2A33] mt-0.5 leading-relaxed font-medium">
-              ಇದು ಕೇವಲ ಡೆಮೊ ಸಿಮ್ಯುಲೇಶನ್ ಆಗಿದೆ. ಯಾವುದೇ ನಿಜವಾದ 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಅಥವಾ ತುರ್ತು ವಿಭಾಗವನ್ನು ಸಂಪರ್ಕಿಸಲಾಗಿಲ್ಲ.
+              {t('ambulance.disclaimerText', currentLanguage)}
             </p>
           </div>
         </div>
@@ -194,34 +205,36 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
       {/* 2-Column Responsive Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ======================================================== */}
-        {/* LEFT COLUMN: SVG MAP CANVAS & STATUS PROGRESSION (Span 7) */}
+        {/* LEFT COLUMN: INTERACTIVE GOOGLE MAP & TELEMETRY HUD (7) */}
         {/* ======================================================== */}
         <div className="lg:col-span-7 space-y-6">
           {/* Ambulance Request Summary Card */}
           <div className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card flex items-center justify-between">
             <div>
               <span className="text-[10px] text-[#C47A92] font-mono uppercase font-bold block">
-                Ambulance Request ID
+                {t('ambulance.requestId', currentLanguage)}
               </span>
               <div className="text-lg font-bold text-[#3B2A33] font-mono mt-0.5 flex items-center space-x-2">
-                <span>{trackingData.id || trackingData.request_id}</span>
+                <span>{trackingData.id || trackingData.request_id || requestId}</span>
                 <span className="text-[10px] bg-[#FDF6F5] text-[#A25B74] px-2.5 py-0.5 rounded-full font-bold border border-[#F0DDE2]">
-                  SIMULATED
+                  {t('common.simulated', currentLanguage)}
                 </span>
               </div>
-              <p className="text-xs font-bold text-[#3B2A33] font-kannada mt-1">
-                ಫಲಾನುಭವಿ: {trackingData.beneficiary_name_kn || trackingData.beneficiary_name || 'ಗೀತಾ ಎಂ.'} ({trackingData.beneficiary_id || 'ASHA-KA-2024-0102'})
+              <p className="text-xs font-bold text-[#3B2A33] mt-1">
+                {t('common.beneficiary', currentLanguage)}: {trackingData.beneficiary_name || 'Geetha M.'} ({trackingData.beneficiary_id || 'ASHA-KA-2024-0102'})
               </p>
             </div>
 
             <div className="text-right">
-              <span className="text-[10px] text-[#C47A92] font-mono block font-medium">ಪ್ರಸ್ತುತ ಸ್ಥಿತಿ</span>
+              <span className="text-[10px] text-[#C47A92] font-mono block font-medium">
+                {t('ambulance.currentStatus', currentLanguage)}
+              </span>
               <span className={`inline-block px-3.5 py-1 rounded-full text-xs font-bold uppercase mt-1 ${
                 currentStatusUpper === 'ARRIVED'
                   ? 'bg-[#E8F7F1] text-[#477A60] border border-[#C8EEDD]'
                   : currentStatusUpper === 'COMPLETED'
-                  ? 'bg-navy-100 text-[#3B2A33]'
-                  : 'bg-[#B94A58] text-white animate-pulse shadow-emergency'
+                  ? 'bg-[#FDF6F5] text-[#3B2A33] border border-[#F0DDE2]'
+                  : 'bg-[#B94A58] text-white shadow-touch animate-pulse'
               }`}>
                 {formatStatusDisplay(trackingData.status)}
               </span>
@@ -230,8 +243,8 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
 
           {/* Stepper Progress Bar */}
           <div className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card">
-            <span className="text-xs font-bold text-[#3B2A33] font-kannada block mb-3">
-              ವಾಹನ ಪ್ರಗತಿ ಹಂತಗಳು (Ambulance Status Flow):
+            <span className="text-xs font-bold text-[#3B2A33] block mb-3">
+              {t('ambulance.currentStatus', currentLanguage)}:
             </span>
             <div className="relative flex items-center justify-between">
               <div className="absolute top-3.5 left-4 right-4 h-1 bg-[#FDF6F5] -z-0">
@@ -245,20 +258,20 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
                 const isDone = idx < currentIdx;
                 const isCurrent = idx === currentIdx;
                 return (
-                  <div key={s.label_en} className="flex flex-col items-center z-10 text-center">
+                  <div key={s.key} className="flex flex-col items-center z-10 text-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-decelerate ${
                       isCurrent
-                        ? 'bg-[#B94A58] text-white ring-4 ring-[#B94A58]/20 shadow-emergency'
+                        ? 'bg-[#B94A58] text-white ring-4 ring-[#B94A58]/20 shadow-touch'
                         : isDone
                         ? 'bg-[#477A60] text-white'
-                        : 'bg-[#FDF6F5] text-[#C47A92]'
+                        : 'bg-[#FDF6F5] text-[#C47A92] border border-[#F0DDE2]'
                     }`}>
                       {isDone ? '✓' : idx + 1}
                     </div>
-                    <span className={`text-[11px] mt-1.5 font-semibold leading-tight max-w-[70px] font-kannada ${
+                    <span className={`text-[11px] mt-1.5 font-semibold leading-tight max-w-[70px] ${
                       isCurrent ? 'text-[#B94A58] font-bold' : isDone ? 'text-[#3B2A33] font-bold' : 'text-[#C47A92]'
                     }`}>
-                      {s.label_kn}
+                      {s.label}
                     </span>
                   </div>
                 );
@@ -266,109 +279,29 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
             </div>
           </div>
 
-          {/* Large Interactive SVG Road Map Canvas */}
-          <div className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card overflow-hidden space-y-3">
-            <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-2.5">
-              <div className="flex items-center space-x-2">
-                <Navigation className="w-4 h-4 text-[#A25B74]" />
-                <h3 className="font-bold text-xs text-[#3B2A33] font-kannada">
-                  ಲೈವ್ ಸಿಮ್ಯುಲೇಟೆಡ್ ಮಾರ್ಗ (Simulated Route Map)
-                </h3>
-              </div>
-              <span className="text-[11px] font-mono bg-[#FDF6F5] text-[#3B2A33] px-2.5 py-0.5 rounded-full border border-[#F0DDE2] flex items-center">
-                <Radio className="w-3.5 h-3.5 mr-1 text-[#477A60] animate-pulse" />
-                GPS: {(trackingData.current_latitude || 12.545).toFixed(3)}° N, {(trackingData.current_longitude || 76.909).toFixed(3)}° E
-              </span>
-            </div>
-
-            <div className="relative w-full h-80 rounded-2xl bg-[#FFF9F7] border border-[#F0DDE2] shadow-inner overflow-hidden">
-              <svg viewBox="0 0 400 240" className="w-full h-full">
-                <path
-                  d={pathD}
-                  fill="none"
-                  stroke="#F0DDE2"
-                  strokeWidth="12"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d={pathD}
-                  fill="none"
-                  stroke="#A25B74"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d={pathD}
-                  fill="none"
-                  stroke="#C47A92"
-                  strokeWidth="2"
-                  strokeDasharray="6 6"
-                  strokeLinecap="round"
-                  className="animate-pulse"
-                />
-
-                {waypoints.map((wp, i) => {
-                  const p = projectToSvg(wp.lat, wp.lng);
-                  return (
-                    <circle
-                      key={i}
-                      cx={p.x}
-                      cy={p.y}
-                      r="3.5"
-                      fill="#E8B4C4"
-                    />
-                  );
-                })}
-
-                {/* Hospital Pin */}
-                <g transform={`translate(${hospitalPos.x}, ${hospitalPos.y})`}>
-                  <circle r="12" fill="#20A675" opacity="0.3" className="animate-ping" />
-                  <circle r="9" fill="#20A675" />
-                  <text x="0" y="3" textAnchor="middle" fill="#FFFFFF" fontSize="9" fontWeight="bold">+</text>
-                  <text x="0" y="20" textAnchor="middle" fill="#E8F7F1" fontSize="8" fontWeight="bold">PHC Base</text>
-                </g>
-
-                {/* Beneficiary Pickup Pin */}
-                <g transform={`translate(${pickupPos.x}, ${pickupPos.y})`}>
-                  <circle r="14" fill="#D94343" opacity="0.35" className="animate-ping" />
-                  <circle r="9" fill="#D94343" />
-                  <circle r="4" fill="#FFFFFF" />
-                  <text x="0" y="20" textAnchor="middle" fill="#FCF1F1" fontSize="8" fontWeight="bold">Pickup Location</text>
-                </g>
-
-                {/* Moving Ambulance Marker */}
-                <g transform={`translate(${ambulancePos.x}, ${ambulancePos.y})`}>
-                  <circle r="18" fill="#D94343" opacity="0.35" className="animate-ping" />
-                  <rect x="-12" y="-9" width="24" height="18" rx="4" fill="#FFFFFF" stroke="#D94343" strokeWidth="2" />
-                  <rect x="-9" y="-7" width="8" height="7" fill="#087F8C" rx="1" />
-                  <rect x="1" y="-7" width="8" height="7" fill="#D94343" rx="1" />
-                  <circle cx="-6" cy="9" r="2.5" fill="#142B45" />
-                  <circle cx="6" cy="9" r="2.5" fill="#142B45" />
-                  <text x="0" y="-13" textAnchor="middle" fill="#FFFFFF" fontSize="8" fontWeight="bold">🚑 108</text>
-                </g>
-              </svg>
-
-              {/* Floating ETA Pill */}
-              <div className="absolute top-3 left-3 bg-navy-900/90 text-white px-3.5 py-2 rounded-xl border border-[#F0DDE2] shadow-card text-xs flex items-center space-x-3">
-                <div className="flex items-center space-x-1">
-                  <Clock className="w-4 h-4 text-[#A25B74]" />
-                  <span className="font-bold">ETA: {trackingData.eta_minutes || 0} ನಿಮಿಷ</span>
-                </div>
-                <span className="text-[#7A6670]">•</span>
-                <div className="flex items-center space-x-1">
-                  <Navigation className="w-4 h-4 text-warning" />
-                  <span className="font-mono">{trackingData.distance_km || '2.4'} km</span>
-                </div>
-              </div>
-
-              {/* Speed Indicator */}
-              <div className="absolute bottom-3 right-3 bg-navy-900/90 text-[#A25B74] font-mono text-xs px-3 py-1 rounded-xl border border-[#F0DDE2]">
-                ವೇಗ: {trackingData.speed_kmh || 45} km/h
-              </div>
-            </div>
-          </div>
+          {/* Interactive Google Ambulance Map Component */}
+          <GoogleAmbulanceMap
+            ambulanceLocation={ambulanceLoc}
+            patientLocation={patientLoc}
+            hospitalLocation={hospitalLoc}
+            status={trackingData.status || 'DISPATCHED'}
+            etaMinutes={trackingData.eta_minutes ?? 8}
+            distanceKm={trackingData.distance_km ?? 2.4}
+            currentLanguage={currentLanguage}
+            onLocationDetected={(newCoords) => {
+              setTrackingData(prev => ({
+                ...prev,
+                pickup_lat: newCoords.lat,
+                pickup_lng: newCoords.lng
+              }));
+              setStatusMessage(
+                currentLanguage === 'kn' ? 'ನಿಮ್ಮ ಜಿಪಿಎಸ್ ಸ್ಥಳವನ್ನು ಪಿಕಪ್ ಬಿಂದುವಾಗಿ ಹೊಂದಿಸಲಾಗಿದೆ.' :
+                currentLanguage === 'hi' ? 'आपका जीपीएस स्थान पिकअप बिंदु के रूप में सेट किया गया।' :
+                'Patient pickup set to your current GPS position.'
+              );
+              setTimeout(() => setStatusMessage(''), 3500);
+            }}
+          />
         </div>
 
         {/* ======================================================== */}
@@ -377,21 +310,22 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
         <div className="lg:col-span-5 space-y-6">
           {/* Driver & EMT Team Card */}
           <div className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card space-y-4">
-            <h4 className="text-xs font-bold text-[#3B2A33] font-kannada border-b border-[#F0DDE2] pb-2">
-              ವಾಹನ ಮತ್ತು ಚಾಲಕರ ಮಾಹಿತಿ (Driver & EMT Team):
+            <h4 className="text-xs font-bold text-[#3B2A33] border-b border-[#F0DDE2] pb-2 flex items-center space-x-1.5">
+              <UserCheck className="w-4 h-4 text-[#A25B74]" />
+              <span>{t('ambulance.driverName', currentLanguage)} & EMT Team</span>
             </h4>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center font-bold text-xl">
+                <div className="w-12 h-12 rounded-2xl bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2] flex items-center justify-center font-bold text-xl shadow-inner">
                   👨‍✈️
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-[#3B2A33] font-kannada">
-                    {trackingData.driver_name || 'ರಮೇಶ್ ಗೌಡ'} (ಚಾಲಕ)
+                  <h4 className="text-sm font-bold text-[#3B2A33]">
+                    {trackingData.driver_name || 'Ramesh Gowda'} ({currentLanguage === 'kn' ? 'ಚಾಲಕ' : currentLanguage === 'hi' ? 'चालक' : 'Driver'})
                   </h4>
                   <p className="text-xs text-[#7A6670] font-mono font-medium">
-                    EMT: {trackingData.emergency_technician || 'ಸುರೇಶ್ ಕುಮಾರ್'}
+                    EMT: {trackingData.emergency_technician || 'Suresh Kumar'}
                   </p>
                   <p className="text-xs text-[#A25B74] font-mono font-bold mt-0.5">
                     {trackingData.vehicle_number || 'KA-11-G-1081'}
@@ -404,73 +338,85 @@ export default function AmbulanceTrackingScreen({ onBack, requestId = 'AMB-REQ-1
                 className="bg-[#A25B74] hover:bg-[#84455C] text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-touch flex items-center space-x-1.5 active:scale-95 transition-decelerate"
               >
                 <Phone className="w-4 h-4" />
-                <span>ಕರೆ ಮಾಡಿ</span>
+                <span>{currentLanguage === 'kn' ? 'ಕರೆ ಮಾಡಿ' : currentLanguage === 'hi' ? 'कॉल करें' : 'Call'}</span>
               </button>
             </div>
           </div>
 
           {/* Location Details */}
           <div className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card space-y-3">
-            <h4 className="text-xs font-bold text-[#3B2A33] font-kannada border-b border-[#F0DDE2] pb-2">
-              ಮಾರ್ಗ ವಿವರಗಳು (Location Details):
+            <h4 className="text-xs font-bold text-[#3B2A33] border-b border-[#F0DDE2] pb-2 flex items-center space-x-1.5">
+              <MapPin className="w-4 h-4 text-[#A25B74]" />
+              <span>{t('ambulance.patientLocation', currentLanguage)}</span>
             </h4>
             <div className="space-y-2 text-xs">
               <div className="p-3 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2]">
                 <span className="text-[10px] text-[#C47A92] uppercase font-bold block flex items-center">
-                  <MapPin className="w-3.5 h-3.5 mr-1 text-[#B94A58]" /> ಪಿಕಪ್ ಸ್ಥಳ (Pickup Location):
+                  <MapPin className="w-3.5 h-3.5 mr-1 text-[#B94A58]" /> {t('ambulance.patientLocation', currentLanguage)}:
                 </span>
                 <p className="font-bold text-[#3B2A33] mt-1 leading-snug">
-                  {trackingData.pickup_location_kn || trackingData.pickup_location}
+                  {trackingData.pickup_location || 'House #42, Main Road, Shivalli Village'}
                 </p>
               </div>
 
               <div className="p-3 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2]">
                 <span className="text-[10px] text-[#C47A92] uppercase font-bold block flex items-center">
-                  <Ambulance className="w-3.5 h-3.5 mr-1 text-[#A25B74]" /> ಗಮ್ಯಸ್ಥಾನ PHC (Destination):
+                  <Building2 className="w-3.5 h-3.5 mr-1 text-[#A25B74]" /> {t('ambulance.hospitalLocation', currentLanguage)}:
                 </span>
                 <p className="font-bold text-[#3B2A33] mt-1 leading-snug">
-                  {trackingData.destination_facility_kn || trackingData.destination_facility}
+                  {trackingData.destination_facility || 'Mandya Taluk Hospital & 24/7 PHC'}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Interactive Simulation Controls */}
-          <div className="bg-navy-900 text-white rounded-3xl p-6 shadow-card space-y-4 border border-navy-800">
-            <div className="flex items-center justify-between border-b border-navy-800 pb-3">
+          {/* Rose & Blush Simulation Controls */}
+          <div className="bg-white text-[#3B2A33] rounded-3xl p-6 shadow-card space-y-4 border border-[#F0DDE2]">
+            <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-3">
               <div>
-                <span className="text-sm font-bold font-kannada text-[#A25B74]-300">
-                  ಸಿಮ್ಯುಲೇಶನ್ ನಿಯಂತ್ರಣಗಳು (Demo Controls)
+                <span className="text-sm font-bold text-[#A25B74] flex items-center space-x-1.5">
+                  <Radio className="w-4 h-4 text-[#B94A58] animate-pulse" />
+                  <span>{currentLanguage === 'kn' ? 'ಸಿಮ್ಯುಲೇಶನ್ ನಿಯಂತ್ರಣಗಳು (Demo Controls)' : currentLanguage === 'hi' ? 'सिमुलेशन नियंत्रण (Demo Controls)' : 'Simulation Controls (Demo Mode)'}</span>
                 </span>
-                <p className="text-xs text-navy-300 mt-0.5">
-                  ಸ್ಥಿತಿ ಮತ್ತು ನಕ್ಷೆಯ ಲೈವ್ ನವೀಕರಣಗಳನ್ನು ಪರೀಕ್ಷಿಸಿ
+                <p className="text-xs text-[#7A6670] mt-0.5">
+                  {currentLanguage === 'kn' ? 'ಸ್ಥಿತಿ ಮತ್ತು ನಕ್ಷೆಯ ಲೈವ್ ನವೀಕರಣಗಳನ್ನು ಪರೀಕ್ಷಿಸಿ' : currentLanguage === 'hi' ? 'स्थिति और मानचित्र के लाइव अपडेट्स जांचें' : 'Test live status transitions and route telemetry'}
                 </p>
               </div>
               <button
                 onClick={() => setAutoSimulate(!autoSimulate)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-decelerate active:scale-95 ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-decelerate active:scale-95 flex items-center space-x-1 ${
                   autoSimulate
                     ? 'bg-[#B94A58] text-white border-[#B94A58]/30 animate-pulse'
-                    : 'bg-navy-800 text-[#A25B74]-300 border-[#F0DDE2] hover:bg-navy-700'
+                    : 'bg-[#FDF6F5] text-[#A25B74] border-[#F0DDE2] hover:bg-[#F9ECEC]'
                 }`}
               >
-                {autoSimulate ? '⏸ ವಿರಾಮ' : '▶️ ಸ್ವಯಂ ಪ್ಲೇ'}
+                {autoSimulate ? (
+                  <>
+                    <Pause className="w-3 h-3" />
+                    <span>{currentLanguage === 'kn' ? 'ವಿರಾಮ' : currentLanguage === 'hi' ? 'रोकें' : 'Pause'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3 h-3" />
+                    <span>{currentLanguage === 'kn' ? 'ಸ್ವಯಂ ಪ್ಲೇ' : currentLanguage === 'hi' ? 'ऑटो प्ले' : 'Auto Play'}</span>
+                  </>
+                )}
               </button>
             </div>
 
             <div className="flex space-x-3 pt-1">
               <button
                 onClick={handleNextStep}
-                className="flex-1 bg-[#477A60] hover:bg-[#477A60]-hover text-white font-bold py-3.5 px-4 rounded-2xl shadow-touch text-xs flex items-center justify-center space-x-2 active:scale-95 transition-decelerate touch-manipulation"
+                className="flex-1 bg-[#A25B74] hover:bg-[#84455C] text-white font-bold py-3.5 px-4 rounded-2xl shadow-touch text-xs flex items-center justify-center space-x-2 active:scale-95 transition-decelerate touch-manipulation"
               >
                 <ChevronRight className="w-4 h-4" />
-                <span className="font-kannada">ಮುಂದಿನ ಹಂತಕ್ಕೆ ಸರಿಸಿ (Next Step)</span>
+                <span>{t('ambulance.demoAdvanceStep', currentLanguage)}</span>
               </button>
 
               <button
                 onClick={handleReset}
-                className="p-3.5 rounded-2xl bg-navy-800 text-navy-200 hover:text-white border border-[#F0DDE2] active:scale-95 transition-decelerate touch-manipulation"
-                title="ಮರುಹೊಂದಿಸಿ (Reset)"
+                className="p-3.5 rounded-2xl bg-[#FDF6F5] text-[#7A6670] hover:text-[#A25B74] border border-[#F0DDE2] active:scale-95 transition-decelerate touch-manipulation"
+                title={t('ambulance.demoReset', currentLanguage)}
               >
                 <RotateCcw className="w-4 h-4" />
               </button>

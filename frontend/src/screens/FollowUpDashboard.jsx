@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficiary }) {
+export default function FollowUpDashboard({
+  currentLanguage = 'kn', onStartVoiceVisit, onSelectBeneficiary }) {
   const [followups, setFollowups] = useState([]);
   const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'upcoming', 'missed', 'completed'
   const [searchQuery, setSearchQuery] = useState('');
@@ -214,7 +215,7 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
               <div className="flex items-center space-x-2 pt-3 border-t border-[#F0DDE2]">
                 <button
                   onClick={() => onStartVoiceVisit(item.beneficiary_id)}
-                  className="flex-1 bg-gradient-to-r from-primary to-cyan hover:from-primary-hover hover:to-cyan-hover text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-touch flex items-center justify-center space-x-1.5 active:scale-95 transition-decelerate"
+                  className="flex-1 bg-[#A25B74] hover:bg-[#84455C] text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-touch flex items-center justify-center space-x-1.5 active:scale-95 transition-decelerate"
                 >
                   <Mic className="w-3.5 h-3.5" />
                   <span className="font-kannada">ಧ್ವನಿ ಭೇಟಿ</span>

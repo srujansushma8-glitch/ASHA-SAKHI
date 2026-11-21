@@ -25,7 +25,8 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function BeneficiaryManagementScreen({ 
+export default function BeneficiaryManagementScreen({
+  currentLanguage = 'kn', 
   onStartVoiceVisit, 
   onBack,
   selectedBeneficiaryId = null,
@@ -110,7 +111,7 @@ export default function BeneficiaryManagementScreen({
       {/* 1. Header with Add Button */}
       <div className="bg-white rounded-3xl p-5 lg:p-6 border border-[#F0DDE2] shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-[#FDF6F5] text-cyan-700 flex items-center justify-center font-bold">
+          <div className="w-12 h-12 rounded-2xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center font-bold">
             <Users className="w-6 h-6" />
           </div>
           <div>
@@ -130,7 +131,7 @@ export default function BeneficiaryManagementScreen({
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center justify-center space-x-2 bg-gradient-to-r from-primary to-cyan hover:from-primary-hover hover:to-cyan-hover text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-touch active:scale-95 transition-decelerate touch-manipulation self-start sm:self-auto"
+          className="flex items-center justify-center space-x-2 bg-[#A25B74] hover:bg-[#84455C] text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-touch active:scale-95 transition-decelerate touch-manipulation self-start sm:self-auto"
         >
           <UserPlus className="w-4 h-4" />
           <span className="font-kannada text-sm">ಹೊಸ ಫಲಾನುಭವಿ ನೋಂದಣಿ</span>
@@ -174,7 +175,7 @@ export default function BeneficiaryManagementScreen({
                   ? cat.id === 'HIGH_RISK'
                     ? 'bg-emergency text-white shadow-emergency'
                     : 'bg-[#A25B74] text-white shadow-touch'
-                  : 'bg-[#FDF6F5] text-[#3B2A33] hover:bg-navy-100 border border-[#F0DDE2]'
+                  : 'bg-[#FDF6F5] text-[#3B2A33] hover:bg-[#FDF6F5] border border-[#F0DDE2]'
               }`}
             >
               {cat.label}
@@ -255,7 +256,7 @@ export default function BeneficiaryManagementScreen({
                   e.stopPropagation();
                   onStartVoiceVisit(b.id);
                 }}
-                className="text-[#A25B74] font-bold hover:text-cyan-600 flex items-center space-x-1"
+                className="text-[#A25B74] font-bold hover:text-[#A25B74] flex items-center space-x-1"
               >
                 <Mic className="w-3.5 h-3.5" />
                 <span>ಭೇಟಿ ಪ್ರಾರಂಭಿಸಿ</span>
@@ -267,7 +268,7 @@ export default function BeneficiaryManagementScreen({
 
       {/* 4. Beneficiary Profile Modal / Drawer with History */}
       {selectedProfile && (
-        <div className="fixed inset-0 z-50 bg-navy-950/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-[#3B2A33]/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white w-full max-w-lg rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-5 max-h-[88vh] overflow-y-auto">
             <div className="flex items-start justify-between border-b border-[#F0DDE2] pb-3">
               <div>
@@ -349,7 +350,7 @@ export default function BeneficiaryManagementScreen({
                 setSelectedProfile(null);
                 if (onStartVoiceVisit) onStartVoiceVisit(id);
               }}
-              className="w-full bg-gradient-to-r from-primary to-cyan hover:from-primary-hover hover:to-cyan-hover text-white text-sm font-bold py-4 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 active:scale-95 transition-decelerate touch-manipulation"
+              className="w-full bg-[#A25B74] hover:bg-[#84455C] text-white text-sm font-bold py-4 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 active:scale-95 transition-decelerate touch-manipulation"
             >
               <Mic className="w-5 h-5" />
               <span className="font-kannada">ಈ ಫಲಾನುಭವಿಗೆ ಧ್ವನಿ ಭೇಟಿ ಪ್ರಾರಂಭಿಸಿ (Start Voice Visit)</span>
@@ -360,7 +361,7 @@ export default function BeneficiaryManagementScreen({
 
       {/* 5. Add Beneficiary Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-navy-950/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-[#3B2A33]/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <form
             onSubmit={handleAddSubmit}
             className="bg-white w-full max-w-lg rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto"

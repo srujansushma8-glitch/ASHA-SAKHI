@@ -34,12 +34,14 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { ttsService } from '../services/ttsService';
+import { t, formatLocalizedDate } from '../services/i18n';
 
 export default function HomeDashboard({ 
   onStartRecording, 
   onSelectBeneficiary, 
   onNavigate, 
-  emergencyCount = 0 
+  emergencyCount = 0,
+  currentLanguage = 'kn'
 }) {
   const [stats, setStats] = useState({
     totalBeneficiaries: 48,
@@ -60,7 +62,11 @@ export default function HomeDashboard({
       setIsPlayingBriefing(false);
     } else {
       setIsPlayingBriefing(true);
-      const briefingText = 'ನಮಸ್ಕಾರ ಶಾರದಾ ಅವರೇ. ಇಂದಿನ ದಿನಚರಿ: 6 ಮನೆ ಭೇಟಿಗಳು ನಿಗದಿಯಾಗಿವೆ. ಮೀನಾಕ್ಷಿಯವರ ತೀವ್ರ ರಕ್ತಹೀನತೆ ತಪಾಸಣೆ ಅತ್ಯಂತ ಪ್ರಮುಖವಾಗಿದೆ. ಪೂಜಾ ಅವರ ಶಿಶುವಿಗೆ ಲಸಿಕೆ ಬಾಕಿ ಇದೆ. ನಿಮ್ಮ ಒಟ್ಟು ಪ್ರೋತ್ಸಾಹಧನ 6850 ರೂಪಾಯಿ ತಲುಪಿದೆ.';
+      const briefingText = currentLanguage === 'kn'
+        ? 'ನಮಸ್ಕಾರ ಶಾರದಾ ಅವರೇ. ಇಂದಿನ ದಿನಚರಿ: 6 ಮನೆ ಭೇಟಿಗಳು ನಿಗದಿಯಾಗಿವೆ. ಮೀನಾಕ್ಷಿಯವರ ತೀವ್ರ ರಕ್ತಹೀನತೆ ತಪಾಸಣೆ ಅತ್ಯಂತ ಪ್ರಮುಖವಾಗಿದೆ. ಪೂಜಾ ಅವರ ಶಿಶುವಿಗೆ ಲಸಿಕೆ ಬಾಕಿ ಇದೆ. ನಿಮ್ಮ ಒಟ್ಟು ಪ್ರೋತ್ಸಾಹಧನ 6850 ರೂಪಾಯಿ ತಲುಪಿದೆ.'
+        : currentLanguage === 'hi'
+        ? 'नमस्ते शारदा जी। आज की कार्यसूची: 6 गृह दौरे निर्धारित हैं। मीनाक्षी की गंभीर एनीमिया जांच सबसे महत्वपूर्ण है। पूजा के शिशु का टीकाकरण लंबित है। आपका कुल प्रोत्साहन 6850 रुपये हो गया है।'
+        : 'Hello Sharada. Today agenda: 6 home visits scheduled. Meenakshi severe anaemia checkup is critical. Pooja infant vaccination is due. Your total incentive reached 6850 rupees.';
       ttsService.speakText(briefingText, {
         onEnd: () => setIsPlayingBriefing(false)
       });
@@ -132,14 +138,14 @@ export default function HomeDashboard({
       <div className="bg-gradient-to-r from-white via-[#FFF9F7] to-[#FDF6F5] rounded-3xl p-6 lg:p-7 border border-[#F0DDE2] shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#FDF6F5] text-[#A25B74] text-xs font-bold border border-[#F0DDE2]">
-            <span className="w-2 h-2 rounded-full bg-cyan animate-pulse"></span>
-            <span>ರಾಷ್ಟ್ರೀಯ ಆರೋಗ್ಯ ಅಭಿಯಾನ (NHM) • ಕರ್ನಾಟಕ ಆರೋಗ್ಯ ಇಲಾಖೆ</span>
+            <span className="w-2 h-2 rounded-full bg-[#A25B74] animate-pulse"></span>
+            <span>{t("common.department", currentLanguage)}</span>
           </div>
-          <h1 className="text-2xl lg:text-3xl font-bold font-kannada text-[#3B2A33] leading-tight">
-            ನಮಸ್ಕಾರ, ಶಾರದಾ ಬಾಯಿ!
+          <h1 className="text-2xl lg:text-3xl font-bold font-serif text-[#3B2A33] leading-tight">
+            {t("dashboard.greeting", currentLanguage)}
           </h1>
           <p className="text-xs text-[#7A6670] font-medium">
-            ಆಶಾ ಕಾರ್ಯಕರ್ತೆ ದಿನಚರಿ (ASHA SAKHI Healthcare Field Register) • ಮಂಡ್ಯ PHC
+            {t("dashboard.roleDesc", currentLanguage)}
           </p>
         </div>
 
@@ -174,7 +180,7 @@ export default function HomeDashboard({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <button
           onClick={() => onStartRecording()}
-          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-[#F0DDE2] shadow-sm hover:shadow-md hover:border-primary transition-all flex flex-col items-center text-center group active:scale-95"
+          className="p-3.5 rounded-2xl bg-white  border border-[#F0DDE2] shadow-sm hover:shadow-md hover:border-primary transition-all flex flex-col items-center text-center group active:scale-95"
         >
           <div className="w-10 h-10 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center mb-2 group-hover:bg-[#A25B74] group-hover:text-white transition-colors">
             <Mic className="w-5 h-5" />
@@ -185,9 +191,9 @@ export default function HomeDashboard({
 
         <button
           onClick={() => onNavigate('route')}
-          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-[#F0DDE2]/70 dark:border-navy-800 shadow-sm hover:shadow-md hover:border-cyan-500 transition-all flex flex-col items-center text-center group active:scale-95"
+          className="p-3.5 rounded-2xl bg-white  border border-[#F0DDE2]/70  shadow-sm hover:shadow-md hover:border-[#A25B74] transition-all flex flex-col items-center text-center group active:scale-95"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center mb-2 group-hover:bg-cyan group-hover:text-white transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center mb-2 group-hover:bg-[#A25B74] group-hover:text-white transition-colors">
             <Navigation className="w-5 h-5" />
           </div>
           <span className="text-xs font-bold text-[#3B2A33] dark:text-white font-kannada">ಮನೆ ಮಾರ್ಗ</span>
@@ -196,7 +202,7 @@ export default function HomeDashboard({
 
         <button
           onClick={() => onNavigate('maternal')}
-          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-[#F0DDE2]/70 dark:border-navy-800 shadow-sm hover:shadow-md hover:border-pink-400 transition-all flex flex-col items-center text-center group active:scale-95"
+          className="p-3.5 rounded-2xl bg-white  border border-[#F0DDE2]/70  shadow-sm hover:shadow-md hover:border-pink-400 transition-all flex flex-col items-center text-center group active:scale-95"
         >
           <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center mb-2 group-hover:bg-pink-500 group-hover:text-white transition-colors">
             <Baby className="w-5 h-5" />
@@ -207,7 +213,7 @@ export default function HomeDashboard({
 
         <button
           onClick={() => onNavigate('incentives')}
-          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-[#F0DDE2]/70 dark:border-navy-800 shadow-sm hover:shadow-md hover:border-saffron transition-all flex flex-col items-center text-center group active:scale-95"
+          className="p-3.5 rounded-2xl bg-white  border border-[#F0DDE2]/70  shadow-sm hover:shadow-md hover:border-saffron transition-all flex flex-col items-center text-center group active:scale-95"
         >
           <div className="w-10 h-10 rounded-xl bg-saffron/10 text-saffron-600 flex items-center justify-center mb-2 group-hover:bg-saffron group-hover:text-white transition-colors">
             <IndianRupee className="w-5 h-5" />
@@ -218,7 +224,7 @@ export default function HomeDashboard({
 
         <button
           onClick={() => onNavigate('beneficiaries')}
-          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-[#F0DDE2]/70 dark:border-navy-800 shadow-sm hover:shadow-md hover:border-healthcare transition-all flex flex-col items-center text-center group active:scale-95"
+          className="p-3.5 rounded-2xl bg-white  border border-[#F0DDE2]/70  shadow-sm hover:shadow-md hover:border-healthcare transition-all flex flex-col items-center text-center group active:scale-95"
         >
           <div className="w-10 h-10 rounded-xl bg-[#477A60]/10 text-[#477A60] flex items-center justify-center mb-2 group-hover:bg-[#477A60] group-hover:text-white transition-colors">
             <Users className="w-5 h-5" />
@@ -229,7 +235,7 @@ export default function HomeDashboard({
 
         <button
           onClick={() => onNavigate('emergency')}
-          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-emergency/30 shadow-sm hover:shadow-md hover:border-emergency transition-all flex flex-col items-center text-center group active:scale-95"
+          className="p-3.5 rounded-2xl bg-white  border border-emergency/30 shadow-sm hover:shadow-md hover:border-emergency transition-all flex flex-col items-center text-center group active:scale-95"
         >
           <div className="w-10 h-10 rounded-xl bg-[#B94A58]/10 text-[#B94A58] flex items-center justify-center mb-2 group-hover:bg-[#B94A58] group-hover:text-white transition-colors">
             <AlertTriangle className="w-5 h-5" />
@@ -242,16 +248,16 @@ export default function HomeDashboard({
       {/* ============================================================ */}
       {/* 2. MAIN HERO SECTION: PREMIUM AI VOICE ASSISTANT CARD        */}
       {/* ============================================================ */}
-      <div className="bg-gradient-to-br from-navy-900 via-navy-800 to-primary text-white rounded-3xl p-6 lg:p-8 shadow-card relative overflow-hidden border border-cyan-500/20">
+      <div className="bg-gradient-to-br from-[#A25B74] via-[#84455C] to-[#5C2B3E] text-white rounded-3xl p-6 lg:p-8 shadow-card relative overflow-hidden border border-[#E9B9C8]/30">
         {/* Subtle Decorative Background Wave */}
-        <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-cyan/10 blur-3xl pointer-events-none"></div>
+        <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
           {/* Left: AI Status & Kannada Introduction */}
           <div className="lg:col-span-8 space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-cyan/20 text-[#A25B74]-300 text-xs font-bold border border-cyan/30">
-                <Sparkles className="w-3.5 h-3.5 text-[#A25B74]" />
+              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-bold border border-white/20">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
                 <span>AI4Bharat Indic-Transcribe & Indic-Speak</span>
               </div>
               <span className="px-2.5 py-1 rounded-full bg-[#477A60]/20 text-emerald-300 text-xs font-mono font-bold border border-healthcare/30">
@@ -266,14 +272,14 @@ export default function HomeDashboard({
               <h2 className="text-2xl lg:text-3xl font-bold font-kannada leading-tight text-white">
                 ಧ್ವನಿ ಮೂಲಕ ಹೊಸ ಮನೆ ಭೇಟಿ ದಾಖಲಿಸಿ
               </h2>
-              <p className="text-sm text-[#A25B74]-100/90 font-normal mt-1.5 max-w-2xl leading-relaxed">
+              <p className="text-sm text-white/90 font-normal mt-1.5 max-w-2xl leading-relaxed">
                 ಕನ್ನಡ ಭಾಷೆಯಲ್ಲಿ ಸ್ವಾಭಾವಿಕವಾಗಿ ಮಾತನಾಡಿ. ತಾಯಿ-ಮಗು ಆರೈಕೆ, ತೂಕ, ಲಸಿಕೆ (UIP), IFA ಮಾತ್ರೆಗಳು ಮತ್ತು ತುರ್ತು ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳನ್ನು ಕೃತಕ ಬುದ್ಧಿಮತ್ತೆ ತಕ್ಷಣವೇ ಗುರುತಿಸಿ ದಾಖಲಿಸುತ್ತದೆ.
               </p>
             </div>
 
             {/* Quick Evaluation Scenario Chips */}
             <div className="pt-2">
-              <span className="text-[10px] uppercase font-mono tracking-wider text-[#A25B74]-300 font-bold block mb-2">
+              <span className="text-[10px] uppercase font-mono tracking-wider text-white/80 font-bold block mb-2">
                 ಪರೀಕ್ಷಾ ಸನ್ನಿವೇಶಗಳು (Quick Evaluation Presets):
               </span>
               <div className="flex flex-wrap gap-2">
@@ -304,14 +310,14 @@ export default function HomeDashboard({
             {/* Circular Pulsing Mic with Animated Cyan Sound Waves */}
             <div className="relative flex items-center justify-center">
               {/* Outer Cyan Ripple */}
-              <div className="absolute w-36 h-36 rounded-full bg-cyan/20 animate-ping pointer-events-none"></div>
+              <div className="absolute w-36 h-36 rounded-full bg-white/20 animate-ping pointer-events-none"></div>
               {/* Middle Cyan Ring */}
-              <div className="absolute w-28 h-28 rounded-full bg-cyan/30 animate-pulse pointer-events-none"></div>
+              <div className="absolute w-28 h-28 rounded-full bg-white/30 animate-pulse pointer-events-none"></div>
               
               {/* Center Mic Button */}
               <button
                 onClick={() => onStartRecording()}
-                className="relative z-10 w-24 h-24 rounded-full bg-gradient-to-tr from-primary to-cyan text-white flex flex-col items-center justify-center shadow-cyan active:scale-95 transition-decelerate border-4 border-white/20 hover:scale-105"
+                className="relative z-10 w-24 h-24 rounded-full bg-white text-[#A25B74] flex flex-col items-center justify-center shadow-touch active:scale-95 transition-decelerate border-4 border-white/20 hover:scale-105"
                 title="ಧ್ವನಿ ಭೇಟಿ ಪ್ರಾರಂಭಿಸಿ"
               >
                 <Mic className="w-9 h-9" />
@@ -320,17 +326,17 @@ export default function HomeDashboard({
 
             {/* Simulated Animated Sound Wave Bars */}
             <div className="flex items-center justify-center space-x-1.5 h-6">
-              <span className="w-1 bg-cyan rounded-full animate-soundwave" style={{ animationDelay: '0.1s' }}></span>
-              <span className="w-1 bg-cyan-300 rounded-full animate-soundwave" style={{ animationDelay: '0.3s' }}></span>
-              <span className="w-1 bg-[#A25B74] rounded-full animate-soundwave" style={{ animationDelay: '0.2s' }}></span>
-              <span className="w-1 bg-cyan rounded-full animate-soundwave" style={{ animationDelay: '0.5s' }}></span>
-              <span className="w-1 bg-cyan-300 rounded-full animate-soundwave" style={{ animationDelay: '0.4s' }}></span>
+              <span className="w-1 bg-white rounded-full animate-soundwave" style={{ animationDelay: '0.1s' }}></span>
+              <span className="w-1 bg-[#E9B9C8] rounded-full animate-soundwave" style={{ animationDelay: '0.3s' }}></span>
+              <span className="w-1 bg-[#FDF6F5] rounded-full animate-soundwave" style={{ animationDelay: '0.2s' }}></span>
+              <span className="w-1 bg-white rounded-full animate-soundwave" style={{ animationDelay: '0.5s' }}></span>
+              <span className="w-1 bg-[#E9B9C8] rounded-full animate-soundwave" style={{ animationDelay: '0.4s' }}></span>
             </div>
 
             {/* Start Button */}
             <button
               onClick={() => onStartRecording()}
-              className="w-full bg-gradient-to-r from-cyan to-primary hover:from-cyan-hover hover:to-primary-hover text-white font-bold py-3.5 px-6 rounded-2xl shadow-cyan flex items-center justify-center space-x-2.5 text-sm active:scale-95 transition-decelerate"
+              className="w-full bg-white hover:bg-[#FDF6F5] text-[#A25B74] font-bold py-3.5 px-6 rounded-2xl shadow-touch flex items-center justify-center space-x-2.5 text-sm active:scale-95 transition-decelerate"
             >
               <Mic className="w-4 h-4" />
               <span className="font-kannada text-base">ಧ್ವನಿ ಭೇಟಿ ಪ್ರಾರಂಭಿಸಿ (Start Voice Visit)</span>
@@ -349,7 +355,7 @@ export default function HomeDashboard({
           className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card hover:shadow-card-hover hover:border-primary transition-decelerate cursor-pointer active:scale-[0.98] group"
         >
           <div className="flex items-center justify-between">
-            <div className="w-12 h-12 rounded-2xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center group-hover:bg-cyan group-hover:text-white transition-decelerate">
+            <div className="w-12 h-12 rounded-2xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center group-hover:bg-[#A25B74] group-hover:text-white transition-decelerate">
               <Users className="w-6 h-6" />
             </div>
             <span className="text-[11px] font-bold text-[#477A60] font-mono bg-[#E8F7F1] px-2.5 py-1 rounded-full border border-[#C8EEDD] flex items-center space-x-1">
@@ -437,21 +443,21 @@ export default function HomeDashboard({
           className={`p-5 rounded-3xl border shadow-card transition-decelerate cursor-pointer active:scale-[0.98] group ${
             stats.emergencyReferrals > 0 
               ? 'bg-[#FCF1F1]/70 border-emergency-300 hover:border-emergency' 
-              : 'bg-white border-[#F0DDE2] hover:border-navy-400'
+              : 'bg-white border-[#F0DDE2] hover:border-[#A25B74]'
           }`}
         >
           <div className="flex items-center justify-between">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-decelerate ${
               stats.emergencyReferrals > 0 
                 ? 'bg-[#B94A58] text-white animate-pulse shadow-emergency' 
-                : 'bg-navy-100 text-[#7A6670]'
+                : 'bg-[#FDF6F5] text-[#7A6670]'
             }`}>
               <AlertTriangle className="w-6 h-6" />
             </div>
             <span className={`text-[11px] font-bold font-mono px-2.5 py-1 rounded-full border ${
               stats.emergencyReferrals > 0 
                 ? 'bg-[#B94A58] text-white border-emergency' 
-                : 'bg-navy-100 text-[#3B2A33] border-[#F0DDE2]'
+                : 'bg-[#FDF6F5] text-[#3B2A33] border-[#F0DDE2]'
             }`}>
               108 Alert
             </span>
@@ -700,7 +706,7 @@ export default function HomeDashboard({
                   <th className="pb-3 font-semibold text-right">ಕ್ರಮ (Action)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-navy-50">
+              <tbody className="divide-y divide-[#F0DDE2]">
                 {recentVisits.map((visit) => (
                   <tr key={visit.id} className="hover:bg-[#FDF6F5] transition-decelerate">
                     <td className="py-3.5 pr-2">

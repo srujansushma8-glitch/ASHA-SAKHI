@@ -27,7 +27,8 @@ import {
   Legend 
 } from 'recharts';
 
-export default function IncentivesReportScreen({ onBack }) {
+export default function IncentivesReportScreen({
+  currentLanguage = 'kn', onBack }) {
   const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'approved', 'under_review', 'pending'
   const [submittedToANM, setSubmittedToANM] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -190,7 +191,7 @@ export default function IncentivesReportScreen({ onBack }) {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleExportCSV}
-            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white  border border-[#F0DDE2] dark:border-[#F0DDE2] text-[#3B2A33]  text-xs font-bold hover:bg-navy-50 dark:hover:bg-navy-700 transition-all shadow-sm active:scale-95"
+            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white  border border-[#F0DDE2] dark:border-[#F0DDE2] text-[#3B2A33]  text-xs font-bold hover:bg-[#FDF6F5] transition-all shadow-sm active:scale-95"
           >
             <Download className="w-4 h-4 text-[#A25B74]" />
             <span>CSV ಡೌನ್‌ಲೋಡ್</span>
@@ -286,7 +287,7 @@ export default function IncentivesReportScreen({ onBack }) {
           <div className="text-2xl font-bold font-mono text-[#B88745] mt-2">
             ₹{potentialTotal.toLocaleString('en-IN')}
           </div>
-          <div className="w-full bg-navy-100  h-2 rounded-full mt-3 overflow-hidden">
+          <div className="w-full bg-[#FDF6F5]  h-2 rounded-full mt-3 overflow-hidden">
             <div 
               className="bg-gradient-to-r from-saffron to-healthcare h-full rounded-full transition-all"
               style={{ width: `${(totalEarned / potentialTotal) * 100}%` }}
@@ -354,7 +355,7 @@ export default function IncentivesReportScreen({ onBack }) {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex bg-navy-100  p-1 rounded-2xl text-xs font-bold">
+          <div className="flex bg-[#FDF6F5]  p-1 rounded-2xl text-xs font-bold">
             {[
               { id: 'all', label: 'ಎಲ್ಲಾ (All)' },
               { id: 'approved', label: 'ಅನುಮೋದಿತ (Approved)' },
@@ -366,7 +367,7 @@ export default function IncentivesReportScreen({ onBack }) {
                 onClick={() => setActiveFilter(f.id)}
                 className={`px-3 py-1.5 rounded-xl transition-all ${
                   activeFilter === f.id
-                    ? 'bg-white dark:bg-navy-700 text-[#A25B74] dark:text-cyan shadow-sm'
+                    ? 'bg-white text-[#A25B74] shadow-sm'
                     : 'text-[#7A6670]  hover:text-[#3B2A33]'
                 }`}
               >
@@ -390,9 +391,9 @@ export default function IncentivesReportScreen({ onBack }) {
                 <th className="py-3 px-4">ಪರಿಶೀಲಕರು</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-navy-100 dark:divide-navy-800 text-xs">
+            <tbody className="divide-y divide-[#F0DDE2] text-xs">
               {filteredClaims.map((claim) => (
-                <tr key={claim.id} className="hover:bg-navy-50/50 dark:hover:bg-navy-800/40 transition-colors">
+                <tr key={claim.id} className="hover:bg-[#FFF9F7] transition-colors">
                   <td className="py-3.5 px-4 font-mono font-bold text-[#7A6670] ">
                     {claim.id}
                   </td>
@@ -427,7 +428,7 @@ export default function IncentivesReportScreen({ onBack }) {
                       </span>
                     )}
                     {claim.status === 'pending' && (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-navy-100  text-[#7A6670]  text-[10px] font-bold">
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#FDF6F5]  text-[#7A6670]  text-[10px] font-bold">
                         <span>ಡ್ರಾಫ್ಟ್</span>
                       </span>
                     )}

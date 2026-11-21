@@ -24,7 +24,8 @@ import {
 import { INITIAL_BENEFICIARIES } from '../services/mockData';
 import { api } from '../services/api';
 
-export default function MaternalHealthScreen({ 
+export default function MaternalHealthScreen({
+  currentLanguage = 'kn', 
   onStartVoiceVisit, 
   onBack, 
   selectedBeneficiaryId = null 
@@ -127,7 +128,7 @@ export default function MaternalHealthScreen({
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
-            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-navy-100 active:scale-[0.98] transition-decelerate"
+            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-[0.98] transition-decelerate"
             title="ಹಿಂದೆ ಹೋಗಿ (Back)"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -173,7 +174,7 @@ export default function MaternalHealthScreen({
       </div>
 
       {/* 2. Top Hero Profile & Gestational Weeks Banner */}
-      <div className="bg-gradient-to-r from-navy-900 via-primary to-teal rounded-3xl p-6 lg:p-8 text-white shadow-card relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#A25B74] via-[#84455C] to-[#5C2B3E] rounded-3xl p-6 lg:p-8 text-white shadow-card relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-80 bg-white/5 rounded-l-full pointer-events-none"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
@@ -207,7 +208,7 @@ export default function MaternalHealthScreen({
                 {currentMother.name_kn || currentMother.name_en}
               </h2>
               <p className="text-xs text-white/80 font-medium mt-1 flex items-center">
-                <MapPin className="w-3.5 h-3.5 mr-1 text-cyan" />
+                <MapPin className="w-3.5 h-3.5 mr-1 text-white" />
                 {currentMother.village || 'Shivalli, Mandya PHC'} • ವಾರ್ಡ್ 3
               </p>
             </div>
@@ -216,7 +217,7 @@ export default function MaternalHealthScreen({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
               <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
                 <span className="text-[11px] text-white/70 block font-kannada">ಗರ್ಭಾವಸ್ಥೆ ವಾರ</span>
-                <span className="text-2xl font-bold font-mono text-cyan">{gestationalWeeks} ವಾರಗಳು</span>
+                <span className="text-2xl font-bold font-mono text-white">{gestationalWeeks} ವಾರಗಳು</span>
               </div>
               <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
                 <span className="text-[11px] text-white/70 block font-kannada">ತ್ರೈಮಾಸಿಕ (Trimester)</span>
@@ -299,7 +300,7 @@ export default function MaternalHealthScreen({
             <div className="text-2xl lg:text-3xl font-bold font-mono text-[#3B2A33]">
               {currentMother.weight || 56.5} <span className="text-xs font-normal text-[#C47A92]">kg</span>
             </div>
-            <span className="text-[11px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full bg-[#FDF6F5] text-cyan-700">
+            <span className="text-[11px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full bg-[#FDF6F5] text-white-700">
               ಪ್ರತಿ ತಿಂಗಳಿಗೆ ~1.5 kg ಏರಿಕೆ
             </span>
           </div>
@@ -359,7 +360,7 @@ export default function MaternalHealthScreen({
                       ? 'bg-[#477A60] text-white'
                       : step.status === 'due'
                       ? 'bg-warning text-white animate-pulse'
-                      : 'bg-navy-200 text-[#3B2A33]'
+                      : 'bg-[#FDF6F5] text-[#3B2A33] border border-[#F0DDE2]'
                   }`}>
                     {step.status === 'completed' ? '✓' : idx + 1}
                   </div>
@@ -390,7 +391,7 @@ export default function MaternalHealthScreen({
               </div>
               <div className="w-full bg-[#FDF6F5] rounded-full h-3 overflow-hidden border border-[#F0DDE2]">
                 <div 
-                  className="bg-gradient-to-r from-primary to-cyan h-full rounded-full transition-all duration-700" 
+                  className="bg-gradient-to-r from-[#A25B74] to-[#C47A92] h-full rounded-full transition-all duration-700" 
                   style={{ width: `${ifaCount}%` }}
                 ></div>
               </div>
@@ -447,7 +448,7 @@ export default function MaternalHealthScreen({
                   className={`p-3 rounded-2xl border transition-decelerate cursor-pointer flex items-center justify-between ${
                     checklist[item.key]
                       ? 'bg-[#FCF1F1] border-[#B94A58]/40 text-[#B94A58]'
-                      : 'bg-[#FDF6F5] border-[#F0DDE2] text-[#3B2A33] hover:bg-navy-50'
+                      : 'bg-[#FDF6F5] border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5]'
                   }`}
                 >
                   <div>
@@ -458,7 +459,7 @@ export default function MaternalHealthScreen({
                     type="checkbox"
                     checked={checklist[item.key]}
                     onChange={() => {}}
-                    className="w-4 h-4 text-[#B94A58] rounded border-navy-300 focus:ring-emergency"
+                    className="w-4 h-4 text-[#B94A58] rounded border-[#F0DDE2] focus:ring-emergency"
                   />
                 </div>
               ))}

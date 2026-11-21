@@ -7,44 +7,41 @@ import {
   AlertTriangle, 
   Square
 } from 'lucide-react';
+import { t } from '../services/i18n';
 
 export default function BottomNav({ 
   activeScreen, 
   setActiveScreen, 
   emergencyCount = 0,
-  isRecording = false
+  isRecording = false,
+  currentLanguage = 'kn'
 }) {
   const tabs = [
     {
       id: 'home',
-      label_kn: 'ಮುಖಪುಟ',
-      label_en: 'Home',
+      label: t('nav.dashboard', currentLanguage),
       icon: Home
     },
     {
       id: 'maternal',
-      label_kn: 'ತಾಯಿ ಆರೋಗ್ಯ',
-      label_en: 'Maternal',
+      label: t('nav.maternalHealth', currentLanguage),
       icon: Baby,
       isMaternal: true
     },
     {
       id: 'record',
-      label_kn: 'ಧ್ವನಿ ಭೇಟಿ',
-      label_en: 'Voice Visit',
+      label: t('nav.voiceVisit', currentLanguage),
       icon: Mic,
       isCenterAction: true
     },
     {
       id: 'beneficiaries',
-      label_kn: 'ಫಲಾನುಭವಿಗಳು',
-      label_en: 'Registry',
+      label: t('nav.beneficiaries', currentLanguage),
       icon: Users
     },
     {
       id: 'emergency',
-      label_kn: 'ತುರ್ತು 108',
-      label_en: 'Alerts',
+      label: t('nav.emergency', currentLanguage),
       icon: AlertTriangle,
       badge: emergencyCount
     }
@@ -82,10 +79,10 @@ export default function BottomNav({
                     <Mic className="w-6 h-6" />
                   )}
                 </button>
-                <span className={`text-[10px] font-bold font-kannada mt-0.5 ${
+                <span className={`text-[10px] font-bold mt-0.5 ${
                   isActive ? 'text-[#A25B74]' : 'text-[#7A6670]'
                 }`}>
-                  {isRecording ? 'ನಿಲ್ಲಿಸಿ' : tab.label_kn}
+                  {isRecording ? (currentLanguage === 'kn' ? 'ನಿಲ್ಲಿಸಿ' : currentLanguage === 'hi' ? 'रोकें' : 'Stop') : tab.label}
                 </span>
               </div>
             );
@@ -96,7 +93,7 @@ export default function BottomNav({
             <button
               key={tab.id}
               onClick={() => setActiveScreen(tab.id)}
-              aria-label={tab.label_en}
+              aria-label={tab.label}
               className={`flex-1 py-1 px-1 flex flex-col items-center justify-center relative touch-manipulation active:scale-95 transition-all ${
                 isActive 
                   ? 'text-[#A25B74] font-bold' 
@@ -113,8 +110,8 @@ export default function BottomNav({
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-kannada leading-tight mt-1">
-                {tab.label_kn}
+              <span className="text-[10px] leading-tight mt-1 truncate max-w-[64px]">
+                {tab.label}
               </span>
             </button>
           );

@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function EmergencyAlertScreen({ onBack, alertData, onTrackAmbulance }) {
+export default function EmergencyAlertScreen({
+  currentLanguage = 'kn', onBack, alertData, onTrackAmbulance }) {
   const [alerts, setAlerts] = useState([]);
   const [selectedAlert, setSelectedAlert] = useState(alertData || null);
   const [actionStatusToast, setActionStatusToast] = useState('');
@@ -88,7 +89,7 @@ export default function EmergencyAlertScreen({ onBack, alertData, onTrackAmbulan
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
-            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-navy-100 active:scale-95 transition-decelerate"
+            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95 transition-decelerate"
             title="ಹಿಂದೆ / Back"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -130,7 +131,7 @@ export default function EmergencyAlertScreen({ onBack, alertData, onTrackAmbulan
                 <span className="bg-white/20 text-white text-xs font-bold px-3.5 py-1 rounded-full uppercase tracking-wider border border-white/30">
                   ತುರ್ತು ರೆಫರಲ್ (Emergency Referral)
                 </span>
-                <span className="text-xs font-mono font-bold bg-navy-950/40 px-3 py-1 rounded-xl">
+                <span className="text-xs font-mono font-bold bg-[#3B2A33]/30 px-3 py-1 rounded-xl">
                   ID: {selectedAlert.beneficiary_id}
                 </span>
               </div>
@@ -187,7 +188,7 @@ export default function EmergencyAlertScreen({ onBack, alertData, onTrackAmbulan
               </div>
 
               {/* Referral Status Bar */}
-              <div className="bg-navy-950/40 rounded-2xl p-4 border border-white/20 flex items-center justify-between">
+              <div className="bg-[#3B2A33]/30 rounded-2xl p-4 border border-white/20 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <Clock className="w-5 h-5 text-[#B94A58]-100" />
                   <div>
@@ -242,7 +243,7 @@ export default function EmergencyAlertScreen({ onBack, alertData, onTrackAmbulan
           <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
             <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-3">
               <div className="flex items-center space-x-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#FDF6F5] text-cyan-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center">
                   <Ambulance className="w-5 h-5" />
                 </div>
                 <div>
@@ -314,9 +315,9 @@ export default function EmergencyAlertScreen({ onBack, alertData, onTrackAmbulan
             {/* Open Full Map Tracking CTA */}
             <button
               onClick={() => onTrackAmbulance && onTrackAmbulance(selectedAlert?.id)}
-              className="w-full bg-[#FDF6F5] hover:bg-cyan-100 text-[#A25B74] font-bold py-3.5 px-4 rounded-2xl shadow-subtle border border-[#F0DDE2] text-xs flex items-center justify-center space-x-2 active:scale-95 transition-decelerate"
+              className="w-full bg-[#FDF6F5] hover:bg-[#FDF6F5] text-[#A25B74] font-bold py-3.5 px-4 rounded-2xl shadow-subtle border border-[#F0DDE2] text-xs flex items-center justify-center space-x-2 active:scale-95 transition-decelerate"
             >
-              <Navigation className="w-4 h-4 text-cyan-700" />
+              <Navigation className="w-4 h-4 text-[#A25B74]" />
               <span className="font-kannada">ಪೂರ್ಣ ಜಿಪಿಎಸ್ ನಕ್ಷೆ ವೀಕ್ಷಿಸಿ (Open Live Map)</span>
             </button>
           </div>

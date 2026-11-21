@@ -1,633 +1,802 @@
 /**
  * Comprehensive Trilingual Internationalization (i18n) for ASHA Sakhi
- * Supports English, Hindi (हिन्दी), and Kannada (ಕನ್ನಡ)
+ * Supports English (en), Hindi (hi), and Kannada (kn)
+ * Covers every screen, button, card, clinical metric, form, and error state.
  */
 
 export const TRANSLATIONS = {
   en: {
-    // Navigation
-    nav: {
-      brand: "ASHA Sakhi",
+    // Navigation & Common
+    common: {
+      appName: "ASHA Sakhi",
       tagline: "Digital Companion for Community Health",
-      features: "Features",
-      problem: "Why It Matters",
-      howItWorks: "How It Works",
-      impact: "Impact",
-      testimonials: "Stories",
-      faq: "FAQ",
-      launchApp: "Launch Web App",
-      signIn: "Worker Sign In",
-      backToLanding: "← Back to Website",
-      darkMode: "Dark Mode",
+      department: "National Health Mission • Karnataka Health Dept",
+      save: "Save Record",
+      saved: "Saved",
+      cancel: "Cancel",
+      close: "Close",
+      edit: "Edit",
+      delete: "Delete",
+      retry: "Retry",
+      back: "Back",
+      search: "Search...",
+      loading: "Loading...",
+      confirm: "Confirm",
+      verified: "Verified",
+      submit: "Submit",
+      accept: "Accept",
+      completed: "Completed",
+      pending: "Pending",
+      due: "Due",
+      overdue: "Overdue",
+      all: "All",
+      actions: "Actions",
+      status: "Status",
+      date: "Date",
+      time: "Time",
+      village: "Village",
+      phone: "Phone",
+      beneficiary: "Beneficiary",
+      age: "Age",
+      weight: "Weight",
+      risk: "Risk Level",
+      lowRisk: "Low Risk",
+      moderateRisk: "Moderate Risk",
+      highRisk: "High Risk",
+      emergency: "Emergency",
+      live: "Live",
+      simulated: "Simulated",
+      demoMode: "Demo Mode",
+      liveMode: "Live Backend",
+      syncOnline: "Online Synced",
+      syncOffline: "Offline Queue",
+      syncNow: "Sync Records",
       lightMode: "Light Mode",
+      darkMode: "Dark Mode"
     },
 
-    // Hero Section
-    hero: {
-      badge: "National Health Mission Compliant • 100% Offline Capable",
-      headlineLead: "Empowering India's Healthcare Heroes",
-      headlineHighlight: "at the Last Mile",
-      subtext: "ASHA Sakhi is an AI-powered, bilingual digital field register that automates household visits, maternal & child tracking, universal immunization schedules, and supervisor reporting for India's 1 million+ ASHA workers.",
-      ctaPrimary: "Launch Web App (Free Demo)",
-      ctaSecondary: "Explore Field Register",
-      trustText: "Trusted across 2,400+ village sub-centres in Karnataka, UP, and Maharashtra",
-      stats: {
-        villages: "2,400+ Villages",
-        workers: "12,800+ ASHA Heroes",
-        visits: "350,000+ Visits Logged",
-        satisfaction: "99.4% Immunization Rate",
-      }
+    nav: {
+      dashboard: "Dashboard",
+      voiceVisit: "AI Voice Assistant",
+      maternalHealth: "Maternal Health",
+      beneficiaries: "Beneficiary Directory",
+      route: "Household Route Map",
+      incentives: "Incentives & NHM Ledger",
+      followups: "Follow-ups & Reports",
+      emergency: "Emergency Alerts",
+      ambulance: "108 Ambulance Map",
+      publicPortal: "Public Portal & 3D Site",
+      switchRole: "Switch Role",
+      languages: "Languages (22)"
     },
 
-    // Problem & Solution
-    problem: {
-      badge: "The Field Reality vs The Digital Leap",
-      title: "From 12 Heavy Paper Registers to One Voice-First Companion",
-      subtitle: "Every day, an ASHA worker walks 10+ kilometres to care for 1,000 villagers while manually maintaining complex paper registries.",
-      before: {
-        title: "The Paper Burden",
-        item1: "12+ heavy physical registers to carry across dirt tracks in the heat.",
-        item2: "Frequent missed vaccination dates due to complex handwritten schedules.",
-        item3: "Critical maternal danger signs delayed in transit with no rapid ambulance link.",
-        item4: "End-of-month stress spending 4 days calculating government incentive claims.",
-      },
-      after: {
-        title: "With ASHA Sakhi",
-        item1: "Natural Kannada/Hindi voice notes instantly structured into digital cards.",
-        item2: "Automated Universal Immunization alerts with zero missed infant doses.",
-        item3: "Real-time MoHFW danger sign detection with 108 ambulance dispatch simulation.",
-        item4: "One-click transparent incentive ledger with JSY/PMSMA payment tallies.",
-      }
+    // Main Dashboard
+    dashboard: {
+      greeting: "Hello, Sharada Bai!",
+      roleDesc: "ASHA Field Leader Register • Mandya PHC (Sector 4)",
+      audioBriefingStart: "Listen Audio Briefing",
+      audioBriefingStop: "Stop Audio Briefing",
+      statBeneficiaries: "Total Beneficiaries",
+      statVisitsToday: "Visits Scheduled Today",
+      statFollowupsDue: "Follow-ups Due",
+      statEmergencies: "Emergency Referrals",
+      maternalOverview: "Maternal Healthcare Overview",
+      maternalSubtext: "14 Enrolled Pregnant Mothers & Risk Cohorts",
+      riskDistribution: "Gestational Risk Distribution",
+      trimesterProgress: "Trimester Progress",
+      trimester1: "1st Trimester (1-12w)",
+      trimester2: "2nd Trimester (13-27w)",
+      trimester3: "3rd Trimester (28-40w)",
+      immunizationOverview: "Universal Child Immunization (0-1 yr)",
+      immunizationSubtext: "22 Infants Enrolled in Shivalli Sub-centre",
+      recentVisits: "Recent Completed Visits",
+      recentVisitsSubtext: "Logged via multilingual AI speech recognition",
+      startVisitBtn: "Start Visit",
+      todaysTasks: "Today's Critical Tasks",
+      portalRequests: "Community Visit Requests",
+      portalRequestsSubtext: "Requests from public portal",
+      noPendingRequests: "No pending visit requests",
+      acceptRequest: "Accept & Schedule",
+      ambulanceWidgetTitle: "108 Ambulance Telemetry",
+      ambulanceWidgetSubtext: "Live GPS Vehicle Dispatch",
+      openAmbulanceMap: "Open Interactive Map",
+      helplinesTitle: "Emergency Helplines",
+      ambulance108: "108 Ambulance Emergency",
+      health104: "104 Health Advice Line",
+      women181: "181 Women's Helpline",
+      callNow: "Call Now"
     },
 
-    // Features Bento Grid
-    features: {
-      badge: "Engineered for Rural Health",
-      title: "Built for Hands That Care",
-      subtitle: "High-contrast clinical workflows designed for community smartphones, poor connectivity, and rapid field execution.",
-      cards: [
-        {
-          id: "voice",
-          title: "AI4Bharat Voice Visit Logging",
-          desc: "Speak naturally in Kannada or Hindi with English medical terms. Indic-Transcribe structures weights, vitals, and notes automatically.",
-          tag: "AI Powered"
-        },
-        {
-          id: "maternal",
-          title: "Maternal & Child Tracking",
-          desc: "Complete 4-ANC protocol tracking, PMSMA high-risk pregnancy screening, and Hb trajectory monitoring to prevent maternal mortality.",
-          tag: "Clinical Care"
-        },
-        {
-          id: "immunization",
-          title: "Universal Immunization Alerts",
-          desc: "Automated UIP schedules from birth BCG to 9-month Measles-Rubella with color-coded overdue warnings and village cohort lists.",
-          tag: "Zero Missed Doses"
-        },
-        {
-          id: "offline",
-          title: "100% Offline-First SQLite",
-          desc: "Capture records without mobile internet in deep rural forest areas. Automatically synchronizes when connectivity is detected.",
-          tag: "No Internet Needed"
-        },
-        {
-          id: "incentives",
-          title: "Transparent Incentive Ledger",
-          desc: "Live rupee counter for every completed home visit, institutional delivery link (JSY), and immunization round. Download monthly PDF claims.",
-          tag: "Fair Compensation"
-        },
-        {
-          id: "ambulance",
-          title: "Emergency 108 Dispatch Simulator",
-          desc: "Immediate clinical danger-sign alerts with simulated 108 ambulance GPS routing, ETA countdowns, and direct medical officer calls.",
-          tag: "Life Saving"
-        }
-      ]
+    // Maternal Health Module
+    maternal: {
+      title: "Maternal Health & ANC Tracking",
+      subtitle: "Pregnancy monitor, vital signs, IFA compliance & danger signs",
+      mothersDirectory: "Enrolled Pregnant Mothers",
+      gestationalAge: "Gestational Age",
+      weeks: "weeks",
+      edd: "Expected Delivery Date (EDD)",
+      vitalsTitle: "Clinical Vital Signs",
+      bloodPressure: "Blood Pressure",
+      hemoglobin: "Hemoglobin (Hb)",
+      fetalHeartRate: "Fetal Heart Rate",
+      nutritionTitle: "Nutrition & Supplements (Poshan Abhiyaan)",
+      ifaTablets: "Iron Folic Acid (IFA) Tablets Given",
+      calciumCompliance: "Calcium Compliance",
+      ancVisits: "Antenatal Care (ANC) Visits",
+      anc1: "ANC-1 (1st Trimester)",
+      anc2: "ANC-2 (24-26 weeks)",
+      anc3: "ANC-3 (32 weeks)",
+      anc4: "ANC-4 (36 weeks)",
+      dangerSignsTitle: "Maternal Danger Signs Checklist (MoHFW)",
+      severeHeadache: "Severe headache / dizziness",
+      blurredVision: "Blurred or spotty vision",
+      vaginalBleeding: "Vaginal bleeding or fluid leaking",
+      reducedMovement: "Reduced fetal movement",
+      facialEdema: "Swelling in face / hands (Edema)",
+      highFever: "High fever / chills",
+      dangerSignDetected: "Danger Sign Detected! Immediate referral required.",
+      triggerReferralBtn: "Refer to PHC / Hospital (108)"
     },
 
-    // How It Works
-    howItWorks: {
-      badge: "Simple 3-Step Routine",
-      title: "How ASHA Sakhi Works in the Field",
-      subtitle: "No complex typing. Designed to be learned in under 5 minutes.",
-      steps: [
-        {
-          num: "01",
-          title: "Tap Mic & Speak Naturally",
-          desc: "During the home visit, tap the large microphone button and describe the mother or child's condition in your mother tongue.",
-        },
-        {
-          num: "02",
-          title: "AI Structures the Clinical Chart",
-          desc: "AI4Bharat parses weight, vaccines, and notes. If a maternal danger sign is detected, an instant referral directive is surfaced.",
-        },
-        {
-          num: "03",
-          title: "Listen to Voice Readback & Confirm",
-          desc: "Indic-Speak reads back the summary in Kannada/Hindi. Confirm with one tap or correct any vital using your voice.",
-        }
-      ]
+    // Child Immunization Module
+    immunization: {
+      title: "Universal Immunization Tracker",
+      subtitle: "UIP immunization schedule from Birth to 9 Months",
+      vaccineSchedule: "Vaccine Schedule",
+      birthDoses: "Birth (BCG, OPV-0, Hep-B)",
+      weeks6: "6 Weeks (OPV-1, Pentavalent-1, Rota-1, fIPV-1, PCV-1)",
+      weeks10: "10 Weeks (OPV-2, Pentavalent-2, Rota-2)",
+      weeks14: "14 Weeks (OPV-3, Pentavalent-3, Rota-3, fIPV-2, PCV-2)",
+      months9: "9 Months (MR-1, JE-1, Vit-A 1st Dose)",
+      markVaccinated: "Mark Vaccinated",
+      dueToday: "Due Today",
+      upcomingThisWeek: "Upcoming This Week"
     },
 
-    // Impact Counters
-    impact: {
-      badge: "Measurable Field Impact",
-      title: "Transforming Last-Mile Healthcare Delivery",
-      villagesTitle: "Rural Villages Covered",
-      workersTitle: "Active ASHA Workers",
-      visitsTitle: "Home Visits Logged",
-      incentivesTitle: "Incentives Tracked (₹)",
+    // Ambulance & Emergency Assistance
+    ambulance: {
+      title: "108 Emergency Ambulance Live Tracking",
+      subtitle: "Real-time vehicle telemetry, route navigation & driver communication",
+      disclaimerTitle: "TRAINING & EVALUATION SIMULATION ONLY",
+      disclaimerText: "This is a demonstration GPS simulation. No actual 108 ambulance has been dispatched to emergency services.",
+      requestId: "Ambulance Request ID",
+      currentStatus: "Current Dispatch Status",
+      requested: "Requested",
+      dispatched: "Dispatched",
+      onTheWay: "On the Way",
+      arrived: "Arrived",
+      completed: "Completed",
+      eta: "Estimated Arrival Time",
+      distanceRemaining: "Distance Remaining",
+      speed: "Current Speed",
+      lastUpdate: "Last GPS Telemetry Update",
+      patientLocation: "Patient Pickup Location",
+      hospitalLocation: "Hospital / PHC Destination",
+      driverName: "Driver Name",
+      driverPhone: "Driver Contact",
+      vehicleNumber: "Vehicle Number",
+      emtStaff: "Emergency Medical Tech",
+      recenterMap: "Recenter on Ambulance",
+      recenterPatient: "Recenter on Patient",
+      fitBounds: "View Entire Route",
+      demoAdvanceStep: "Advance Simulation Step",
+      demoReset: "Reset Simulation",
+      autoSimulate: "Auto Step (3.5s)",
+      callingDriver: "Calling Driver...",
+      mapLoading: "Loading Google Maps...",
+      mapPermissionDenied: "Location permission denied. Showing default Mandya Sector coordinates.",
+      mapApiError: "Google Maps API unavailable or key unconfigured. Rendering high-fidelity vector terrain map."
     },
 
-    // Testimonials
-    testimonials: {
-      badge: "Voices from the Frontlines",
-      title: "Loved by Workers, Trusted by Officers",
-      quotes: [
-        {
-          quote: "Earlier I spent whole Sundays writing duplicate registers. Now with ASHA Sakhi, I speak during my visit in Kannada, and my monthly report is ready in seconds.",
-          name: "Sharada Bai",
-          role: "Senior ASHA Worker",
-          location: "Mandya District, Karnataka",
-          badge: "ASHA Hero"
-        },
-        {
-          quote: "The automated immunization list ensures no child in Keregodu misses their Pentavalent booster. It is a true companion for community health.",
-          name: "Sunitha Ramesh",
-          role: "ASHA Worker (7 Years Service)",
-          location: "Shivalli Sub-Centre",
-          badge: "Field Champion"
-        },
-        {
-          quote: "From a Medical Officer perspective, having real-time alerts for pre-eclampsia and danger signs saves lives before complications escalate.",
-          name: "Dr. R. Manjunath",
-          role: "Primary Health Centre Medical Officer",
-          location: "Mandya Sector 4",
-          badge: "Health Officer"
-        }
-      ]
+    // AI Voice Assistant Module
+    voice: {
+      title: "Multilingual AI Voice Assistant",
+      subtitle: "AI4Bharat Indic-Transcribe ASR & Indic-Speak TTS",
+      readyToRecord: "Ready to Record",
+      recordingInProgress: "Listening... Speak naturally in your language",
+      processingAudio: "Processing audio windows with AI4Bharat...",
+      startRecordingBtn: "Start Voice Visit",
+      stopRecordingBtn: "Stop Recording",
+      retryBtn: "Restart Session",
+      listenAudioBtn: "Play Recording",
+      extractedCardTitle: "Structured Clinical Data Extracted",
+      kannadaReadback: "Spoken Confirmation Readback",
+      listenReadbackBtn: "Listen Readback",
+      evaluationPresets: "Evaluation Presets for Judges",
+      saveVisitBtn: "Commit Record to SQLite",
+      dangerAlertTitle: "Clinical Danger Alert Triggered!"
     },
 
-    // Partners & Security
-    partners: {
-      badge: "Governance & Data Protection",
-      title: "Compliant with National Digital Health Standards",
-      desc: "Built in adherence to ABDM (Ayushman Bharat Digital Mission) principles, end-to-end local encryption, and strict consent protocols.",
-      badges: ["National Health Mission", "AI4Bharat IIT Madras", "MoHFW Guidelines", "ABDM FHIR Ready", "100% Data Sovereignty"]
+    // Beneficiary Directory
+    beneficiaries: {
+      title: "Beneficiary Community Directory",
+      subtitle: "Residents under Shivalli & Keregodu sub-centre jurisdiction",
+      searchPlaceholder: "Search by name, ID, phone, or village...",
+      addNewBtn: "Register New Beneficiary",
+      categoryAll: "All Beneficiaries",
+      categoryANC: "Pregnant Mothers (ANC)",
+      categoryPNC: "New Mothers (PNC)",
+      categoryChild: "Infants (0-1 yr)",
+      totalRegistered: "Total Registered",
+      viewProfile: "View Clinical Profile"
     },
 
-    // FAQ
-    faq: {
-      badge: "Got Questions?",
-      title: "Frequently Asked Questions",
-      items: [
-        {
-          q: "Does ASHA Sakhi require an active internet connection in remote villages?",
-          a: "No! ASHA Sakhi is 100% offline-first. All records, voice visits, and immunization schedules are securely saved on the smartphone's local database and automatically synchronize when network is restored."
-        },
-        {
-          q: "Can ASHA workers speak Kannada mixed with English medical words?",
-          a: "Yes! Powered by AI4Bharat Indic-Transcribe, the engine is explicitly optimized for code-mixed speech like 'ANC checkup', 'IFA goli', 'TT injection', and 'weight'."
-        },
-        {
-          q: "How does the incentive tracker calculate monthly payments?",
-          a: "The app maps each completed task to the official NHM incentive schedule (e.g., JSY institutional delivery ₹300, complete immunization ₹150, ANC visits ₹200) and exports verified supervisor summaries."
-        },
-        {
-          q: "Is patient health information secure and private?",
-          a: "Yes. All data adheres to the Digital Information Security in Healthcare Act (DISHA) and Ayushman Bharat Digital Mission (ABDM) standards with localized on-device encryption."
-        },
-        {
-          q: "Does the app replace existing government portal reporting?",
-          a: "ASHA Sakhi generates supervisor-ready formatted summaries that match the RCH portal and ANM monthly reporting registers, eliminating hours of manual cross-referencing."
-        }
-      ]
+    // Household Route Screen
+    route: {
+      title: "Village Household Route Planner",
+      subtitle: "Optimized daily GPS walking path for Mandya Sector 4",
+      aiPriority: "AI Priority (High Risk First)",
+      shortestDistance: "Shortest Distance",
+      optimizedBadge: "Route Optimized",
+      totalDistance: "Estimated Walking Distance: 3.8 km",
+      stopsCount: "5 Household Visits Scheduled",
+      offlineGpsBadge: "Offline GPS Caching Active",
+      lakeLandmark: "Shivalli Lake",
+      startVisitBtn: "Start Home Visit"
     },
 
-    // Footer
-    footer: {
-      tagline: "Empowering India's community healthcare workers with dignity, clarity, and voice technology.",
-      helplines: "Emergency Helplines: 108 (Ambulance) • 104 (Health Advice) • 112 (National Emergency)",
-      copyright: "© 2026 ASHA Sakhi. Built for India's Community Health Activists.",
-      links: ["Privacy Policy", "Terms of Service", "MoHFW Guidelines", "AI4Bharat Docs"]
+    // Incentives Screen
+    incentives: {
+      title: "ASHA Incentives & NHM Ledger",
+      subtitle: "JSY, Immunization, monthly earnings & supervisor approval ledger",
+      submitToANM: "Submit Batch to ANM Supervisor",
+      submittedSuccess: "Batch successfully submitted to ANM!",
+      totalEarnedMonth: "Total Earned This Month",
+      approvedANM: "Approved by ANM",
+      underReviewMO: "Under MO Review",
+      projectedTarget: "Target Potential",
+      monthlyTrend: "Monthly Earnings Trend",
+      claimsLedger: "Itemized Claims Ledger",
+      claimId: "Claim ID",
+      taskScheme: "Task / Health Scheme",
+      amount: "Incentive (₹)",
+      verifyCode: "Verification Code"
     }
   },
 
   hi: {
-    // Navigation
-    nav: {
-      brand: "आशा सखी",
-      tagline: "सामुदायिक स्वास्थ्य का डिजिटल साथी",
-      features: "विशेषताएं",
-      problem: "समाधान",
-      howItWorks: "कार्यप्रणाली",
-      impact: "प्रभाव",
-      testimonials: "अनुभव",
-      faq: "प्रश्नोत्तरी",
-      launchApp: "ऐप खोलें",
-      signIn: "कार्यकर्ता लॉगिन",
-      backToLanding: "← वेबसाइट पर वापस",
-      darkMode: "डार्क मोड",
+    // Navigation & Common
+    common: {
+      appName: "आशा सखी",
+      tagline: "सामुदायिक स्वास्थ्य के लिए डिजिटल साथी",
+      department: "राष्ट्रीय स्वास्थ्य मिशन • कर्नाटक स्वास्थ्य विभाग",
+      save: "रिकॉर्ड सहेजें",
+      saved: "सहेजा गया",
+      cancel: "रद्द करें",
+      close: "बंद करें",
+      edit: "संपादित करें",
+      delete: "हटाएं",
+      retry: "पुनः प्रयास",
+      back: "पीछे जाएं",
+      search: "खोजें...",
+      loading: "लोड हो रहा है...",
+      confirm: "पुष्टि करें",
+      verified: "सत्यापित",
+      submit: "जमा करें",
+      accept: "स्वीकार करें",
+      completed: "पूर्ण हुआ",
+      pending: "लंबित",
+      due: "बाकी",
+      overdue: "अतिदेय",
+      all: "सभी",
+      actions: "कार्रवाई",
+      status: "स्थिति",
+      date: "दिनांक",
+      time: "समय",
+      village: "गाँव",
+      phone: "फ़ोन",
+      beneficiary: "लाभार्थी",
+      age: "आयु",
+      weight: "वजन",
+      risk: "जोखिम स्तर",
+      lowRisk: "कम जोखिम",
+      moderateRisk: "मध्यम जोखिम",
+      highRisk: "उच्च जोखिम",
+      emergency: "आपातकाल",
+      live: "लाइव",
+      simulated: "सिम्युलेटेड",
+      demoMode: "डेमो मोड",
+      liveMode: "लाइव बैकएंड",
+      syncOnline: "ऑनलाइन सिंक",
+      syncOffline: "ऑफ़लाइन कतार",
+      syncNow: "रिकॉर्ड सिंक करें",
       lightMode: "लाइट मोड",
+      darkMode: "डार्क मोड"
     },
 
-    // Hero Section
-    hero: {
-      badge: "राष्ट्रीय स्वास्थ्य मिशन द्वारा समर्थित • 100% ऑफलाइन कार्यक्षम",
-      headlineLead: "अंतिम छोर तक स्वास्थ्य वीरांगनाओं का",
-      headlineHighlight: "सशक्तिकरण",
-      subtext: "आशा सखी एक एआई-संचालित द्विभाषी डिजिटल फील्ड रजिस्टर है, जो भारत की 10 लाख से अधिक आशा कार्यकर्ताओं के लिए गृह-भेंट, मातृ एवं शिशु देखभाल, टीकाकरण अनुसूची और सुपरवाइजर रिपोर्टिंग को स्वचालित करता है।",
-      ctaPrimary: "वेब ऐप शुरू करें (निःशुल्क डेमो)",
-      ctaSecondary: "फील्ड रजिस्टर देखें",
-      trustText: "कर्नाटक, उत्तर प्रदेश और महाराष्ट्र के 2,400+ ग्राम उप-केंद्रों में विश्वसनीय",
-      stats: {
-        villages: "2,400+ गांव",
-        workers: "12,800+ आशा कार्यकर्ता",
-        visits: "350,000+ दर्ज भेंट",
-        satisfaction: "99.4% समय पर टीकाकरण",
-      }
+    nav: {
+      dashboard: "डैशबोर्ड",
+      voiceVisit: "एआई वॉयस सहायक",
+      maternalHealth: "मातृ स्वास्थ्य",
+      beneficiaries: "लाभार्थी निर्देशिका",
+      route: "ग्राम गृह भ्रमण मार्ग",
+      incentives: "प्रोत्साहन राशि खाता",
+      followups: "फॉलो-अप और रिपोर्ट",
+      emergency: "आपातकालीन अलर्ट",
+      ambulance: "108 एम्बुलेंस मैप",
+      publicPortal: "पब्लिक पोर्टल व 3D साइट",
+      switchRole: "भूमिका बदलें",
+      languages: "भाषाएं (22)"
     },
 
-    // Problem & Solution
-    problem: {
-      badge: "फील्ड की वास्तविकता बनाम डिजिटल बदलाव",
-      title: "12 भारी रजिस्टरों से एक आवाज़-आधारित साथी तक",
-      subtitle: "हर दिन, एक आशा कार्यकर्ता 1,000 ग्रामीणों की देखभाल के लिए 10+ किमी चलती है और कागजी रजिस्टरों का भारी बोझ उठाती है।",
-      before: {
-        title: "कागजी रजिस्टरों की परेशानी",
-        item1: "धूप और धूल में 12+ भारी कागजी रजिस्टर साथ लेकर चलना।",
-        item2: "हाथ से लिखी तारीखों के कारण बच्चों के टीकाकरण छूटने का जोखिम।",
-        item3: "गर्भावस्था के खतरे के लक्षणों में अस्पताल तक जानकारी पहुंचने में देरी।",
-        item4: "महीने के अंत में 4 दिन बैठकर प्रोत्साहन राशि (Incentives) का हिसाब लगाना।",
-      },
-      after: {
-        title: "आशा सखी के साथ",
-        item1: "हिंदी या कन्नड़ में बोलकर तुरंत डिजिटल कार्ड तैयार करना।",
-        item2: "स्वचालित टीकाकरण अलर्ट - कोई भी खुराक नहीं छूटेगी।",
-        item3: "खतरे के लक्षणों की तत्काल पहचान और 108 एम्बुलेंस सिमुलेशन।",
-        item4: "जेएसवाई और पीएमएसएमए प्रोत्साहन राशि का पारदर्शी व त्वरित हिसाब।",
-      }
+    // Main Dashboard
+    dashboard: {
+      greeting: "नमस्ते, शारदा बाई!",
+      roleDesc: "आशा फील्ड रजिस्टर • मंड्या पीएचसी (सेक्टर 4)",
+      audioBriefingStart: "दैनिक ऑडियो ब्रीफिंग सुनें",
+      audioBriefingStop: "ऑडियो ब्रीफिंग रोकें",
+      statBeneficiaries: "कुल लाभार्थी",
+      statVisitsToday: "आज निर्धारित गृह भ्रमण",
+      statFollowupsDue: "बाकी फॉलो-अप",
+      statEmergencies: "आपातकालीन रेफरल",
+      maternalOverview: "मातृ स्वास्थ्य अवलोकन",
+      maternalSubtext: "14 पंजीकृत गर्भवती महिलाएं और जोखिम समूह",
+      riskDistribution: "गर्भावस्था जोखिम वितरण",
+      trimesterProgress: "त्रैमासिक प्रगति",
+      trimester1: "पहला त्रैमासिक (1-12 सप्ताह)",
+      trimester2: "दूसरा त्रैमासिक (13-27 सप्ताह)",
+      trimester3: "तीसरा त्रैमासिक (28-40 सप्ताह)",
+      immunizationOverview: "शिशु सार्वभौमिक टीकाकरण (0-1 वर्ष)",
+      immunizationSubtext: "शिवल्ली उपकेंद्र में 22 शिशु पंजीकृत",
+      recentVisits: "हाल के पूर्ण भ्रमण",
+      recentVisitsSubtext: "एआई4भारत बहुभाषी वॉयस द्वारा दर्ज",
+      startVisitBtn: "भ्रमण शुरू करें",
+      todaysTasks: "आज के मुख्य कार्य",
+      portalRequests: "समुदाय भ्रमण अनुरोध",
+      portalRequestsSubtext: "पब्लिक पोर्टल से प्राप्त अनुरोध",
+      noPendingRequests: "कोई लंबित अनुरोध नहीं है",
+      acceptRequest: "स्वीकारें और तय करें",
+      ambulanceWidgetTitle: "108 एम्बुलेंस टेलीमेट्री",
+      ambulanceWidgetSubtext: "लाइव जीपीएस वाहन प्रेषण",
+      openAmbulanceMap: "इंटरैक्टिव मैप खोलें",
+      helplinesTitle: "आपातकालीन हेल्पलाइन नंबर",
+      ambulance108: "108 एम्बुलेंस सेवा",
+      health104: "104 स्वास्थ्य सलाह",
+      women181: "181 महिला हेल्पलाइन",
+      callNow: "कॉल करें"
     },
 
-    // Features Bento Grid
-    features: {
-      badge: "ग्रामीण स्वास्थ्य के लिए निर्मित",
-      title: "सेवा करने वाले हाथों के लिए सरल तकनीक",
-      subtitle: "कमजोर इंटरनेट और सामान्य स्मार्टफोन पर भी तेजी से काम करने वाला क्लिनिकल इंटरफेस।",
-      cards: [
-        {
-          id: "voice",
-          title: "AI4Bharat बोलकर विजिट दर्ज करें",
-          desc: "हिंदी में स्वाभाविक रूप से बोलें। Indic-Transcribe वजन, टीकाकरण और स्वास्थ्य विवरण तुरंत अलग कर देता है।",
-          tag: "AI समर्थित"
-        },
-        {
-          id: "maternal",
-          title: "मातृ एवं शिशु स्वास्थ्य ट्रैकिंग",
-          desc: "4-एएनसी जांच, उच्च जोखिम वाली गर्भावस्था की पहचान और हीमोग्लोबिन स्तर की सटीक निगरानी।",
-          tag: "मातृ सुरक्षा"
-        },
-        {
-          id: "immunization",
-          title: "स्वचालित टीकाकरण अनुसूची",
-          desc: "जन्म से लेकर 9 महीने तक के सभी आवश्यक टीकों की रंगीन चेतावनी और गांववार सूची।",
-          tag: "शत-प्रतिशत सुरक्षा"
-        },
-        {
-          id: "offline",
-          title: "100% ऑफलाइन SQLite सपोर्ट",
-          desc: "घने जंगलों और बिना नेटवर्क वाले गांवों में भी डेटा सुरक्षित रूप से दर्ज करें; नेटवर्क आने पर स्वतः सिंक।",
-          tag: "बिना इंटरनेट"
-        },
-        {
-          id: "incentives",
-          title: "पारदर्शी आशा प्रोत्साहन खाता",
-          desc: "हर भेंट, संस्थागत प्रसव और टीकाकरण पर मिलने वाले रुपये की स्पष्ट गणना और रिपोर्ट डाउनलोड।",
-          tag: "उचित पारिश्रमिक"
-        },
-        {
-          id: "ambulance",
-          title: "108 एम्बुलेंस आपातकालीन सिमुलेशन",
-          desc: "गंभीर खतरे के लक्षण मिलते ही 108 एम्बुलेंस मार्ग, ईटीए और चिकित्सा अधिकारी से त्वरित संपर्क।",
-          tag: "जीवन रक्षक"
-        }
-      ]
+    // Maternal Health Module
+    maternal: {
+      title: "मातृ स्वास्थ्य व एएनसी ट्रैकिंग",
+      subtitle: "गर्भावस्था निगरानी, महत्वपूर्ण लक्षण, आईएफए व खतरे के संकेत",
+      mothersDirectory: "पंजीकृत गर्भवती महिलाएं",
+      gestationalAge: "गर्भकालीन आयु",
+      weeks: "सप्ताह",
+      edd: "प्रसव की संभावित तिथि (EDD)",
+      vitalsTitle: "नैदानिक महत्वपूर्ण लक्षण",
+      bloodPressure: "रक्तचाप (BP)",
+      hemoglobin: "हीमोग्लोबिन (Hb)",
+      fetalHeartRate: "भ्रूण हृदय गति (FHR)",
+      nutritionTitle: "पोषण व पूरक आहार (पोषण अभियान)",
+      ifaTablets: "आयरन फोलिक एसिड (IFA) गोलियां",
+      calciumCompliance: "कैल्शियम अनुपालन",
+      ancVisits: "प्रसव पूर्व जांच (ANC) चरण",
+      anc1: "ANC-1 (पहला त्रैमासिक)",
+      anc2: "ANC-2 (24-26 सप्ताह)",
+      anc3: "ANC-3 (32 सप्ताह)",
+      anc4: "ANC-4 (36 सप्ताह)",
+      dangerSignsTitle: "मातृ खतरे के संकेतों की चेकलिस्ट (MoHFW)",
+      severeHeadache: "गंभीर सिरदर्द या चक्कर आना",
+      blurredVision: "धुंधला दिखना या आंखों के आगे अंधेरा",
+      vaginalBleeding: "योनि से रक्तस्राव या पानी बहना",
+      reducedMovement: "भ्रूण की हलचल में कमी",
+      facialEdema: "चेहरे व पैरों में अत्यधिक सूजन",
+      highFever: "तेज बुखार या कंपकंपी",
+      dangerSignDetected: "खतरे का संकेत पाया गया! तत्काल रेफरल आवश्यक है।",
+      triggerReferralBtn: "पीएचसी रेफर करें / 108 बुलाएं"
     },
 
-    // How It Works
-    howItWorks: {
-      badge: "सरल 3-चरणीय प्रक्रिया",
-      title: "फील्ड में आशा सखी का उपयोग कैसे करें",
-      subtitle: "कोई जटिल टाइपिंग नहीं। 5 मिनट में कोई भी सीख सकता है।",
-      steps: [
-        {
-          num: "01",
-          title: "माइक बटन दबाएं और बोलें",
-          desc: "घर की भेंट के दौरान माइक दबाएं और लाभार्थी की स्थिति अपनी मातृभाषा में बताएं।",
-        },
-        {
-          num: "02",
-          title: "AI विवरण को व्यवस्थित करता है",
-          desc: "AI4Bharat वजन, टीके और स्वास्थ्य सलाह को अलग करता है और खतरे के लक्षणों को पहचानता है।",
-        },
-        {
-          num: "03",
-          title: "बोलकर पुष्टि सुनें और सुरक्षित करें",
-          desc: "Indic-Speak सारांश बोलकर सुनाता है। एक क्लिक में पुष्टि करें या आवाज़ से सुधारें।",
-        }
-      ]
+    // Child Immunization Module
+    immunization: {
+      title: "सार्वभौमिक टीकाकरण ट्रैकर",
+      subtitle: "जन्म से 9 महीने तक का संपूर्ण यूआईपी टीकाकरण कार्यक्रम",
+      vaccineSchedule: "टीकाकरण समय सारणी",
+      birthDoses: "जन्म (बीसीजी, ओपीवी-0, हेप-बी)",
+      weeks6: "6 सप्ताह (ओपीवी-1, पेंटावेलेंट-1, रोटा-1, एफआईपीवी-1, पीसीवी-1)",
+      weeks10: "10 सप्ताह (ओपीवी-2, पेंटावेलेंट-2, रोटा-2)",
+      weeks14: "14 सप्ताह (ओपीवी-3, पेंटावेलेंट-3, रोटा-3, एफआईपीवी-2, पीसीवी-2)",
+      months9: "9 महीने (एमआर-1, जेई-1, विटामिन-ए पहली खुराक)",
+      markVaccinated: "टीका लगा चिन्हित करें",
+      dueToday: "आज बाकी टीके",
+      upcomingThisWeek: "इस सप्ताह आगामी"
     },
 
-    // Impact Counters
-    impact: {
-      badge: "मापने योग्य प्रभाव",
-      title: "ग्रामीण स्वास्थ्य सेवा का सशक्तिकरण",
-      villagesTitle: "शामिल ग्रामीण गांव",
-      workersTitle: "सक्रिय आशा कार्यकर्ता",
-      visitsTitle: "दर्ज की गई गृह-भेंट",
-      incentivesTitle: "पारदर्शी प्रोत्साहन राशि (₹)",
+    // Ambulance & Emergency Assistance
+    ambulance: {
+      title: "108 आपातकालीन एम्बुलेंस लाइव ट्रैकिंग",
+      subtitle: "वास्तविक समय वाहन टेलीमेट्री, मार्ग नेविगेशन व चालक संचार",
+      disclaimerTitle: "केवल प्रशिक्षण एवं मूल्यांकन सिमुलेशन",
+      disclaimerText: "यह एक प्रदर्शन जीपीएस सिमुलेशन है। कोई वास्तविक 108 एम्बुलेंस आपातकालीन सेवा को प्रेषित नहीं की गई है।",
+      requestId: "एम्बुलेंस अनुरोध आईडी",
+      currentStatus: "वर्तमान प्रेषण स्थिति",
+      requested: "अनुरोध प्राप्त",
+      dispatched: "वाहन रवाना",
+      onTheWay: "मार्ग में है",
+      arrived: "स्थान पर पहुंच गया",
+      completed: "पूर्ण हुआ",
+      eta: "अनुमानित आगमन समय",
+      distanceRemaining: "शेष दूरी",
+      speed: "वर्तमान गति",
+      lastUpdate: "अंतिम जीपीएस टेलीमेट्री अपडेट",
+      patientLocation: "मरीज का स्थान (पिकअप)",
+      hospitalLocation: "गंतव्य अस्पताल / पीएचसी",
+      driverName: "चालक का नाम",
+      driverPhone: "चालक संपर्क",
+      vehicleNumber: "वाहन क्रमांक",
+      emtStaff: "ईएमटी तकनीशियन",
+      recenterMap: "एम्बुलेंस पर केंद्रित करें",
+      recenterPatient: "मरीज पर केंद्रित करें",
+      fitBounds: "पूरा मार्ग देखें",
+      demoAdvanceStep: "सिमुलेशन चरण आगे बढ़ाएं",
+      demoReset: "सिमुलेशन रीसेट करें",
+      autoSimulate: "स्वचालित चरण (3.5 सेकंड)",
+      callingDriver: "चालक को कॉल कर रहे हैं...",
+      mapLoading: "गूगल मैप्स लोड हो रहा है...",
+      mapPermissionDenied: "स्थान की अनुमति अस्वीकृत। मंड्या डिफ़ॉल्ट निर्देशांक दिखाए जा रहे हैं।",
+      mapApiError: "गूगल मैप्स एपीआई अनुपलब्ध। उच्च-रिज़ॉल्यूशन वेक्टर इलाके का नक्शा दिखाया जा रहा है।"
     },
 
-    // Testimonials
-    testimonials: {
-      badge: "कार्यकर्ताओं के अनुभव",
-      title: "आशा कार्यकर्ताओं का विश्वास, अधिकारियों का भरोसा",
-      quotes: [
-        {
-          quote: "पहले मुझे रजिस्टर भरने में पूरे रविवार लग जाते थे। अब मैं बोलते ही जानकारी दर्ज कर लेती हूं और मेरी मासिक रिपोर्ट तुरंत तैयार हो जाती है।",
-          name: "शारदा बाई",
-          role: "वरिष्ठ आशा कार्यकर्ता",
-          location: "मांड्या जिला, कर्नाटक",
-          badge: "आशा वीरांगना"
-        },
-        {
-          quote: "स्वचालित टीकाकरण अलर्ट की वजह से मेरे गांव में एक भी बच्चे का पेंटावेलेंट टीका नहीं छूटा। यह हमारा सच्चा साथी है।",
-          name: "सुनीता देवी",
-          role: "आशा कार्यकर्ता (7 वर्ष का अनुभव)",
-          location: "वाराणसी, उत्तर प्रदेश",
-          badge: "फील्ड चैंपियन"
-        },
-        {
-          quote: "चिकित्सा अधिकारी के तौर पर, खतरे के लक्षणों का तुरंत अलर्ट मिलना मातृ मृत्यु दर कम करने में अत्यंत मददगार है।",
-          name: "डॉ. आर. मंजುನಾಥ್",
-          role: "प्राथमिक स्वास्थ्य केंद्र चिकित्सा अधिकारी",
-          location: "सेक्टर 4",
-          badge: "स्वास्थ्य अधिकारी"
-        }
-      ]
+    // AI Voice Assistant Module
+    voice: {
+      title: "बहुभाषी एआई वॉयस सहायक",
+      subtitle: "AI4Bharat इंडिक-ट्रांसक्राइब एएसआर व इंडिक-स्पीक टीटीएस",
+      readyToRecord: "रिकॉर्ड करने के लिए तैयार",
+      recordingInProgress: "सुन रहे हैं... अपनी भाषा में स्पष्ट बोलें",
+      processingAudio: "एआई4भारत द्वारा ऑडियो संसाधित किया जा रहा है...",
+      startRecordingBtn: "वॉयस भ्रमण शुरू करें",
+      stopRecordingBtn: "रिकॉर्डिंग रोकें",
+      retryBtn: "सत्र पुनः शुरू करें",
+      listenAudioBtn: "रिकॉर्डिंग सुनें",
+      extractedCardTitle: "पहचाने गए नैदानिक विवरण",
+      kannadaReadback: "बोली गई पुष्टि और रीडबैक",
+      listenReadbackBtn: "रीडबैक सुनें",
+      evaluationPresets: "मूल्यांकन परीक्षण परिदृश्य",
+      saveVisitBtn: "रिकॉर्ड सहेजें (SQLite)",
+      dangerAlertTitle: "नैदानिक खतरे का अलर्ट सक्रिय!"
     },
 
-    // Partners & Security
-    partners: {
-      badge: "सुरक्षा और गोपनीयता",
-      title: "राष्ट्रीय डिजिटल स्वास्थ्य मिशन के अनुरूप",
-      desc: "एबीडीएम (ABDM) सिद्धांतों, स्थानीय एन्क्रिप्शन और गोपनीयता मानकों के पूर्ण अनुपालन में निर्मित।",
-      badges: ["राष्ट्रीय स्वास्थ्य मिशन", "AI4Bharat IIT Madras", "MoHFW दिशानिर्देश", "ABDM FHIR समर्थित", "100% डेटा संप्रभुता"]
+    // Beneficiary Directory
+    beneficiaries: {
+      title: "लाभार्थी समुदाय निर्देशिका",
+      subtitle: "शिवल्ली व केरेगोडू उपकेंद्र क्षेत्र के पंजीकृत निवासी",
+      searchPlaceholder: "नाम, आईडी, फ़ोन या गाँव से खोजें...",
+      addNewBtn: "नया लाभार्थी पंजीकृत करें",
+      categoryAll: "सभी लाभार्थी",
+      categoryANC: "गर्भवती महिलाएं (ANC)",
+      categoryPNC: "प्रसवावस्था माताएं (PNC)",
+      categoryChild: "शिशु (0-1 वर्ष)",
+      totalRegistered: "कुल पंजीकृत",
+      viewProfile: "नैदानिक प्रोफ़ाइल देखें"
     },
 
-    // FAQ
-    faq: {
-      badge: "प्रश्न और उत्तर",
-      title: "अक्सर पूछे जाने वाले सवाल",
-      items: [
-        {
-          q: "क्या बिना इंटरनेट वाले दूरदराज गांवों में आशा सखी काम करता है?",
-          a: "हाँ! आशा सखी 100% ऑफलाइन कार्य करता है। सारा डेटा फोन के सुरक्षित डेटाबेस में रहता है और इंटरनेट मिलने पर अपने आप सिंक हो जाता है।"
-        },
-        {
-          q: "क्या कार्यकर्ता हिंदी और अंग्रेजी के मिले-जुले शब्द बोल सकती हैं?",
-          a: "हाँ! AI4Bharat Indic-Transcribe को विशेष रूप से 'ANC चेकअप', 'IFA गोली', 'TT इंजेक्शन' जैसे मिश्रित शब्दों के लिए प्रशिक्षित किया गया है।"
-        },
-        {
-          q: "प्रोत्साहन राशि (Incentive) का हिसाब कैसे होता है?",
-          a: "ऐप प्रत्येक पूर्ण कार्य (जैसे जेएसवाई संस्थागत प्रसव ₹300, पूर्ण टीकाकरण ₹150) को सरकारी दर के अनुसार जोड़कर मासिक रिपोर्ट तैयार करता है।"
-        },
-        {
-          q: "क्या मरीजों की स्वास्थ्य जानकारी सुरक्षित है?",
-          a: "बिल्कुल। सारा डेटा स्वास्थ्य डेटा सुरक्षा (DISHA) और राष्ट्रीय मानकों के अनुसार एन्क्रिप्टेड रहता है।"
-        },
-        {
-          q: "क्या यह सरकारी पोर्टल को बदल देता है?",
-          a: "आशा सखी सुपरवाइजर और एएनएम के मासिक रजिस्टरों के अनुरूप सटीक रिपोर्ट तैयार करता है, जिससे कागजी काम खत्म हो जाता है।"
-        }
-      ]
+    // Household Route Screen
+    route: {
+      title: "ग्राम गृह भ्रमण मार्ग योजना",
+      subtitle: "मंड्या सेक्टर 4 के लिए अनुकूलित दैनिक जीपीएस पैदल मार्ग",
+      aiPriority: "एआई प्राथमिकता (उच्च जोखिम पहले)",
+      shortestDistance: "न्यूनतम दूरी",
+      optimizedBadge: "मार्ग अनुकूलित",
+      totalDistance: "अनुमानित पैदल दूरी: 3.8 किमी",
+      stopsCount: "5 गृह भ्रमण निर्धारित",
+      offlineGpsBadge: "ऑफ़लाइन जीपीएस कैशिंग सक्रिय",
+      lakeLandmark: "शिवल्ली झील",
+      startVisitBtn: "गृह भ्रमण शुरू करें"
     },
 
-    // Footer
-    footer: {
-      tagline: "भारत की स्वास्थ्य कार्यकर्ताओं को गरिमा, स्पष्टता और आवाज़ तकनीक से सशक्त बनाना।",
-      helplines: "आपातकालीन नंबर: 108 (एम्बुलेंस) • 104 (स्वास्थ्य सलाह) • 112 (राष्ट्रीय आपातकाल)",
-      copyright: "© 2026 आशा सखी। भारत की सामुदायिक स्वास्थ्य कार्यकर्ताओं के लिए समर्पित।",
-      links: ["गोपनीयता नीति", "नियम व शर्तें", "MoHFW दिशानिर्देश", "AI4Bharat"]
+    // Incentives Screen
+    incentives: {
+      title: "आशा प्रोत्साहन राशि व एनएचएम खाता",
+      subtitle: "जेएसवाई, टीकाकरण, मासिक आय व पर्यवेक्षक अनुमोदन लेजर",
+      submitToANM: "एएनएम पर्यवेक्षक को बैच जमा करें",
+      submittedSuccess: "बैच एएनएम को सफलतापूर्वक जमा कर दिया गया!",
+      totalEarnedMonth: "इस माह की कुल कमाई",
+      approvedANM: "एएनएम अनुमोदित राशि",
+      underReviewMO: "चिकित्सा अधिकारी जांच में",
+      projectedTarget: "लक्ष्य संभावित राशि",
+      monthlyTrend: "मासिक कमाई की प्रगति",
+      claimsLedger: "मदवार दावा सूची",
+      claimId: "दावा आईडी",
+      taskScheme: "कार्य / स्वास्थ्य योजना",
+      amount: "राशि (₹)",
+      verifyCode: "सत्यापन कोड"
     }
   },
 
   kn: {
-    // Navigation
-    nav: {
-      brand: "ಆಶಾ ಸಖಿ",
-      tagline: "ಸಮುದಾಯ ಆರೋಗ್ಯದ ಡಿಜಿಟಲ್ ಒಡನಾಡಿ",
-      features: "ವೈಶಿಷ್ಟ್ಯಗಳು",
-      problem: "ಪರಿಹಾರ",
-      howItWorks: "ಕಾರ್ಯವಿಧಾನ",
-      impact: "ಪ್ರಭಾವ",
-      testimonials: "ಅನುಭವಗಳು",
-      faq: "ಪ್ರಶ್ನೋತ್ತರ",
-      launchApp: "ವೆಬ್ ಆಪ್ ತೆರೆಯಿರಿ",
-      signIn: "ಕಾರ್ಯಕರ್ತೆ ಲಾಗಿನ್",
-      backToLanding: "← ವೆಬ್‌ಸೈಟ್‌ಗೆ ಹಿಂತಿರುಗಿ",
-      darkMode: "ಡಾರ್ಕ್ ಮೋಡ್",
+    // Navigation & Common
+    common: {
+      appName: "ಆಶಾ ಸಖಿ",
+      tagline: "ಗ್ರಾಮೀಣ ಸಮುದಾಯ ಆರೋಗ್ಯದ ಡಿಜಿಟಲ್ ಒಡನಾಡಿ",
+      department: "ರಾಷ್ಟ್ರೀಯ ಆರೋಗ್ಯ ಅಭಿಯಾನ • ಕರ್ನಾಟಕ ಆರೋಗ್ಯ ಇಲಾಖೆ",
+      save: "ದಾಖಲೆಯನ್ನು ಉಳಿಸಿ",
+      saved: "ಉಳಿಸಲಾಗಿದೆ",
+      cancel: "ರದ್ದುಮಾಡಿ",
+      close: "ಮುಚ್ಚಿ",
+      edit: "ತಿದ್ದುಪಡಿ",
+      delete: "ಅಳಿಸಿ",
+      retry: "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+      back: "ಹಿಂದೆ",
+      search: "ಹುಡುಕಿ...",
+      loading: "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+      confirm: "ದೃಢೀಕರಿಸಿ",
+      verified: "ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+      submit: "ಸಲ್ಲಿಸಿ",
+      accept: "ಸ್ವೀಕರಿಸಿ",
+      completed: "ಪೂರ್ಣಗೊಂಡಿದೆ",
+      pending: "ಬಾಕಿ ಇದೆ",
+      due: "ಇಂದು ಬಾಕಿ",
+      overdue: "ಅವಧಿ ಮೀರಿದೆ",
+      all: "ಎಲ್ಲಾ",
+      actions: "ಕ್ರಮ",
+      status: "ಸ್ಥಿತಿ",
+      date: "ದಿನಾಂಕ",
+      time: "ಸಮಯ",
+      village: "ಗ್ರಾಮ",
+      phone: "ದೂರವಾಣಿ",
+      beneficiary: "ಫಲಾನುಭವಿ",
+      age: "ವಯಸ್ಸು",
+      weight: "ತೂಕ",
+      risk: "ಅಪಾಯದ ಮಟ್ಟ",
+      lowRisk: "ಕಡಿಮೆ ಅಪಾಯ",
+      moderateRisk: "ಮಧ್ಯಮ ಅಪಾಯ",
+      highRisk: "ಹೆಚ್ಚಿನ ಅಪಾಯ",
+      emergency: "ತುರ್ತು",
+      live: "ಲೈವ್",
+      simulated: "ಸಿಮ್ಯುಲೇಶನ್",
+      demoMode: "ಡೆಮೊ ಮೋಡ್",
+      liveMode: "ಲೈವ್ ಬ್ಯಾಕೆಂಡ್",
+      syncOnline: "ಆನ್‌ಲೈನ್ ಸಿಂಕ್",
+      syncOffline: "ಆಫ್‌ಲೈನ್ ಕ್ಯೂ",
+      syncNow: "ದಾಖಲೆ ಸಿಂಕ್ ಮಾಡಿ",
       lightMode: "ಲೈಟ್ ಮೋಡ್",
+      darkMode: "ಡಾರ್ಕ್ ಮೋಡ್"
     },
 
-    // Hero Section
-    hero: {
-      badge: "ರಾಷ್ಟ್ರೀಯ ಆರೋಗ್ಯ ಅಭಿಯಾನ (NHM) ಕರ್ನಾಟಕ • 100% ಆಫ್‌ಲೈನ್ ಸಕ್ರಿಯ",
-      headlineLead: "ಗ್ರಾಮೀಣ ಆರೋಗ್ಯ ವೀರರ",
-      headlineHighlight: "ಡಿಜಿಟಲ್ ಸಬಲೀಕರಣ",
-      subtext: "ಆಶಾ ಸಖಿ ಕೃತಕ ಬುದ್ಧಿಮತ್ತೆ (AI) ಆಧಾರಿತ ಕನ್ನಡ ಧ್ವನಿ ದಿನಚರಿಯಾಗಿದ್ದು, ಮನೆ ಭೇಟಿಗಳು, ಗರ್ಭಿಣಿ ಮತ್ತು ನವಜಾತ ಶಿಶುಗಳ ತಪಾಸಣೆ, ಸಾರ್ವತ್ರಿಕ ಲಸಿಕೆ ಮತ್ತು ಪ್ರೋತ್ಸಾಹಧನ ಲೆಕ್ಕಾಚಾರವನ್ನು ಸ್ವಯಂಚಾಲಿತಗೊಳಿಸುತ್ತದೆ.",
-      ctaPrimary: "ವೆಬ್ ಆಪ್ ಪ್ರಾರಂಭಿಸಿ (ಉಚಿತ ಡೆಮೊ)",
-      ctaSecondary: "ಕ್ಷೇತ್ರ ರಿಜಿಸ್ಟರ್ ವೀಕ್ಷಿಸಿ",
-      trustText: "ಕರ್ನಾಟಕದ ಮಂಡ್ಯ, ಮೈಸೂರು ಹಾಗೂ ತುಮಕೂರಿನ 2,400+ ಗ್ರಾಮ ಉಪಕೇಂದ್ರಗಳಲ್ಲಿ ವಿಶ್ವಾಸಾರ್ಹ",
-      stats: {
-        villages: "2,400+ ಗ್ರಾಮಗಳು",
-        workers: "12,800+ ಆಶಾ ಕಾರ್ಯಕರ್ತೆಯರು",
-        visits: "350,000+ ದಾಖಲಾದ ಭೇಟಿಗಳು",
-        satisfaction: "99.4% ಸಮಯಕ್ಕೆ ಸರಿಯಾದ ಲಸಿಕೆ",
-      }
+    nav: {
+      dashboard: "ಮುಖಪುಟ",
+      voiceVisit: "ಧ್ವನಿ ಭೇಟಿ",
+      maternalHealth: "ತಾಯಿ ಆರೋಗ್ಯ",
+      beneficiaries: "ಫಲಾನುಭವಿಗಳ ರಿಜಿಸ್ಟರ್",
+      route: "ಗ್ರಾಮ ಮಾರ್ಗ ನಕ್ಷೆ",
+      incentives: "ಪ್ರೋತ್ಸಾಹಧನ ಲೆಕ್ಕ",
+      followups: "ಫಾಲೋ-ಅಪ್ ಪಟ್ಟಿ",
+      emergency: "ತುರ್ತು ಎಚ್ಚರಿಕೆ",
+      ambulance: "108 ಆಂಬ್ಯುಲೆನ್ಸ್",
+      publicPortal: "ಸಾರ್ವಜನಿಕ ಪೋರ್ಟಲ್ & 3D ಸೈಟ್",
+      switchRole: "ಪಾತ್ರ ಬದಲಿಸಿ",
+      languages: "ಭಾಷೆಗಳು (22)"
     },
 
-    // Problem & Solution
-    problem: {
-      badge: "ವಾಸ್ತವಿಕ ಸಮಸ್ಯೆ ಮತ್ತು ಡಿಜಿಟಲ್ ಪರಿಹಾರ",
-      title: "12 ಭಾರವಾದ ಕಾಗದದ ರಿಜಿಸ್ಟರ್‌ಗಳಿಂದ ಒಂದು ಧ್ವನಿ ಸಹಾಯಕಿಗೆ",
-      subtitle: "ಪ್ರತಿದಿನ ಒಬ್ಬ ಆಶಾ ಕಾರ್ಯಕರ್ತೆ 1,000 ಜನರ ಯೋಗಕ್ಷೇಮಕ್ಕಾಗಿ ಬಿಸಿಲಿನಲ್ಲಿ 10+ ಕಿಮೀ ನಡೆಯುತ್ತಾ ಸಂಕೀರ್ಣ ರಿಜಿಸ್ಟರ್‌ಗಳನ್ನು ನಿರ್ವಹಿಸುತ್ತಾರೆ.",
-      before: {
-        title: "ಕಾಗದದ ರಿಜಿಸ್ಟರ್‌ಗಳ ತೊಂದರೆ",
-        item1: "12+ ದಪ್ಪ ಕಾಗದದ ರಿಜಿಸ್ಟರ್‌ಗಳನ್ನು ಧೂಳು ಮತ್ತು ಬಿಸಿಲಿನಲ್ಲಿ ಹೊತ್ತುಕೊಂಡು ತಿರುಗುವುದು.",
-        item2: "ಕೈಬರಹದ ದಿನಾಂಕಗಳಿಂದಾಗಿ ಮಕ್ಕಳಿಗೆ ಲಸಿಕೆ ತಪ್ಪಿಹೋಗುವ ಅಪಾಯ.",
-        item3: "ಗರ್ಭಿಣಿಯರ ತುರ್ತು ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳು ಆಸ್ಪತ್ರೆ ತಲುಪುವಲ್ಲಿ ವಿಳಂಬ.",
-        item4: "ತಿಂಗಳ ಕೊನೆಯಲ್ಲಿ ಪ್ರೋತ್ಸಾಹಧನ (Incentives) ಲೆಕ್ಕಹಾಕಲು 4 ದಿನ ವ್ಯರ್ಥ ಮಾಡುವುದು.",
-      },
-      after: {
-        title: "ಆಶಾ ಸಖಿ ಬಳಕೆಯ ನಂತರ",
-        item1: "ಕನ್ನಡದಲ್ಲಿ ಸ್ವಾಭಾವಿಕವಾಗಿ ಮಾತನಾಡಿ ತಕ್ಷಣವೇ ಡಿಜಿಟಲ್ ಕಾರ್ಡ್ ದಾಖಲೀಕರಣ.",
-        item2: "ಸ್ವಯಂಚಾಲಿತ ಲಸಿಕಾ ಎಚ್ಚರಿಕೆಗಳು - ಯಾವುದೇ ಮಗುವಿಗೆ ಲಸಿಕೆ ತಪ್ಪುವುದಿಲ್ಲ.",
-        item3: "ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳ ತಕ್ಷಣ ಪತ್ತೆ ಮತ್ತು 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಸಿಮ್ಯುಲೇಶನ್.",
-        item4: "JSY ಮತ್ತು PMSMA ಪ್ರೋತ್ಸಾಹಧನದ ಪಾರದರ್ಶಕ ಲೆಕ್ಕ ಹಾಗೂ ತ್ವರಿತ ವರದಿ.",
-      }
+    // Main Dashboard
+    dashboard: {
+      greeting: "ನಮಸ್ಕಾರ, ಶಾರದಾ ಬಾಯಿ!",
+      roleDesc: "ಆಶಾ ಕಾರ್ಯಕರ್ತೆ ದಿನಚರಿ • ಮಂಡ್ಯ PHC (ಸೆಕ್ಟರ್ 4)",
+      audioBriefingStart: "ದಿನಚರಿ ಧ್ವನಿ ಬ್ರೀಫಿಂಗ್ ಕೇಳಿ",
+      audioBriefingStop: "ಧ್ವನಿ ಬ್ರೀಫಿಂಗ್ ನಿಲ್ಲಿಸಿ",
+      statBeneficiaries: "ಒಟ್ಟು ಫಲಾನುಭವಿಗಳು",
+      statVisitsToday: "ಇಂದಿನ ನಿಗದಿತ ಭೇಟಿಗಳು",
+      statFollowupsDue: "ಬಾಕಿ ಇರುವ ಫಾಲೋ-ಅಪ್",
+      statEmergencies: "ತುರ್ತು ರೆಫರಲ್‌ಗಳು",
+      maternalOverview: "ತಾಯಿ ಆರೋಗ್ಯ ಸಮೀಕ್ಷೆ",
+      maternalSubtext: "14 ನೋಂದಾಯಿತ ಗರ್ಭಿಣಿಯರು ಮತ್ತು ಅಪಾಯದ ವರ್ಗೀಕರಣ",
+      riskDistribution: "ಗರ್ಭಾವಸ್ಥೆ ಅಪಾಯದ ಹಂಚಿಕೆ",
+      trimesterProgress: "ತ್ರೈಮಾಸಿಕ ಪ್ರಗತಿ",
+      trimester1: "1ನೇ ತ್ರೈಮಾಸಿಕ (1-12 ವಾರ)",
+      trimester2: "2ನೇ ತ್ರೈಮಾಸಿಕ (13-27 ವಾರ)",
+      trimester3: "3ನೇ ತ್ರೈಮಾಸಿಕ (28-40 ವಾರ)",
+      immunizationOverview: "ಮಕ್ಕಳ ಸಾರ್ವತ್ರಿಕ ಲಸಿಕಾ ಪ್ರಗತಿ (0-1 ವರ್ಷ)",
+      immunizationSubtext: "ಶಿವಳ್ಳಿ ಉಪಕೇಂದ್ರದಲ್ಲಿ 22 ಶಿಶುಗಳು ನೋಂದಣಿ",
+      recentVisits: "ಇತ್ತೀಚಿನ ಭೇಟಿ ದಾಖಲೆಗಳು",
+      recentVisitsSubtext: "ಕನ್ನಡ ಧ್ವನಿ ಮೂಲಕ ಸ್ವಯಂಚಾಲಿತ ದಾಖಲೀಕರಣ",
+      startVisitBtn: "ಭೇಟಿ ಆರಂಭಿಸಿ",
+      todaysTasks: "ಇಂದಿನ ಪ್ರಮುಖ ಕರ್ತವ್ಯಗಳು",
+      portalRequests: "ಸಮುದಾಯ ಭೇಟಿ ವಿನಂತಿಗಳು",
+      portalRequestsSubtext: "ಸಾರ್ವಜನಿಕ ಪೋರ್ಟಲ್‌ನಿಂದ ಬಂದಿರುವ ಕೋರಿಕೆಗಳು",
+      noPendingRequests: "ಯಾವುದೇ ಹೊಸ ವಿನಂತಿಗಳು ಬಾಕಿ ಇಲ್ಲ",
+      acceptRequest: "ದೃಢೀಕರಿಸಿ",
+      ambulanceWidgetTitle: "108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಟೆಲಿಮೆಟ್ರಿ",
+      ambulanceWidgetSubtext: "ನೈಜ ಸಮಯದ GPS ವಾಹನ ಪ್ರಗತಿ",
+      openAmbulanceMap: "ಲೈವ್ ನಕ್ಷೆ ವೀಕ್ಷಿಸಿ",
+      helplinesTitle: "ತುರ್ತು ಸಹಾಯವಾಣಿ ಸಂಖ್ಯೆಗಳು",
+      ambulance108: "108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಸೇವೆ",
+      health104: "104 ಆರೋಗ್ಯ ಸಹಾಯವಾಣಿ",
+      women181: "181 ಮಹಿಳಾ ಸಹಾಯವಾಣಿ",
+      callNow: "ಕರೆ ಮಾಡಿ"
     },
 
-    // Features Bento Grid
-    features: {
-      badge: "ಗ್ರಾಮೀಣ ಆರೋಗ್ಯಕ್ಕಾಗಿ ವಿಶೇಷ ವಿನ್ಯಾಸ",
-      title: "ಆರೈಕೆಯ ಕೈಗಳಿಗಾಗಿ ಸರಳ ತಂತ್ರಜ್ಞಾನ",
-      subtitle: "ಕಡಿಮೆ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಮತ್ತು ಸಾಮಾನ್ಯ ಸ್ಮಾರ್ಟ್‌ಫೋನ್‌ಗಳಲ್ಲೂ ವೇಗವಾಗಿ ಕಾರ್ಯನಿರ್ವಹಿಸುವ ಕ್ಲಿನಿಕಲ್ ವ್ಯವಸ್ಥೆ.",
-      cards: [
-        {
-          id: "voice",
-          title: "AI4Bharat ಕನ್ನಡ ಧ್ವನಿ ದಾಖಲೀಕರಣ",
-          desc: "ಕನ್ನಡ ಮತ್ತು ಇಂಗ್ಲಿಷ್ ವೈದ್ಯಕೀಯ ಪದಗಳನ್ನು ಮಾತನಾಡಿ. Indic-Transcribe ತೂಕ, ಲಸಿಕೆ ಹಾಗೂ ಟಿಪ್ಪಣಿಗಳನ್ನು ತಾನಾಗಿಯೇ ಪ್ರತ್ಯೇಕಿಸುತ್ತದೆ.",
-          tag: "AI ಸಕ್ರಿಯ"
-        },
-        {
-          id: "maternal",
-          title: "ತಾಯಿ ಮತ್ತು ಮಗುವಿನ ಆರೋಗ್ಯ ಟ್ರ್ಯಾಕರ್",
-          desc: "4-ANC ತಪಾಸಣೆ, PMSMA ಹೆಚ್ಚಿನ ಅಪಾಯದ ಗರ್ಭಾವಸ್ಥೆ ಪತ್ತೆ ಮತ್ತು ಹಿಮೋಗ್ಲೋಬಿನ್ ನಿರಂತರ ಮೇಲ್ವಿಚಾರಣೆ.",
-          tag: "ತಾಯಿ ಸುರಕ್ಷತೆ"
-        },
-        {
-          id: "immunization",
-          title: "ಸಾರ್ವತ್ರಿಕ ಲಸಿಕಾ (UIP) ವೇಳಾಪಟ್ಟಿ",
-          desc: "ಜನನ ಲಸಿಕೆಯಿಂದ 9 ತಿಂಗಳವರೆಗೆ ಎಲ್ಲಾ ಲಸಿಕೆಗಳ ಬಣ್ಣದ ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ಗ್ರಾಮವಾರು ಬಾಕಿ ಪಟ್ಟಿ.",
-          tag: "ಶೂನ್ಯ ಮಿಸ್ಸಿಂಗ್"
-        },
-        {
-          id: "offline",
-          title: "100% ಆಫ್‌ಲೈನ್ SQLite ಬೆಂಬಲ",
-          desc: "ನೆಟ್‌ವರ್ಕ್ ಇಲ್ಲದ ಅರಣ್ಯ ಮತ್ತು ಕುಗ್ರಾಮಗಳಲ್ಲೂ ಡೇಟಾ ಸುರಕ್ಷಿತವಾಗಿ ದಾಖಲಿಸಿ; ಸಂಪರ್ಕ ಬಂದಾಗ ಸ್ವಯಂ ಸಿಂಕ್.",
-          tag: "ನೆಟ್‌ವರ್ಕ್ ಬೇಡ"
-        },
-        {
-          id: "incentives",
-          title: "ಪಾರದರ್ಶಕ ಆಶಾ ಪ್ರೋತ್ಸಾಹಧನ ಲೆಡ್ಜರ್",
-          desc: "ಪ್ರತಿ ಮನೆ ಭೇಟಿ, ಆಸ್ಪತ್ರೆ ಹೆರಿಗೆ (JSY) ಮತ್ತು ಲಸಿಕೆ ಸುತ್ತುಗಳ ಹಣದ ನಿಖರ ಲೆಕ್ಕ ಹಾಗೂ ವರದಿ ಡೌನ್‌ಲೋಡ್.",
-          tag: "ಸರಿಯಾದ ಗೌರವಧನ"
-        },
-        {
-          id: "ambulance",
-          title: "108 ಆಂಬ್ಯುಲೆನ್ಸ್ ತುರ್ತು ಸಿಮ್ಯುಲೇಶನ್",
-          desc: "ಅಪಾಯಕಾರಿ ಲಕ್ಷಣ ಕಂಡುಬಂದ ತಕ್ಷಣ 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಲೈವ್ ನಕ್ಷೆ, ಈಟಿಎ ಮತ್ತು ವೈದ್ಯಾಧಿಕಾರಿ ಸಂಪರ್ಕ.",
-          tag: "ಜೀವ ರಕ್ಷಕ"
-        }
-      ]
+    // Maternal Health Module
+    maternal: {
+      title: "ತಾಯಿ ಮತ್ತು ಗರ್ಭಿಣಿ ಆರೋಗ್ಯ ವಿಶ್ಲೇಷಣೆ",
+      subtitle: "ಗರ್ಭಾವಸ್ಥೆ ಟ್ರ್ಯಾಕರ್, ತಪಾಸಣೆ, ಪೌಷ್ಟಿಕಾಂಶ & ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳ ಪರಿಶೀಲನೆ",
+      mothersDirectory: "ನೋಂದಾಯಿತ ಗರ್ಭಿಣಿಯರ ಪಟ್ಟಿ",
+      gestationalAge: "ಗರ್ಭಾವಸ್ಥೆಯ ಅವಧಿ",
+      weeks: "ವಾರಗಳು",
+      edd: "ಅಂದಾಜು ಹೆರಿಗೆ ದಿನಾಂಕ (EDD)",
+      vitalsTitle: "ದೈಹಿಕ ಮತ್ತು ಕ್ಲಿನಿಕಲ್ ತಪಾಸಣೆ",
+      bloodPressure: "ರಕ್ತದೊತ್ತಡ (BP)",
+      hemoglobin: "ರಕ್ತಹೀನತೆ / ಹಿಮೋಗ್ಲೋಬಿನ್ (Hb)",
+      fetalHeartRate: "ಭ್ರೂಣದ ಹೃದಯ ಬಡಿತ (FHR)",
+      nutritionTitle: "ಪೌಷ್ಟಿಕಾಂಶ ಮತ್ತು ಔಷಧಿ ವಿತರಣೆ (ಪೋಷಣ್ ಅಭಿಯಾನ)",
+      ifaTablets: "ಕಬ್ಬಿಣಾಂಶದ ಮಾತ್ರೆಗಳು (IFA)",
+      calciumCompliance: "ಕ್ಯಾಲ್ಸಿಯಂ ಸೇವನೆ",
+      ancVisits: "ಪ್ರಸವಪೂರ್ವ ತಪಾಸಣೆ (ANC) ಹಂತಗಳು",
+      anc1: "ANC-1 (1ನೇ ತ್ರೈಮಾಸಿಕ)",
+      anc2: "ANC-2 (24-26 ವಾರ)",
+      anc3: "ANC-3 (32 ವಾರ)",
+      anc4: "ANC-4 (36 ವಾರ)",
+      dangerSignsTitle: "ಗರ್ಭಾವಸ್ಥೆಯ ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳ ಪರಿಶೀಲನೆ (MoHFW)",
+      severeHeadache: "ತೀವ್ರ ತಲೆನೋವು ಅಥವಾ ತಲೆತಿರುಗುವಿಕೆ",
+      blurredVision: "ಕಣ್ಣು ಮಂಜಾಗುವುದು ಅಥವಾ ಕತ್ತಲೆ",
+      vaginalBleeding: "ಯೋನಿ ರಕ್ತಸ್ರಾವ ಅಥವಾ ನೀರಿನ ಸೋರಿಕೆ",
+      reducedMovement: "ಭ್ರೂಣದ ಚಲನೆ ಕಡಿಮೆಯಾಗುವುದು",
+      facialEdema: "ಮುಖ ಮತ್ತು ಕಾಲುಗಳಲ್ಲಿ ತೀವ್ರ ಊತ",
+      highFever: "ತೀವ್ರ ಜ್ವರ ಅಥವಾ ನಡುಕ",
+      dangerSignDetected: "ಅಪಾಯಕಾರಿ ಲಕ್ಷಣ ಪತ್ತೆಯಾಗಿದೆ! ತಕ್ಷಣ ಆಸ್ಪತ್ರೆಗೆ ರೆಫರ್ ಮಾಡಿ.",
+      triggerReferralBtn: "PHC ಗೆ ರೆಫರ್ ಮಾಡಿ / 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಕರೆ"
     },
 
-    // How It Works
-    howItWorks: {
-      badge: "ಸುಲಭ 3 ಹಂತಗಳ ದಿನಚರಿ",
-      title: "ಕ್ಷೇತ್ರದಲ್ಲಿ ಆಶಾ ಸಖಿ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ?",
-      subtitle: "ಯಾವುದೇ ಸಂಕೀರ್ಣ ಟೈಪಿಂಗ್ ಇಲ್ಲ. 5 ನಿಮಿಷಗಳಲ್ಲಿ ಯಾರಾದರೂ ಕಲಿಯಬಹುದು.",
-      steps: [
-        {
-          num: "01",
-          title: "ಮೈಕ್ ಬಟನ್ ಒತ್ತಿ ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಿ",
-          desc: "ಮನೆ ಭೇಟಿಯ ಸಮಯದಲ್ಲಿ ದೊಡ್ಡ ಮೈಕ್ ಬಟನ್ ಒತ್ತಿ ತಾಯಿ ಅಥವಾ ಮಗುವಿನ ಸ್ಥಿತಿಯನ್ನು ನಿಮ್ಮ ಮಾತೃಭಾಷೆಯಲ್ಲಿ ತಿಳಿಸಿ.",
-        },
-        {
-          num: "02",
-          title: "AI ವಿವರಗಳನ್ನು ರಚನಾತ್ಮಕವಾಗಿ ಪ್ರತ್ಯೇಕಿಸುತ್ತದೆ",
-          desc: "AI4Bharat ತೂಕ, ಲಸಿಕೆ ಮತ್ತು ಟಿಪ್ಪಣಿಗಳನ್ನು ವಿಂಗಡಿಸಿ ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳನ್ನು ತಕ್ಷಣವೇ ಪತ್ತೆಹಚ್ಚುತ್ತದೆ.",
-        },
-        {
-          num: "03",
-          title: "ಧ್ವನಿ ಓದುವಿಕೆ ಕೇಳಿ ದೃಢೀಕರಿಸಿ",
-          desc: "Indic-Speak ವಿವರಗಳನ್ನು ಕನ್ನಡದಲ್ಲಿ ಓದಿ ಹೇಳುತ್ತದೆ. ಒಂದೇ ಟ್ಯಾಪ್‌ನಲ್ಲಿ ಖಚಿತಪಡಿಸಿ ಅಥವಾ ಧ್ವನಿಯಿಂದ ಸರಿಪಡಿಸಿ.",
-        }
-      ]
+    // Child Immunization Module
+    immunization: {
+      title: "ಸಾರ್ವತ್ರಿಕ ಲಸಿಕಾ ಟ್ರ್ಯಾಕರ್",
+      subtitle: "ಜನನದಿಂದ 9 ತಿಂಗಳವರೆಗಿನ ಸಮಗ್ರ ಲಸಿಕಾ ವೇಳಾಪಟ್ಟಿ",
+      vaccineSchedule: "ಲಸಿಕಾ ವೇಳಾಪಟ್ಟಿ",
+      birthDoses: "ಜನನ (BCG, OPV-0, Hep-B)",
+      weeks6: "6 ವಾರ (OPV-1, Pentavalent-1, Rota-1, fIPV-1, PCV-1)",
+      weeks10: "10 ವಾರ (OPV-2, Pentavalent-2, Rota-2)",
+      weeks14: "14 ವಾರ (OPV-3, Pentavalent-3, Rota-3, fIPV-2, PCV-2)",
+      months9: "9 ತಿಂಗಳು (MR-1, JE-1, Vit-A 1ನೇ ಡೋಸ್)",
+      markVaccinated: "ಲಸಿಕೆ ನೀಡಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸಿ",
+      dueToday: "ಇಂದು ನೀಡಬೇಕಾದ ಲಸಿಕೆಗಳು",
+      upcomingThisWeek: "ಈ ವಾರ ಬಾಕಿ ಇರುವ ಲಸಿಕೆಗಳು"
     },
 
-    // Impact Counters
-    impact: {
-      badge: "ಅಳೆಯಬಹುದಾದ ನೈಜ ಪ್ರಭಾವ",
-      title: "ಗ್ರಾಮೀಣ ಸಮುದಾಯ ಆರೋಗ್ಯ ವಿತರಣೆಯ ಪರಿವರ್ತನೆ",
-      villagesTitle: "ವ್ಯಾಪ್ತಿಗೆ ಒಳಪಟ್ಟ ಗ್ರಾಮಗಳು",
-      workersTitle: "ಸಕ್ರಿಯ ಆಶಾ ಕಾರ್ಯಕರ್ತೆಯರು",
-      visitsTitle: "ದಾಖಲಾದ ಮನೆ ಭೇಟಿಗಳು",
-      incentivesTitle: "ಪಾರದರ್ಶಕ ಪ್ರೋತ್ಸಾಹಧನ (₹)",
+    // Ambulance & Emergency Assistance
+    ambulance: {
+      title: "108 ತುರ್ತು ವಾಹನ ಲೈವ್ ಟ್ರ್ಯಾಕಿಂಗ್",
+      subtitle: "ನೈಜ ಸಮಯದ ವಾಹನ ಪ್ರಗತಿ, ಜಿಪಿಎಸ್ ನಕ್ಷೆ ಮತ್ತು ಚಾಲಕರ ಸಂಪರ್ಕ",
+      disclaimerTitle: "ತರಬೇತಿ ಮತ್ತು ಪ್ರಾತ್ಯಕ್ಷಿಕೆ ಸಿಮ್ಯುಲೇಶನ್ ಮಾತ್ರ",
+      disclaimerText: "ಇದು ಕೇವಲ ಡೆಮೊ ಸಿಮ್ಯುಲೇಶನ್ ಆಗಿದೆ. ಯಾವುದೇ ನಿಜವಾದ 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಅಥವಾ ತುರ್ತು ವಿಭಾಗವನ್ನು ಸಂಪರ್ಕಿಸಲಾಗಿಲ್ಲ.",
+      requestId: "ಆಂಬ್ಯುಲೆನ್ಸ್ ಕೋರಿಕೆ ಐಡಿ",
+      currentStatus: "ಪ್ರಸ್ತುತ ರವಾನೆ ಸ್ಥಿತಿ",
+      requested: "ಕೋರಲಾಗಿದೆ",
+      dispatched: "ಹೊರಟಿದೆ",
+      onTheWay: "ಮಾರ್ಗದಲ್ಲಿದೆ",
+      arrived: "ಸ್ಥಳ ತಲುಪಿದೆ",
+      completed: "ಪೂರ್ಣಗೊಂಡಿದೆ",
+      eta: "ಅಂದಾಜು ತಲುಪುವ ಸಮಯ (ETA)",
+      distanceRemaining: "ಬಾಕಿ ಇರುವ ದೂರ",
+      speed: "ಪ್ರಸ್ತುತ ವೇಗ",
+      lastUpdate: "ಕೊನೆಯ GPS ಮಾಹಿತಿ",
+      patientLocation: "ರೋಗಿಯ ಸ್ಥಳ (ಪಿಕ್-ಅಪ್)",
+      hospitalLocation: "ಗಮ್ಯಸ್ಥಾನ ಆಸ್ಪತ್ರೆ / PHC",
+      driverName: "ಚಾಲಕರ ಹೆಸರು",
+      driverPhone: "ಚಾಲಕರ ದೂರವಾಣಿ",
+      vehicleNumber: "ವಾಹನ ಸಂಖ್ಯೆ",
+      emtStaff: "ತುರ್ತು ವೈದ್ಯಕೀಯ ಸಿಬ್ಬಂದಿ",
+      recenterMap: "ಆಂಬ್ಯುಲೆನ್ಸ್ ಮೇಲೆ ಕೇಂದ್ರೀಕರಿಸಿ",
+      recenterPatient: "ರೋಗಿಯ ಮೇಲೆ ಕೇಂದ್ರೀಕರಿಸಿ",
+      fitBounds: "ಸಂಪೂರ್ಣ ಮಾರ್ಗ ವೀಕ್ಷಿಸಿ",
+      demoAdvanceStep: "ಸಿಮ್ಯುಲೇಶನ್ ಹಂತ ಮುನ್ನಡೆಸಿ",
+      demoReset: "ಸಿಮ್ಯುಲೇಶನ್ ಮರುಹೊಂದಿಸಿ",
+      autoSimulate: "ಸ್ವಯಂಚಾಲಿತ ಹಂತ (3.5 ಸೆಕೆಂಡ್)",
+      callingDriver: "ಚಾಲಕರಿಗೆ ಕರೆ ಮಾಡಲಾಗುತ್ತಿದೆ...",
+      mapLoading: "ಗೂಗಲ್ ಮ್ಯಾಪ್ಸ್ ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+      mapPermissionDenied: "ಸ್ಥಳದ ಅನುಮತಿಯನ್ನು ನಿರಾಕರಿಸಲಾಗಿದೆ. ಮಂಡ್ಯ ಡೀಫಾಲ್ಟ್ ನಕ್ಷೆಯನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ.",
+      mapApiError: "ಗೂಗಲ್ ಮ್ಯಾಪ್ಸ್ API ಲಭ್ಯವಿಲ್ಲ. ಹೈ-ರೆಸಲ್ಯೂಶನ್ ವೆಕ್ಟರ್ ನಕ್ಷೆಯನ್ನು ಪ್ರದರ್ಶಿಸಲಾಗುತ್ತಿದೆ."
     },
 
-    // Testimonials
-    testimonials: {
-      badge: "ಕ್ಷೇತ್ರ ಕಾರ್ಯಕರ್ತೆಯರ ಮಾತು",
-      title: "ಆಶಾ ಕಾರ್ಯಕರ್ತೆಯರ ನಂಬಿಕೆ, ವೈದ್ಯಾಧಿಕಾರಿಗಳ ಮೆಚ್ಚುಗೆ",
-      quotes: [
-        {
-          quote: "ಹಿಂದೆ ಭಾನುವಾರವೆಲ್ಲ ಕೂತು ರಿಜಿಸ್ಟರ್ ಬರೆಯಬೇಕಿತ್ತು. ಈಗ ಆಶಾ ಸಖಿಯಲ್ಲಿ ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಿದರೆ ಸಾಕು, ನನ್ನ ಮಾಸಿಕ ವರದಿ ಕ್ಷಣಾರ್ಧದಲ್ಲಿ ಸಿದ್ಧವಾಗುತ್ತದೆ.",
-          name: "ಶಾರದಾ ಬಾಯಿ",
-          role: "ಹಿರಿಯ ಆಶಾ ಕಾರ್ಯಕರ್ತೆ",
-          location: "ಮಂಡ್ಯ ಜಿಲ್ಲೆ, ಕರ್ನಾಟಕ",
-          badge: "ಆಶಾ ಹೀರೋ"
-        },
-        {
-          quote: "ಸ್ವಯಂಚಾಲಿತ ಲಸಿಕಾ ಎಚ್ಚರಿಕೆಗಳಿಂದಾಗಿ ನನ್ನ ಗ್ರಾಮದ ಯಾವುದೇ ಮಗುವಿಗೆ ಪೆಂಟಾವಲೆಂಟ್ ಲಸಿಕೆ ತಪ್ಪಿಲ್ಲ. ಇದು ನಮಗೆ ನಿಜವಾದ ಸಖಿ.",
-          name: "ಸುನೀತಾ ರಮೇಶ್",
-          role: "ಆಶಾ ಕಾರ್ಯಕರ್ತೆ (7 ವರ್ಷ ಸೇವೆ)",
-          location: "ಶಿವಳ್ಳಿ ಉಪಕೇಂದ್ರ",
-          badge: "ಫೀಲ್ಡ್ ಚಾಂಪಿಯನ್"
-        },
-        {
-          quote: "ವೈದ್ಯಾಧಿಕಾರಿಯಾಗಿ, ಪ್ರೀ-ಎಕ್ಲಾಂಪ್ಸಿಯಾ ಮತ್ತು ತುರ್ತು ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳು ತಕ್ಷಣವೇ ನಮ್ಮ ಗಮನಕ್ಕೆ ಬರುವುದರಿಂದ ತಾಯಿ ಮರಣ ತಡೆಯಲು ಸಾಧ್ಯವಾಗಿದೆ.",
-          name: "ಡಾ. ಆರ್. ಮಂಜುನಾಥ್",
-          role: "ಪ್ರಾಥಮಿಕ ಆರೋಗ್ಯ ಕೇಂದ್ರ ವೈದ್ಯಾಧಿಕಾರಿ",
-          location: "ಮಂಡ್ಯ ಸೆಕ್ಟರ್ 4",
-          badge: "ಆರೋಗ್ಯ ಅಧಿಕಾರಿ"
-        }
-      ]
+    // AI Voice Assistant Module
+    voice: {
+      title: "ಬಹುಭಾಷಾ AI ಧ್ವನಿ ಕ್ಷೇತ್ರ ದಿನಚರಿ",
+      subtitle: "AI4Bharat Indic-Transcribe ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆ & Indic-Speak TTS",
+      readyToRecord: "ರೆಕಾರ್ಡ್ ಮಾಡಲು ಸಿದ್ಧವಾಗಿದೆ",
+      recordingInProgress: "ಆಲಿಸುತ್ತಿದೆ... ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಸರಳವಾಗಿ ಮಾತನಾಡಿ",
+      processingAudio: "AI4Bharat ಮೂಲಕ ಆಡಿಯೋ ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...",
+      startRecordingBtn: "ಧ್ವನಿ ಭೇಟಿ ಪ್ರಾರಂಭಿಸಿ",
+      stopRecordingBtn: "ರೆಕಾರ್ಡಿಂಗ್ ನಿಲ್ಲಿಸಿ",
+      retryBtn: "ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ",
+      listenAudioBtn: "ರೆಕಾರ್ಡಿಂಗ್ ಕೇಳಿ",
+      extractedCardTitle: "ಗುರುತಿಸಲಾದ ಕ್ಲಿನಿಕಲ್ ಮಾಹಿತಿ",
+      kannadaReadback: "ಕನ್ನಡ ಧ್ವನಿ ದೃಢೀಕರಣ ರೀಡ್‌ಬ್ಯಾಕ್",
+      listenReadbackBtn: "ರೀಡ್‌ಬ್ಯಾಕ್ ಕೇಳಿ",
+      evaluationPresets: "ಪರೀಕ್ಷಾ ಸನ್ನಿವೇಶಗಳು (Presets)",
+      saveVisitBtn: "ದಾಖಲೆಯನ್ನು ಸೇವ್ ಮಾಡಿ (SQLite)",
+      dangerAlertTitle: "ತುರ್ತು ಅಪಾಯಕಾರಿ ಎಚ್ಚರಿಕೆ ಪತ್ತೆಯಾಗಿದೆ!"
     },
 
-    // Partners & Security
-    partners: {
-      badge: "ಆಡಳಿತ ಮತ್ತು ದತ್ತಾಂಶ ರಕ್ಷಣೆ",
-      title: "ರಾಷ್ಟ್ರೀಯ ಡಿಜಿಟಲ್ ಆರೋಗ್ಯ ಮಾನದಂಡಗಳಿಗೆ ಅನುಗುಣ",
-      desc: "ABDM ಮಾರ್ಗಸೂಚಿಗಳು, ಸ್ಥಳೀಯ ಎನ್‌ಕ್ರಿಪ್ಶನ್ ಮತ್ತು ರೋಗಿಗಳ ಗೌಪ್ಯತೆಯ ಕಟ್ಟುನಿಟ್ಟಿನ ನಿಯಮಗಳ ಅಡಿಯಲ್ಲಿ ನಿರ್ಮಿಸಲಾಗಿದೆ.",
-      badges: ["ರಾಷ್ಟ್ರೀಯ ಆರೋಗ್ಯ ಅಭಿಯಾನ", "AI4Bharat IIT Madras", "MoHFW ಮಾರ್ಗಸೂಚಿ", "ABDM FHIR ಸಿದ್ಧ", "100% ಸ್ಥಳೀಯ ಡೇಟಾ"]
+    // Beneficiary Directory
+    beneficiaries: {
+      title: "ಫಲಾನುಭವಿಗಳ ಸಮುದಾಯ ರಿಜಿಸ್ಟರ್",
+      subtitle: "ಶಿವಳ್ಳಿ ಮತ್ತು ಕೆರೆಗೋಡು ಉಪಕೇಂದ್ರ ವ್ಯಾಪ್ತಿಯ ನಿವಾಸಿಗಳು",
+      searchPlaceholder: "ಹೆಸರು, ಐಡಿ, ಫೋನ್ ಅಥವಾ ಗ್ರಾಮದಿಂದ ಹುಡುಕಿ...",
+      addNewBtn: "ಹೊಸ ಫಲಾನುಭವಿ ನೋಂದಣಿ",
+      categoryAll: "ಎಲ್ಲಾ ಫಲಾನುಭವಿಗಳು",
+      categoryANC: "ಗರ್ಭಿಣಿಯರು (ANC)",
+      categoryPNC: "ಬಾಣಂತಿಯರು (PNC)",
+      categoryChild: "ಶಿಶುಗಳು (0-1 ವರ್ಷ)",
+      totalRegistered: "ಒಟ್ಟು ನೋಂದಾಯಿತರು",
+      viewProfile: "ಆರೋಗ್ಯ ವಿವರ ನೋಡಿ"
     },
 
-    // FAQ
-    faq: {
-      badge: "ಪ್ರಶ್ನೆಗಳಿವೆಯೇ?",
-      title: "ಸಾಮಾನ್ಯವಾಗಿ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು",
-      items: [
-        {
-          q: "ನೆಟ್‌ವರ್ಕ್ ಇಲ್ಲದ ಕುಗ್ರಾಮಗಳಲ್ಲಿ ಆಶಾ ಸಖಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆಯೇ?",
-          a: "ಹೌದು! ಆಶಾ ಸಖಿ 100% ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ. ಎಲ್ಲಾ ದಾಖಲೆಗಳು ಫೋನ್‌ನಲ್ಲೇ ಉಳಿಯಲಿದ್ದು, ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಬಂದಾಗ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸರ್ವರ್‌ಗೆ ಸಿಂಕ್ ಆಗುತ್ತವೆ."
-        },
-        {
-          q: "ಆಶಾ ಕಾರ್ಯಕರ್ತೆಯರು ಕನ್ನಡದೊಂದಿಗೆ ಇಂಗ್ಲಿಷ್ ವೈದ್ಯಕೀಯ ಪದಗಳನ್ನು ಬೆರೆಸಿ ಮಾತನಾಡಬಹುದೇ?",
-          a: "ಖಂಡಿತ! AI4Bharat Indic-Transcribe ಮಾದರಿಯು 'ANC ಚೆಕಪ್', 'IFA ಗೋಲಿ', 'TT ಇಂಜೆಕ್ಷನ್' ಮತ್ತು 'ತೂಕ' ಮುಂತಾದ ಮಿಶ್ರಿತ ಮಾತುಗಳನ್ನು ನಿಖರವಾಗಿ ಗ್ರಹಿಸುತ್ತದೆ."
-        },
-        {
-          q: "ಮಾಸಿಕ ಪ್ರೋತ್ಸಾಹಧನ (Incentives) ಲೆಕ್ಕಾಚಾರ ಹೇಗೆ ನಡೆಯುತ್ತದೆ?",
-          a: "ಆಪ್ ಪ್ರತಿ ಪೂರ್ಣಗೊಂಡ ಕಾರ್ಯವನ್ನು (ಉದಾ: JSY ಆಸ್ಪತ್ರೆ ಹೆರಿಗೆ ₹300, ಪೂರ್ಣ ಲಸಿಕೆ ₹150, ANC ಭೇಟಿ ₹200) ಸರ್ಕಾರದ ದರಪಟ್ಟಿಯಂತೆ ತಾನೇ ಲೆಕ್ಕಹಾಕಿ ಮಾಸಿಕ PDF ನೀಡುತ್ತದೆ."
-        },
-        {
-          q: "ಫಲಾನುಭವಿಗಳ ಆರೋಗ್ಯ ವಿವರಗಳು ಎಷ್ಟು ಸುರಕ್ಷಿತವಾಗಿವೆ?",
-          a: "ಸಂಪೂರ್ಣ ಸುರಕ್ಷಿತ. ಎಲ್ಲಾ ವಿವರಗಳು ಆರೋಗ್ಯ ದತ್ತಾಂಶ ಸಂರಕ್ಷಣಾ ಕಾಯ್ದೆ (DISHA) ಹಾಗೂ ABDM ಮಾನದಂಡಗಳಂತೆ ಭದ್ರವಾಗಿರುತ್ತವೆ."
-        },
-        {
-          q: "ಇದು ಸರ್ಕಾರದ ಪೋರ್ಟಲ್ ವರದಿಗಳಿಗೆ ಸಹಕಾರಿಯಾಗಿದೆಯೇ?",
-          a: "ಹೌದು. ಆಶಾ ಸಖಿ RCH ಪೋರ್ಟಲ್ ಮತ್ತು ANM ಮಾಸಿಕ ರಿಜಿಸ್ಟರ್‌ಗಳಿಗೆ ಹೊಂದುವಂತೆ ವರದಿಗಳನ್ನು ಸಿದ್ಧಪಡಿಸುವುದರಿಂದ ಸಮಯ ಉಳಿಯುತ್ತದೆ."
-        }
-      ]
+    // Household Route Screen
+    route: {
+      title: "ಗ್ರಾಮ ಮನೆ ಭೇಟಿ ನಕ್ಷೆ ಯೋಜನೆ",
+      subtitle: "ಮಂಡ್ಯ ಸೆಕ್ಟರ್ 4 ರ ದೈನಂದಿನ ಆಪ್ಟಿಮೈಸ್ಡ್ GPS ನಡಿಗೆ ಮಾರ್ಗ",
+      aiPriority: "AI ಆದ್ಯತೆ (ಹೆಚ್ಚಿನ ಅಪಾಯ ಮೊದಲು)",
+      shortestDistance: "ಕಡಿಮೆ ದೂರ",
+      optimizedBadge: "ಮಾರ್ಗ ಆಪ್ಟಿಮೈಸ್ಡ್ ಆಗಿದೆ",
+      totalDistance: "ಅಂದಾಜು ನಡಿಗೆ ದೂರ: 3.8 ಕಿ.ಮೀ",
+      stopsCount: "5 ಮನೆ ಭೇಟಿಗಳು ನಿಗದಿಯಾಗಿವೆ",
+      offlineGpsBadge: "ಆಫ್‌ಲೈನ್ GPS ಸಂಗ್ರಹ ಸಕ್ರಿಯ",
+      lakeLandmark: "ಶಿವಳ್ಳಿ ಕೆರೆ",
+      startVisitBtn: "ಮನೆ ಭೇಟಿ ಆರಂಭಿಸಿ"
     },
 
-    // Footer
-    footer: {
-      tagline: "ಭಾರತದ ಸಮುದಾಯ ಆರೋಗ್ಯ ಕಾರ್ಯಕರ್ತೆಯರನ್ನು ಘನತೆ, ಸ್ಪಷ್ಟತೆ ಮತ್ತು ಧ್ವನಿ ತಂತ್ರಜ್ಞಾನದಿಂದ ಸಬಲೀಕರಣಗೊಳಿಸುವುದು.",
-      helplines: "ತುರ್ತು ಸಹಾಯವಾಣಿ: 108 (ಆಂಬ್ಯುಲೆನ್ಸ್) • 104 (ಆರೋಗ್ಯ ಸಲಹೆ) • 112 (ರಾಷ್ಟ್ರೀಯ ತುರ್ತು)",
-      copyright: "© 2026 ಆಶಾ ಸಖಿ. ಭಾರತದ ಆಶಾ ಕಾರ್ಯಕರ್ತೆಯರಿಗಾಗಿ ಅರ್ಪಿತ.",
-      links: ["ಗೌಪ್ಯತಾ ನೀತಿ", "ಸೇವಾ ನಿಯಮಗಳು", "MoHFW ಮಾರ್ಗಸೂಚಿ", "AI4Bharat"]
+    // Incentives Screen
+    incentives: {
+      title: "ಆಶಾ ಪ್ರೋತ್ಸಾಹಧನ ಲೆಕ್ಕಪತ್ರ (NHM)",
+      subtitle: "JSY, ಲಸಿಕಾ ಪ್ರೋತ್ಸಾಹಧನ, ಮಾಸಿಕ ಗಳಿಕೆ ಮತ್ತು ಮೇಲ್ವಿಚಾರಕರ ಅನುಮೋದನೆ",
+      submitToANM: "ANM ಮೇಲ್ವಿಚಾರಕರಿಗೆ ಸಲ್ಲಿಸಿ",
+      submittedSuccess: "ದಾಖಲೆಗಳನ್ನು ANM ಗೆ ಯಶಸ್ವಿಯಾಗಿ ಸಲ್ಲಿಸಲಾಗಿದೆ!",
+      totalEarnedMonth: "ಈ ತಿಂಗಳ ಒಟ್ಟು ಗಳಿಕೆ",
+      approvedANM: "ANM ಅನುಮೋದಿತ ಮೊತ್ತ",
+      underReviewMO: "MO ಪರಿಶೀಲನೆಯಲ್ಲಿದೆ",
+      projectedTarget: "ಗುರಿ ಸಂಭಾವನೆ (Target)",
+      monthlyTrend: "ಮಾಸಿಕ ಗಳಿಕೆ ಪ್ರಗತಿ",
+      claimsLedger: "ಮದವಾರು ಪ್ರೋತ್ಸಾಹಧನ ಪಟ್ಟಿ",
+      claimId: "ಕ್ಲೈಮ್ ಐಡಿ",
+      taskScheme: "ಕಾರ್ಯ / ಯೋಜನೆ",
+      amount: "ಮೊತ್ತ (₹)",
+      verifyCode: "ಪರಿಶೀಲನಾ ಕೋಡ್"
     }
   }
 };
+
+/**
+ * Helper to fetch nested translation string by dot-notation key.
+ * Falls back to English, and finally the key itself.
+ */
+export function t(key, lang = 'kn') {
+  const currentLang = (lang === 'hi' || lang === 'en') ? lang : 'kn';
+  const parts = key.split('.');
+  
+  let val = TRANSLATIONS[currentLang];
+  for (const part of parts) {
+    if (val && typeof val === 'object' && part in val) {
+      val = val[part];
+    } else {
+      val = null;
+      break;
+    }
+  }
+
+  if (val !== null && val !== undefined) return val;
+
+  // Fallback to English
+  let fallbackVal = TRANSLATIONS.en;
+  for (const part of parts) {
+    if (fallbackVal && typeof fallbackVal === 'object' && part in fallbackVal) {
+      fallbackVal = fallbackVal[part];
+    } else {
+      fallbackVal = null;
+      break;
+    }
+  }
+
+  return (fallbackVal !== null && fallbackVal !== undefined) ? fallbackVal : key;
+}
+
+/**
+ * Formats date into locale-appropriate string for en, hi, or kn.
+ */
+export function formatLocalizedDate(dateObj, lang = 'kn') {
+  const d = (dateObj instanceof Date) ? dateObj : new Date(dateObj || Date.now());
+  const locale = lang === 'hi' ? 'hi-IN' : lang === 'kn' ? 'kn-IN' : 'en-IN';
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(d);
+}

@@ -23,7 +23,8 @@ import { voiceWs } from '../services/websocket';
 import { api } from '../services/api';
 import { ttsService } from '../services/ttsService';
 
-export default function StructuredVisitRecordScreen({ 
+export default function StructuredVisitRecordScreen({
+  currentLanguage = 'kn', 
   record, 
   onSaved, 
   onBack, 
@@ -168,7 +169,7 @@ export default function StructuredVisitRecordScreen({
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
-            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-navy-100 active:scale-95 transition-decelerate"
+            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95 transition-decelerate"
             title="ಹಿಂದೆ / Back"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -194,7 +195,7 @@ export default function StructuredVisitRecordScreen({
           className={`flex items-center space-x-2 px-5 py-3 rounded-2xl text-xs font-bold border active:scale-95 transition-decelerate self-start sm:self-auto ${
             isPlayingReadback
               ? 'bg-[#477A60] text-white border-healthcare shadow-touch animate-pulse'
-              : 'bg-[#FDF6F5] text-[#A25B74] border-[#F0DDE2] hover:bg-cyan-100'
+              : 'bg-[#FDF6F5] text-[#A25B74] border-[#F0DDE2] hover:bg-[#FDF6F5]'
           }`}
           title="AI4Bharat Indic-Speak ಧ್ವನಿ ಮೂಲಕ ಓದಿ ಕೇಳಿ"
         >
@@ -222,7 +223,7 @@ export default function StructuredVisitRecordScreen({
           <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
             <div className="flex items-start justify-between border-b border-[#F0DDE2] pb-3">
               <div className="flex items-start space-x-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-[#FDF6F5] text-cyan-700 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center shrink-0">
                   <User className="w-6 h-6" />
                 </div>
                 <div>
@@ -389,7 +390,7 @@ export default function StructuredVisitRecordScreen({
 
             <button
               onClick={handleSaveDraft}
-              className="w-full py-3 px-4 rounded-2xl border border-primary-200 text-[#A25B74] bg-[#FDF6F5]/50 font-bold text-xs hover:bg-cyan-100 active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
+              className="w-full py-3 px-4 rounded-2xl border border-primary-200 text-[#A25B74] bg-[#FDF6F5]/50 font-bold text-xs hover:bg-[#FDF6F5] active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
             >
               <BookmarkCheck className="w-4 h-4" />
               <span>ಕರಡು ಉಳಿಸಿ (Save Local Draft for Offline Sync)</span>
@@ -400,7 +401,7 @@ export default function StructuredVisitRecordScreen({
 
       {/* Voice Correction Popover Modal */}
       {voiceCorrectionActive && (
-        <div className="fixed inset-0 z-50 bg-navy-950/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-[#3B2A33]/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-2">
               <span className="text-xs font-bold text-[#3B2A33] font-kannada flex items-center space-x-2">
@@ -447,7 +448,7 @@ export default function StructuredVisitRecordScreen({
 
       {/* Manual Field Edit Modal */}
       {editingField && (
-        <div className="fixed inset-0 z-50 bg-navy-950/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-[#3B2A33]/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-2">
               <span className="text-xs font-bold text-[#3B2A33] font-kannada">

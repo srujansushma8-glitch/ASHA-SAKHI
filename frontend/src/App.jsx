@@ -216,6 +216,7 @@ export default function App() {
             <main className="flex-1 w-full overflow-y-auto">
               {activeScreen === 'home' && (
                 <HomeDashboard
+                  currentLanguage={currentLanguage}
                   onStartRecording={handleStartVoiceRecording}
                   onNavigate={(screen) => setActiveScreen(screen)}
                   onSelectBeneficiary={(id) => {
@@ -228,6 +229,7 @@ export default function App() {
 
               {activeScreen === 'route' && (
                 <HouseholdRouteScreen
+                  currentLanguage={currentLanguage}
                   onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
                   onBack={() => setActiveScreen('home')}
                 />
@@ -235,12 +237,14 @@ export default function App() {
 
               {activeScreen === 'incentives' && (
                 <IncentivesReportScreen
+                  currentLanguage={currentLanguage}
                   onBack={() => setActiveScreen('home')}
                 />
               )}
 
               {activeScreen === 'maternal' && (
                 <MaternalHealthScreen
+                  currentLanguage={currentLanguage}
                   selectedBeneficiaryId={selectedBeneficiaryId}
                   onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
                   onBack={() => setActiveScreen('home')}
@@ -260,6 +264,7 @@ export default function App() {
 
               {activeScreen === 'structured_record' && (
                 <StructuredVisitRecordScreen
+                  currentLanguage={currentLanguage}
                   record={currentRecord}
                   onSaved={handleRecordSaved}
                   onBack={() => setActiveScreen('record')}
@@ -272,6 +277,7 @@ export default function App() {
 
               {activeScreen === 'emergency' && (
                 <EmergencyAlertScreen
+                  currentLanguage={currentLanguage}
                   alertData={currentDangerAlert}
                   onBack={() => setActiveScreen('home')}
                   onTrackAmbulance={() => setActiveScreen('ambulance')}
@@ -280,12 +286,14 @@ export default function App() {
 
               {activeScreen === 'ambulance' && (
                 <AmbulanceTrackingScreen
+                  currentLanguage={currentLanguage}
                   onBack={() => setActiveScreen('emergency')}
                 />
               )}
 
               {activeScreen === 'followups' && (
                 <FollowUpDashboard
+                  currentLanguage={currentLanguage}
                   onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
                   onSelectBeneficiary={(id) => {
                     setSelectedBeneficiaryId(id);
@@ -296,6 +304,7 @@ export default function App() {
 
               {activeScreen === 'beneficiaries' && (
                 <BeneficiaryManagementScreen
+                  currentLanguage={currentLanguage}
                   selectedBeneficiaryId={selectedBeneficiaryId}
                   initialSearchQuery={globalSearch}
                   onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
@@ -308,6 +317,7 @@ export default function App() {
           {/* 3. Mobile Fixed Bottom Navigation (Hidden on Desktop) */}
           <div className="lg:hidden">
             <BottomNav
+              currentLanguage={currentLanguage}
               activeScreen={activeScreen}
               setActiveScreen={setActiveScreen}
               emergencyCount={emergencyAlerts.length}

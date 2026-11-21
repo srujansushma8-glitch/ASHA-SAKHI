@@ -291,7 +291,7 @@ export default function VoiceRecordingScreen({
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
-            className="p-2.5 rounded-2xl bg-[#FDF6F5]  border border-[#F0DDE2] dark:border-[#F0DDE2] text-[#3B2A33]  hover:bg-navy-100 dark:hover:bg-navy-700 active:scale-[0.98] transition-decelerate"
+            className="p-2.5 rounded-2xl bg-[#FDF6F5]  border border-[#F0DDE2] dark:border-[#F0DDE2] text-[#3B2A33]  hover:bg-[#FDF6F5] active:scale-[0.98] transition-decelerate"
             title="ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ (Back to Home)"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -301,7 +301,7 @@ export default function VoiceRecordingScreen({
               <h1 className="text-lg lg:text-xl font-bold font-kannada text-[#3B2A33]  leading-tight">
                 ಧ್ವನಿ ಕ್ಷೇತ್ರ ದಿನಚರಿ (Multilingual Voice Assistant)
               </h1>
-              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-[#FDF6F5] dark:bg-cyan-900/40 text-[#A25B74] dark:text-cyan-300 border border-[#F0DDE2] dark:border-cyan-700">
+              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2]">
                 AI4Bharat VAD
               </span>
             </div>
@@ -316,7 +316,7 @@ export default function VoiceRecordingScreen({
           {onOpenLanguageSelector && (
             <button
               onClick={onOpenLanguageSelector}
-              className="flex items-center space-x-2 px-3.5 py-2 rounded-2xl bg-[#FDF6F5]  hover:bg-cream-100 dark:hover:bg-navy-700 border border-primary/30 text-[#3B2A33]  text-xs font-bold transition-all shadow-xs group"
+              className="flex items-center space-x-2 px-3.5 py-2 rounded-2xl bg-[#FDF6F5]  hover:bg-cream-100 hover:bg-[#FDF6F5] border border-primary/30 text-[#3B2A33]  text-xs font-bold transition-all shadow-xs group"
               title="Change language among 22 scheduled Indian languages"
             >
               <Globe className="w-4 h-4 text-[#A25B74] group-hover:rotate-45 transition-transform" />
@@ -369,7 +369,7 @@ export default function VoiceRecordingScreen({
                   isRecording
                     ? 'bg-[#B94A58] hover:bg-[#A33D4A] text-white shadow-emergency animate-pulse'
                     : isProcessing
-                    ? 'bg-navy-300 text-white cursor-not-allowed'
+                    ? 'bg-[#C47A92]/40 text-white cursor-not-allowed'
                     : 'bg-gradient-to-tr from-[#A25B74] to-[#C47A92] hover:from-[#84455C] hover:to-[#A25B74] text-white shadow-md shadow-[#A25B74]/30'
                 }`}
               >
@@ -405,7 +405,7 @@ export default function VoiceRecordingScreen({
               <button
                 onClick={handleRetry}
                 disabled={isRecording && duration < 1}
-                className="flex-1 py-3 px-4 rounded-2xl border border-[#F0DDE2] dark:border-[#F0DDE2] text-[#3B2A33]  font-semibold text-xs hover:bg-[#FDF6F5] dark:hover:bg-navy-800 active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
+                className="flex-1 py-3 px-4 rounded-2xl border border-[#F0DDE2] dark:border-[#F0DDE2] text-[#3B2A33]  font-semibold text-xs hover:bg-[#FDF6F5] hover:bg-[#FDF6F5] active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
               >
                 <RotateCcw className="w-4 h-4 text-[#7A6670]" />
                 <span>ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ</span>
@@ -424,7 +424,7 @@ export default function VoiceRecordingScreen({
               {recordedAudioUrl && !isRecording && (
                 <button
                   onClick={toggleAudioPlayback}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-[#FDF6F5] dark:bg-cyan-900/30 text-[#A25B74] dark:text-cyan-200 border border-[#F0DDE2] dark:border-cyan-700 font-bold text-xs hover:bg-cyan-100 active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
+                  className="flex-1 py-3 px-4 rounded-2xl bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2] font-bold text-xs hover:bg-[#FDF6F5] active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
                 >
                   {isPlayingAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
                   <span>{isPlayingAudio ? 'ವಿರಾಮ' : 'ಕೇಳಿ (Play)'}</span>
@@ -462,7 +462,7 @@ export default function VoiceRecordingScreen({
                   <Sparkles className="w-4 h-4 text-[#A25B74]" />
                   <span>ಪರೀಕ್ಷಾ ಸನ್ನಿವೇಶಗಳು (Evaluation Presets for Judges):</span>
                 </span>
-                <span className="text-[10px] bg-[#FDF6F5] dark:bg-cyan-900/40 text-[#A25B74] dark:text-cyan-300 font-mono px-2.5 py-0.5 rounded-full font-bold border border-[#F0DDE2] dark:border-cyan-700">
+                <span className="text-[10px] bg-[#FDF6F5] text-[#A25B74] font-mono px-2.5 py-0.5 rounded-full font-bold border border-[#F0DDE2]">
                   AI4Bharat Multilingual
                 </span>
               </div>
@@ -490,7 +490,7 @@ export default function VoiceRecordingScreen({
             <div className={`rounded-3xl p-5 border shadow-card space-y-3 animate-fade-in ${
               agentResponse.danger_flag
                 ? 'bg-[#FCF1F1]/80 dark:bg-[#B94A58]/20 border-emergency-300'
-                : 'bg-gradient-to-r from-mint-50/80 via-white to-softblue dark:from-navy-800 dark:to-navy-900 border-mint-200 dark:border-[#F0DDE2]'
+                : 'bg-gradient-to-r from-mint-50/80 via-white to-softblue  border-mint-200 dark:border-[#F0DDE2]'
             }`}>
               <div className="flex items-center justify-between border-b border-[#F0DDE2] dark:border-[#F0DDE2] pb-2.5">
                 <div className="flex items-center space-x-2">
@@ -511,7 +511,7 @@ export default function VoiceRecordingScreen({
 
                 <button
                   onClick={handlePlayVoiceReadback}
-                  className="px-3 py-1.5 rounded-xl bg-white  hover:bg-mint-100 dark:hover:bg-navy-700 text-[#3B2A33]  text-xs font-bold border border-[#F0DDE2] dark:border-[#F0DDE2] flex items-center space-x-1.5 shadow-xs"
+                  className="px-3 py-1.5 rounded-xl bg-white  hover:bg-mint-100 hover:bg-[#FDF6F5] text-[#3B2A33]  text-xs font-bold border border-[#F0DDE2] dark:border-[#F0DDE2] flex items-center space-x-1.5 shadow-xs"
                 >
                   <Volume2 className={`w-3.5 h-3.5 text-[#A25B74] ${isPlayingTTS ? 'animate-bounce' : ''}`} />
                   <span>{isPlayingTTS ? 'ನುಡಿಯುತ್ತಿದೆ...' : 'ಕೇಳಿ (Play Voice)'}</span>
@@ -555,7 +555,7 @@ export default function VoiceRecordingScreen({
             </div>
 
             <div 
-              className="min-h-[160px] p-4 rounded-2xl bg-[#FDF6F5] dark:bg-navy-950 border border-[#F0DDE2] dark:border-[#F0DDE2] text-sm leading-relaxed flex flex-col justify-between"
+              className="min-h-[160px] p-4 rounded-2xl bg-[#FDF6F5]  border border-[#F0DDE2] dark:border-[#F0DDE2] text-sm leading-relaxed flex flex-col justify-between"
               dir={isRtl ? 'rtl' : 'ltr'}
             >
               {finalTranscript ? (
@@ -603,7 +603,7 @@ export default function VoiceRecordingScreen({
                 {/* Voice Read-back Button */}
                 <button
                   onClick={handlePlayVoiceReadback}
-                  className="px-3 py-1.5 rounded-xl bg-[#FDF6F5]  hover:bg-[#FDF6F5] dark:hover:bg-navy-700 text-[#3B2A33]  text-xs font-bold border border-[#F0DDE2] dark:border-[#F0DDE2] flex items-center space-x-1.5 active:scale-95 transition-decelerate"
+                  className="px-3 py-1.5 rounded-xl bg-[#FDF6F5]  hover:bg-[#FDF6F5] hover:bg-[#FDF6F5] text-[#3B2A33]  text-xs font-bold border border-[#F0DDE2] dark:border-[#F0DDE2] flex items-center space-x-1.5 active:scale-95 transition-decelerate"
                   title="ಧ್ವನಿ ಖಚಿತತೆ ಕೇಳಿ"
                 >
                   <Volume2 className={`w-4 h-4 text-[#A25B74] ${isPlayingTTS ? 'animate-bounce' : ''}`} />
@@ -613,19 +613,19 @@ export default function VoiceRecordingScreen({
 
               {/* Extracted Fields Summary Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-2.5 rounded-xl bg-[#FDF6F5] dark:bg-navy-950 border border-[#F0DDE2] dark:border-[#F0DDE2]">
+                <div className="p-2.5 rounded-xl bg-[#FDF6F5]  border border-[#F0DDE2] dark:border-[#F0DDE2]">
                   <span className="text-[10px] text-[#C47A92] block font-medium">ಫಲಾನುಭವಿ</span>
                   <span className="font-bold text-[#3B2A33]  font-kannada">{extractedRecordData.beneficiary_name}</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#FDF6F5] dark:bg-navy-950 border border-[#F0DDE2] dark:border-[#F0DDE2]">
+                <div className="p-2.5 rounded-xl bg-[#FDF6F5]  border border-[#F0DDE2] dark:border-[#F0DDE2]">
                   <span className="text-[10px] text-[#C47A92] block font-medium">ಭೇಟಿ ಪ್ರಕಾರ</span>
                   <span className="font-bold text-[#A25B74]">{extractedRecordData.visit_type}</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#FDF6F5] dark:bg-navy-950 border border-[#F0DDE2] dark:border-[#F0DDE2]">
+                <div className="p-2.5 rounded-xl bg-[#FDF6F5]  border border-[#F0DDE2] dark:border-[#F0DDE2]">
                   <span className="text-[10px] text-[#C47A92] block font-medium">ತೂಕ (Weight)</span>
                   <span className="font-bold font-mono text-[#3B2A33] ">{extractedRecordData.weight || 'N/A'} kg</span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-[#FDF6F5] dark:bg-navy-950 border border-[#F0DDE2] dark:border-[#F0DDE2]">
+                <div className="p-2.5 rounded-xl bg-[#FDF6F5]  border border-[#F0DDE2] dark:border-[#F0DDE2]">
                   <span className="text-[10px] text-[#C47A92] block font-medium">ಮುಂದಿನ ಭೇಟಿ</span>
                   <span className="font-bold font-mono text-[#477A60]">{extractedRecordData.next_visit_date || 'N/A'}</span>
                 </div>
