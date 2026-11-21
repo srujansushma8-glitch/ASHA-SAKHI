@@ -20,3 +20,19 @@ class FollowupCreate(BaseModel):
 class FollowupResponse(FollowupCreate):
     id: str
     created_at: str
+    beneficiary_name: Optional[str] = None
+    beneficiary_name_kn: Optional[str] = None
+    village: Optional[str] = None
+    category: Optional[str] = None
+    status: Optional[str] = None
+    type: Optional[str] = None
+    risk_level: Optional[str] = None
+    phone: Optional[str] = None
+    household_id: Optional[str] = None
+
+
+class FollowupStatusUpdate(BaseModel):
+    status: Optional[str] = None
+    completion_status: Optional[str] = None
+    due_date: Optional[str] = None
+    notes: Optional[str] = None

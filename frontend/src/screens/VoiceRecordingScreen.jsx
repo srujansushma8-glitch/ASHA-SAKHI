@@ -17,7 +17,11 @@ import {
   Info,
   Globe,
   Radio,
-  MessageSquare
+  MessageSquare,
+  Edit3,
+  Save,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import { audioRecorder } from '../services/audioRecorder';
 import { voiceWs } from '../services/websocket';
@@ -57,6 +61,7 @@ export default function VoiceRecordingScreen({
   const [editedTranscript, setEditedTranscript] = useState('');
   const [isSavingDirect, setIsSavingDirect] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+  const [errorState, setErrorState] = useState(null);
 
   const timerRef = useRef(null);
   const audioPlayerRef = useRef(null);
@@ -83,7 +88,8 @@ export default function VoiceRecordingScreen({
     });
 
     const unsubFinal = voiceWs.on('transcript_final', (payload) => {
-      setFinalTranscript(payload.text || '');
+      const text = payload.transcript || payload.text || '';
+      setFinalTranscript(text);
       setPartialTranscript('');
       setProcessingStatus(t('voice.fullTranscriptReceived'));
     });
@@ -92,21 +98,48 @@ export default function VoiceRecordingScreen({
       setIsProcessing(false);
       setProcessingStatus(t('voice.fieldsExtracted'));
       setExtractedRecordData(payload.record);
+      if (payload.transcript && !finalTranscript) {
+        setFinalTranscript(payload.transcript);
+      }
     });
 
     const unsubDanger = voiceWs.on('danger_alert', (payload) => {
-      setActiveDangerAlert(payload.alert);
-      if (onDangerAlert) onDangerAlert(payload.alert);
+      const alertObj = payload.alert || payload;
+      setActiveDangerAlert(alertObj);
+      if (onDangerAlert) onDangerAlert(alertObj);
+      if (payload.audio_base64) {
+        setIsPlayingTTS(true);
+        ttsService.playBase64Audio(payload.audio_base64, 'wav', () => {
+          setIsPlayingTTS(false);
+        });
+      }
     });
 
     const unsubAgent = voiceWs.on('agent_response', (payload) => {
+      setIsProcessing(false);
       setAgentResponse(payload);
+      if (payload.transcript && !finalTranscript) {
+        setFinalTranscript(payload.transcript);
+      }
       if (payload.spoken_text) {
         setProcessingStatus(payload.spoken_text);
       }
-      if (payload.danger_flag && payload.alert && onDangerAlert) {
-        setActiveDangerAlert(payload.alert);
-        onDangerAlert(payload.alert);
+      if (payload.audio_base64) {
+        setIsPlayingTTS(true);
+        ttsService.playBase64Audio(payload.audio_base64, 'wav', () => {
+          setIsPlayingTTS(false);
+        });
+      } else if (payload.spoken_text) {
+        setIsPlayingTTS(true);
+        ttsService.speakText(payload.spoken_text, {
+          language: langInfo.bcp47,
+          onEnd: () => setIsPlayingTTS(false)
+        });
+      }
+      if (payload.danger_flag && onDangerAlert) {
+        const alertObj = payload.alert || payload;
+        setActiveDangerAlert(alertObj);
+        onDangerAlert(alertObj);
       }
     });
 
@@ -144,6 +177,7 @@ export default function VoiceRecordingScreen({
     const unsubError = voiceWs.on('error', (payload) => {
       setIsProcessing(false);
       setIsRecording(false);
+      setErrorState(payload);
       setProcessingStatus(`${t('common.error') || 'Error'}: ${payload.message || 'Processing error'}`);
     });
 
@@ -172,6 +206,7 @@ export default function VoiceRecordingScreen({
   const handleStartRecording = async () => {
     try {
       ttsService.stop();
+      setErrorState(null);
       setExtractedRecordData(null);
       setActiveDangerAlert(null);
       setAgentResponse(null);
@@ -180,6 +215,14 @@ export default function VoiceRecordingScreen({
       setWindowCount(0);
       setDuration(0);
 
+      // 1. Immediately initiate WebSocket session with active language
+      voiceWs.startSession({
+        language,
+        audioConfig: { sampleRate: 16000, encoding: 'audio/wav' },
+        demoScenarioId: demoScenario
+      });
+
+      // 2. Start hardware audio recorder
       const { stream, mimeType } = await audioRecorder.startRecording({
         timeslice: 1000,
         onChunk: (chunk) => {
@@ -193,12 +236,6 @@ export default function VoiceRecordingScreen({
         onStateChange: (state) => {
           if (state === 'recording') setIsRecording(true);
         }
-      });
-
-      voiceWs.startSession({
-        language,
-        audioConfig: { sampleRate: 16000, encoding: mimeType },
-        demoScenarioId: demoScenario
       });
 
       setIsRecording(true);
@@ -224,13 +261,14 @@ export default function VoiceRecordingScreen({
     setProcessingStatus(t('voice.processingWindow'));
 
     try {
-      const { blob, url } = await audioRecorder.stopRecording();
+      const { blob, url, base64Audio, mimeType } = await audioRecorder.stopRecording();
       if (url) {
         setRecordedAudioUrl(url);
       }
-      voiceWs.stopRecording();
+      voiceWs.stopRecording({ audioBase64: base64Audio, mimeType: mimeType || 'audio/wav' });
     } catch (err) {
       console.error('[VoiceRecording] Stop error', err);
+      voiceWs.stopRecording();
       setIsProcessing(false);
     }
   };
@@ -275,6 +313,7 @@ export default function VoiceRecordingScreen({
     clearInterval(timerRef.current);
     audioRecorder.reset();
     ttsService.stop();
+    setErrorState(null);
     setIsRecording(false);
     setIsProcessing(false);
     setDuration(0);
@@ -441,6 +480,23 @@ export default function VoiceRecordingScreen({
                   : t('voice.speakIdlePrompt')}
               </p>
             </div>
+
+            {/* In-Place Friendly Error & Immediate Retry Card */}
+            {errorState && (
+              <div className="p-3.5 rounded-2xl bg-[#FCF1F1] border border-[#F0B8B8] text-center space-y-2.5 animate-fade-in">
+                <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#B94A58]">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorState.message || 'Processing error occurred'}</span>
+                </div>
+                <button
+                  onClick={handleStartRecording}
+                  className="px-4 py-2 rounded-xl bg-[#B94A58] hover:bg-[#A33D4A] text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 active:scale-95 transition-all"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>{langInfo.code === 'kn' ? 'ಮತ್ತೊಮ್ಮೆ ಮಾತನಾಡಿ (Speak Again)' : 'Speak Again'}</span>
+                </button>
+              </div>
+            )}
 
             {/* Primary Action Controls: Retry, Stop, Playback */}
             <div className="flex items-center justify-center gap-3 pt-4 border-t border-[#F0DDE2]">

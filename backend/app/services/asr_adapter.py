@@ -45,25 +45,41 @@ class MockASRAdapter(BaseASRAdapter):
         self.model_name = "mock-ai4bharat-indic-conformer-asr"
         self._custom_queue: List[str] = []
 
-        # Preset authentic utterances per language
+        # Preset authentic utterances per language covering all 9 required field scenarios
         self._lang_utterances: Dict[str, List[str]] = {}
         for code, info in INDIC_LANGUAGES.items():
             self._lang_utterances[code] = [
                 info.sample_anc_phrase,
-                info.sample_query_phrase,
                 info.sample_danger_phrase,
-                f"Register new pregnant woman in {info.region}, weight 52 kg, BP normal.",
+                info.sample_query_phrase,
+                f"Register new pregnant woman Sunita age 24 in {info.region}, weight 52 kg, BP 120/80 normal.",
+                f"Show today's pending follow-ups and high-risk visits in {info.region}.",
+                f"Check immunization status and vaccines due for child in {info.region}.",
+                f"Newborn home visit day 3, weight 2.9 kg, breastfeeding normal, mother recovering well.",
+                f"Update beneficiary weight to 52 kg.",
                 info.sample_greeting
             ]
 
-        # Baseline Kannada utterances
+        # Comprehensive clinical Kannada utterances across all 9 field scenarios
         self._lang_utterances["kn"] = [
+            # 1. Routine ANC Visit with clinical vitals & next visit
             "ಫಲಾನುಭವಿ ಲಕ್ಷ್ಮಿ BEN-KA-001, ANC checkup ಮೂರನೇ ತಿಂಗಳು, weight 54 kg, TT injection ಮೊದಲ ಡೋಸ್ ಕೊಟ್ಟಿದ್ದೇವೆ, IFA goli ಕೊಟ್ಟಿದೆ, next visit date 2026-12-15.",
-            "BEN-KA-002 ಸುಮಿತ್ರಾ, ANC checkup ಆಗಿದೆ, weight 52 kg, ಆದರೆ bleeding agtidhe ತಕ್ಷಣ ನೋಡ್ಬೇಕು.",
-            "BEN-KA-004 ಬೇಬಿ ಆಫ್ ಕವಿತಾ, newborn home visit day 3, weight 2.8 kg, ಮಗುವಿಗೆ teevra jwara ಮತ್ತು baby has high fever.",
-            "ರಾಧಾ BEN-KA-003, PNC visit, weight 56 kg, vaccinations completed BCG ಮತ್ತು OPV 0, vaccinations due Pentavalent 1, next visit 2026-12-01.",
-            "ಫಲಾನುಭವಿ BEN-KA-001 ತೂಕ 54 kg ಅಲ್ಲ 52 kg ಎಂದು ಬದಲಾಯಿಸಿ.",
-            "BEN-KA-005 ಬೇಬಿ ಆಫ್ ರೂಪಾ, newborn visit, ತೂಕ 3.1 kg, ಹಾಲು ಕುಡಿಯುತ್ತಿಲ್ಲ, baby unable to suckle."
+            # 2. Maternal High-Risk Danger Sign (Severe Bleeding -> Triggers Immediate Emergency Protocol)
+            "BEN-KA-002 ಸುಮಿತ್ರಾ, ANC checkup ಆಗಿದೆ, weight 52 kg, ಆದರೆ bleeding agtidhe ತಕ್ಷಣ ನೋಡ್ಬೇಕು, ರಕ್ತಸ್ರಾವ ಹೆಚ್ಚಾಗಿದೆ.",
+            # 3. Newborn High-Risk Danger Sign (High Fever & Unable to Suckle -> Triggers Immediate Protocol)
+            "BEN-KA-004 ಬೇಬಿ ಆಫ್ ಕವಿತಾ, newborn home visit day 3, weight 2.8 kg, ಮಗುವಿಗೆ teevra jwara ಮತ್ತು ಹಾಲು ಕುಡಿಯುತ್ತಿಲ್ಲ, baby unable to suckle.",
+            # 4. Beneficiary Registration (New Pregnant Woman)
+            "ಹೊಸ ಗರ್ಭಿಣಿ ಮಹಿಳೆ ಕವಿತಾ ವಯಸ್ಸು 24 ಹೊಸಕೋಟೆ ಗ್ರಾಮ ತೂಕ 52 kg ಬಿಪಿ 120/80 ಸಾಮಾನ್ಯ ಎಂದು ನೋಂದಾಯಿಸಿ.",
+            # 5. Pending Tasks & Today's Follow-ups Query
+            "ಇಂದಿನ ಬಾಕಿ ಇರುವ ಫಾಲೋ-ಅಪ್ ಮತ್ತು ಹೈ-ರಿಸ್ಕ್ ಗರ್ಭಿಣಿಯರ ಪಟ್ಟಿ ತೋರಿಸಿ.",
+            # 6. Child Immunization & Vaccination Status Check
+            "ರಾಧಾ BEN-KA-003, ಮಗುವಿಗೆ BCG ಮತ್ತು OPV 0 ಆಗಿದೆ, ಮುಂದಿನ ಪೆಂಟಾವಲೆಂಟ್ 1 ಲಸಿಕೆ ಯಾವಾಗ ಕೊಡಬೇಕು ಪರಿಶೀಲಿಸಿ.",
+            # 7. Beneficiary History & Previous Visit Search
+            "ಫಲಾನುಭವಿ BEN-KA-001 ಲಕ್ಷ್ಮಿ ಅವರ ಹಿಂದಿನ ಭೇಟಿಯ ವಿವರ ಮತ್ತು ತೂಕದ ಮಾಹಿತಿ ತೋರಿಸಿ.",
+            # 8. Postnatal Care (PNC / HBNC) Routine Home Visit
+            "ರಾಧಾ BEN-KA-003, PNC ಭೇಟಿ, ತೂಕ 56 kg, ತಾಯಿ ಮತ್ತು ಮಗು ಕ್ಷೇಮವಾಗಿದ್ದಾರೆ, ಮುಂದಿನ ಭೇಟಿ 2026-12-01.",
+            # 9. Spoken Field Correction
+            "ಫಲಾನುಭವಿ BEN-KA-001 ತೂಕ 54 kg ಅಲ್ಲ 52 kg ಎಂದು ಬದಲಾಯಿಸಿ."
         ]
         self._counters: Dict[str, int] = {k: 0 for k in INDIC_LANGUAGES}
 

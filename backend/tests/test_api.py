@@ -84,6 +84,22 @@ async def test_confirm_visit_and_followup_generation():
         assert fu_res.status_code == 200
         followups = fu_res.json()
         assert len(followups) >= 1
+        assert "beneficiary_name" in followups[0]
+        assert "village" in followups[0]
+        assert "status" in followups[0]
+
+        # Test PATCH /api/followups/{id}
+        first_fu_id = followups[0]["id"]
+        patch_res = await client.patch(f"/api/followups/{first_fu_id}", json={"status": "COMPLETED"})
+        assert patch_res.status_code == 200
+        assert patch_res.json()["completion_status"] == "COMPLETED"
+
+        # Test GET /api/followups/summary
+        summary_res = await client.get("/api/followups/summary")
+        assert summary_res.status_code == 200
+        summary_data = summary_res.json()
+        assert "total_pending" in summary_data
+        assert "maternal_count" in summary_data
 
 
 @pytest.mark.asyncio

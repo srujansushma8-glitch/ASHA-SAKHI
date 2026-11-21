@@ -214,8 +214,17 @@ class VoiceWebSocketClient {
   /**
    * Frontend Event: audio_chunk
    */
-  sendAudioChunk({ chunkIndex, base64Audio, size, mimeType }) {
-    if (!this.sessionId) return;
+  sendAudioChunk(chunkData = {}) {
+    if (!this.sessionId) {
+      this.sessionId = `SES-${Date.now().toString().slice(-6)}`;
+    }
+
+    const chunkIndex = chunkData.chunkIndex ?? 0;
+    const base64Audio = chunkData.base64Audio || chunkData.base64 || chunkData.audio_data || '';
+    const size = chunkData.size || (base64Audio ? base64Audio.length : 0);
+    const mimeType = chunkData.mimeType || 'audio/wav';
+
+    if (!base64Audio) return;
 
     const payload = {
       event: 'audio_chunk',
@@ -255,13 +264,22 @@ class VoiceWebSocketClient {
   /**
    * Frontend Event: stop_recording
    */
-  stopRecording() {
-    if (!this.sessionId) return;
+  stopRecording(options = {}) {
+    if (!this.sessionId) {
+      this.sessionId = `SES-${Date.now().toString().slice(-6)}`;
+    }
+
+    const audioBase64 = options.audioBase64 || options.audio_base64 || '';
+    const mimeType = options.mimeType || options.format || 'audio/wav';
 
     const payload = {
       event: 'stop_recording',
       session_id: this.sessionId,
-      data: {}
+      audio_base64: audioBase64,
+      data: {
+        audio_base64: audioBase64,
+        format: mimeType
+      }
     };
 
     if (this.isLive && this.ws && this.ws.readyState === WebSocket.OPEN) {

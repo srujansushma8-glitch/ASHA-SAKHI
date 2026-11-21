@@ -345,21 +345,125 @@ export const api = {
    * Follow-ups List
    * GET /api/followups
    */
+  _normalizeFollowup(f) {
+    if (!f) return null;
+    const task = f.task_type || f.type || 'Clinical Follow-up';
+    let cat = f.category;
+    if (!cat) {
+      const u = task.toUpperCase();
+      if (u.includes('ANC') || u.includes('PREGNAN') || u.includes('TRIMESTER')) cat = 'ANC';
+      else if (u.includes('IMMUNIZ') || u.includes('VACCIN') || u.includes('OPV') || u.includes('PENTAVALENT')) cat = 'Immunization';
+      else if (u.includes('NEWBORN') || u.includes('HBNC') || u.includes('INFANT')) cat = 'Newborn';
+      else if (u.includes('DANGER') || (f.priority && ['HIGH', 'URGENT', 'CRITICAL'].includes(String(f.priority).toUpperCase()))) cat = 'High Risk';
+      else cat = 'General';
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const due = f.due_date || todayStr;
+    const rawStatus = (f.status || f.completion_status || 'PENDING').toLowerCase();
+    let normStatus = rawStatus;
+    if (rawStatus === 'completed') {
+      normStatus = 'completed';
+    } else if (rawStatus === 'overdue' || rawStatus === 'missed' || (rawStatus === 'pending' && due < todayStr)) {
+      normStatus = 'overdue';
+    } else if (due > todayStr) {
+      normStatus = 'upcoming';
+    } else {
+      normStatus = 'pending';
+    }
+
+    return {
+      id: f.id || `FOL-${Date.now()}`,
+      visit_id: f.visit_id || null,
+      beneficiary_id: f.beneficiary_id || 'BEN-UNKNOWN',
+      beneficiary_name: f.beneficiary_name || f.name || f.beneficiary_id || 'Beneficiary',
+      beneficiary_name_kn: f.beneficiary_name_kn || null,
+      village: f.village || 'Keregodu GP',
+      household_id: f.household_id || `HH-${(f.beneficiary_id || '').slice(-3) || '01'}`,
+      category: cat,
+      type: task,
+      due_date: due,
+      priority: (f.priority || 'MEDIUM').toLowerCase(),
+      status: normStatus,
+      completion_status: (f.completion_status || normStatus).toUpperCase(),
+      notes: f.notes || '',
+      guideline_source: f.guideline_source || 'MoHFW Protocol'
+    };
+  },
+
   async getFollowups() {
+    let rawList = null;
     if (!isDemoMode()) {
       try {
         const res = await fetchWithTimeout(`${BASE_URL}/api/followups`);
         if (res.ok) {
-          const data = await res.json();
-          localStorage.setItem(STORAGE_KEYS.FOLLOWUPS, JSON.stringify(data));
-          return data;
+          rawList = await res.json();
+          localStorage.setItem(STORAGE_KEYS.FOLLOWUPS, JSON.stringify(rawList));
         }
       } catch (err) {
         console.warn('[API] Failed to fetch followups from server, loading cached/mock', err);
       }
     }
-    const cached = localStorage.getItem(STORAGE_KEYS.FOLLOWUPS);
-    return cached ? JSON.parse(cached) : INITIAL_FOLLOWUPS;
+    if (!rawList) {
+      const cached = localStorage.getItem(STORAGE_KEYS.FOLLOWUPS);
+      rawList = cached ? JSON.parse(cached) : INITIAL_FOLLOWUPS;
+    }
+    return (rawList || []).map(f => this._normalizeFollowup(f)).filter(Boolean);
+  },
+
+  async getFollowupsSummary() {
+    if (!isDemoMode()) {
+      try {
+        const res = await fetchWithTimeout(`${BASE_URL}/api/followups/summary`);
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch (err) {
+        console.warn('[API] Failed to fetch followups summary from server', err);
+      }
+    }
+    const items = await this.getFollowups();
+    return {
+      total_followups: items.length,
+      total_pending: items.filter(f => f.status === 'pending' || f.status === 'overdue').length,
+      overdue_count: items.filter(f => f.status === 'overdue').length,
+      upcoming_count: items.filter(f => f.status === 'upcoming').length,
+      completed_count: items.filter(f => f.status === 'completed').length,
+      missed_count: items.filter(f => f.status === 'overdue').length,
+      maternal_count: items.filter(f => f.category === 'ANC').length,
+      child_immunization_count: items.filter(f => f.category === 'Immunization').length,
+      high_risk_count: items.filter(f => f.category === 'High Risk').length,
+      newborn_count: items.filter(f => f.category === 'Newborn').length,
+    };
+  },
+
+  exportFollowupsCsv(items = []) {
+    const headers = ['Followup ID', 'Beneficiary ID', 'Beneficiary Name', 'Village', 'Household', 'Category', 'Task Type', 'Due Date', 'Priority', 'Status', 'Notes'];
+    const rows = items.map(f => [
+      `"${f.id || ''}"`,
+      `"${f.beneficiary_id || ''}"`,
+      `"${(f.beneficiary_name || '').replace(/"/g, '""')}"`,
+      `"${(f.village || '').replace(/"/g, '""')}"`,
+      `"${f.household_id || ''}"`,
+      `"${f.category || ''}"`,
+      `"${(f.type || f.task_type || '').replace(/"/g, '""')}"`,
+      `"${f.due_date || ''}"`,
+      `"${(f.priority || '').toUpperCase()}"`,
+      `"${(f.status || '').toUpperCase()}"`,
+      `"${(f.notes || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ASHA_Sakhi_Followups_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    return true;
   },
 
   /**
@@ -882,9 +986,21 @@ export const api = {
    * Update followup status (e.g. mark done, reschedule)
    */
   async updateFollowup(followupId, updates) {
+    if (!isDemoMode()) {
+      try {
+        await fetchWithTimeout(`${BASE_URL}/api/followups/${followupId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates)
+        });
+      } catch (err) {
+        console.warn('[API] Remote followup update failed, updating locally', err);
+      }
+    }
     const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.FOLLOWUPS) || '[]');
     const updated = list.map(item => item.id === followupId ? { ...item, ...updates } : item);
     localStorage.setItem(STORAGE_KEYS.FOLLOWUPS, JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent('asha_followups_updated', { detail: { followupId, updates } }));
     return updated;
   },
 

@@ -128,136 +128,186 @@ async def voice_websocket_endpoint(websocket: WebSocket):
 
                 # 3. EVENT: stop_recording
                 elif event == "stop_recording":
-                    if not current_session or len(current_session.audio_buffer) == 0:
-                        await send_event("error", {"message": "No audio received to process."})
+                    if not current_session:
+                        current_session = session_manager.get_or_create_session(session_id)
+
+                    # Check for directly bundled audio in stop_recording
+                    direct_b64 = data.get("audio_base64") or payload.get("audio_base64") or payload.get("audio_data") or ""
+                    if direct_b64:
+                        try:
+                            direct_bytes = base64.b64decode(direct_b64)
+                            if direct_bytes and len(direct_bytes) > 0:
+                                current_session.audio_buffer.clear()
+                                current_session.audio_buffer.extend(direct_bytes)
+                        except Exception as dec_err:
+                            logger.warning(f"Failed decoding audio_base64 in stop_recording: {dec_err}")
+
+                    if len(current_session.audio_buffer) == 0:
+                        await send_event(
+                            "error",
+                            {
+                                "code": "NO_AUDIO_CAPTURED",
+                                "message": "ಯಾವುದೇ ಧ್ವನಿ ದಾಖಲಾಗಿಲ್ಲ. ದಯವಿಟ್ಟು ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ಪರಿಶೀಲಿಸಿ ಮತ್ತೊಮ್ಮೆ ಮಾತನಾಡಿ (No audio received. Please check mic permissions and speak again.)",
+                                "can_retry": True
+                            }
+                        )
                         continue
 
                     current_session.status = "PROCESSING"
                     raw_audio = bytes(current_session.audio_buffer)
                     current_session.audio_buffer.clear()
 
-                    wav_audio = audio_manager.validate_or_wrap_wav(raw_audio)
-                    active_lang = current_session.language or "kn"
+                    active_lang = current_session.language or data.get("language") or "kn"
+                    if active_lang not in INDIC_LANGUAGES:
+                        active_lang = "kn"
 
-                    # A. Speech Recognition (AI4Bharat Indic-Transcribe / Mock)
-                    asr_res = await asr_adapter.transcribe(wav_audio, language=active_lang)
-                    transcript = asr_res.transcript
-                    current_session.transcript_history.append(transcript)
+                    try:
+                        wav_audio = audio_manager.validate_or_wrap_wav(raw_audio)
 
-                    await send_event(
-                        "transcript_final",
-                        {
-                            "transcript": transcript,
-                            "text": transcript,
-                            "language": active_lang,
-                            "latency_ms": asr_res.latency_ms,
-                            "is_mock": asr_res.is_mock,
-                            "model_name": asr_res.model_name,
-                        },
-                    )
+                        # A. Speech Recognition (AI4Bharat Indic-Transcribe / Mock)
+                        asr_res = await asr_adapter.transcribe(wav_audio, language=active_lang)
+                        transcript = asr_res.transcript or ""
+                        current_session.transcript_history.append(transcript)
 
-                    # B. Independent Deterministic Danger-Sign Detection
-                    danger_res = danger_detector.detect(transcript, language=active_lang)
-                    current_session.danger_result = danger_res
-
-                    # C. Process Conversational Turn with Indic Voice Agent
-                    agent_resp = indic_voice_agent.process_turn(
-                        transcript=transcript,
-                        language=active_lang,
-                        session_context=current_session.context
-                    )
-
-                    # If danger detected: generate simulated ambulance request & emergency alert
-                    sim_amb = None
-                    if danger_res.has_danger:
-                        current_session.status = "INTERRUPTED_EMERGENCY"
-                        emergency_tts = tts_adapter.get_emergency_audio(language=active_lang)
-
-                        # Automatically trigger simulated ambulance dispatch
-                        ben_id = "BEN-KA-001"
-                        if current_session.current_record and current_session.current_record.beneficiary_id:
-                            ben_id = current_session.current_record.beneficiary_id
-
-                        pickup = "Hoskote Village"
-                        from app.models.beneficiary import BeneficiaryRepository
-                        ben = BeneficiaryRepository.get_by_id(ben_id)
-                        if ben and ben.get("village"):
-                            pickup = ben["village"]
-
-                        sim_amb = ambulance_service.create_request(
-                            beneficiary_id=ben_id,
-                            emergency_id=danger_res.detected_signs[0].sign_id if danger_res.detected_signs else None,
-                            pickup_location=pickup,
-                            notes=f"Auto-triggered simulated 108 dispatch for danger sign: {danger_res.highest_severity} ({active_lang})",
-                        )
-                        current_session.simulated_ambulance = sim_amb
+                        if not transcript.strip():
+                            await send_event(
+                                "error",
+                                {
+                                    "code": "NO_SPEECH_DETECTED",
+                                    "message": "ಧ್ವನಿ ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಿಸಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ಪಷ್ಟವಾಗಿ ಮತ್ತೊಮ್ಮೆ ಮಾತನಾಡಿ (No speech detected. Please speak clearly and try again.)",
+                                    "can_retry": True
+                                }
+                            )
+                            continue
 
                         await send_event(
-                            "danger_alert",
+                            "transcript_final",
                             {
-                                "severity": danger_res.highest_severity,
-                                "detected_signs": [s.model_dump() for s in danger_res.detected_signs],
-                                "detected_phrases": danger_res.detected_phrases,
-                                "instruction_kn": danger_res.spoken_instruction_kn,
-                                "instruction_en": danger_res.spoken_instruction_en,
-                                "spoken_native": emergency_tts.text,
-                                "referral_action": danger_res.referral_action,
-                                "audio_base64": emergency_tts.audio_base64,
-                                "simulated_ambulance": sim_amb,
-                            },
-                        )
-
-                    # D. If Agent handled Registration, Search, Tasks, Assistant Queries, or Greeting
-                    if agent_resp.intent and agent_resp.intent not in {"VISIT_AWAITING_CONFIRMATION", "CLINICAL_VISIT"}:
-                        # Synthesize natural voice response in active language
-                        spoken_audio = await tts_adapter.synthesize(agent_resp.spoken_text, language=active_lang)
-
-                        await send_event(
-                            "agent_response",
-                            {
-                                "intent": agent_resp.intent,
-                                "spoken_text": agent_resp.spoken_text,
-                                "display_text": agent_resp.display_text,
+                                "transcript": transcript,
+                                "text": transcript,
                                 "language": active_lang,
-                                "audio_base64": spoken_audio.audio_base64,
-                                "latency_ms": spoken_audio.latency_ms,
-                                "extracted_data": agent_resp.extracted_data,
-                                "saved_entity_id": agent_resp.saved_entity_id,
+                                "latency_ms": asr_res.latency_ms,
+                                "is_mock": asr_res.is_mock,
+                                "model_name": asr_res.model_name,
                             },
                         )
 
-                    # E. Standard Clinical Visit Extraction Flow
-                    if agent_resp.intent in {"VISIT_AWAITING_CONFIRMATION", "CLINICAL_VISIT"} or not agent_resp.intent:
-                        extracted = clinical_extractor.extract(transcript)
-                        current_session.current_record = extracted
+                        # B. Independent Deterministic Danger-Sign Detection
+                        danger_res = danger_detector.detect(transcript, language=active_lang)
+                        current_session.danger_result = danger_res
 
-                        await send_event(
-                            "record_extracted",
-                            {
-                                "record": extracted.model_dump(),
-                                "requires_clarification": extracted.requires_clarification,
-                                "clarification_prompt": extracted.clarification_prompt,
-                                "danger_flag": danger_res.has_danger,
-                                "language": active_lang,
-                            },
+                        # C. Process Conversational Turn with Indic Voice Agent
+                        agent_resp = indic_voice_agent.process_turn(
+                            transcript=transcript,
+                            language=active_lang,
+                            session_context=current_session.context
                         )
 
-                        # Normal Confirmation Audio in Active Language (if not interrupted by emergency)
-                        if not danger_res.has_danger:
-                            current_session.status = "AWAITING_CONFIRMATION"
-                            readback_text = agent_resp.spoken_text or current_session.build_confirmation_text(language=active_lang)
-                            confirm_tts = await tts_adapter.synthesize(readback_text, language=active_lang)
+                        # If danger detected: generate simulated ambulance request & emergency alert
+                        sim_amb = None
+                        if danger_res.has_danger:
+                            current_session.status = "INTERRUPTED_EMERGENCY"
+                            emergency_tts = tts_adapter.get_emergency_audio(language=active_lang)
+
+                            # Automatically trigger simulated ambulance dispatch
+                            ben_id = "BEN-KA-001"
+                            if current_session.current_record and current_session.current_record.beneficiary_id:
+                                ben_id = current_session.current_record.beneficiary_id
+
+                            pickup = "Hoskote Village"
+                            from app.models.beneficiary import BeneficiaryRepository
+                            ben = BeneficiaryRepository.get_by_id(ben_id)
+                            if ben and ben.get("village"):
+                                pickup = ben["village"]
+
+                            sim_amb = ambulance_service.create_request(
+                                beneficiary_id=ben_id,
+                                emergency_id=danger_res.detected_signs[0].sign_id if danger_res.detected_signs else None,
+                                pickup_location=pickup,
+                                notes=f"Auto-triggered simulated 108 dispatch for danger sign: {danger_res.highest_severity} ({active_lang})",
+                            )
+                            current_session.simulated_ambulance = sim_amb
 
                             await send_event(
-                                "confirmation_audio",
+                                "danger_alert",
                                 {
-                                    "text": readback_text,
-                                    "language": active_lang,
-                                    "audio_base64": confirm_tts.audio_base64,
-                                    "latency_ms": confirm_tts.latency_ms,
-                                    "is_mock": confirm_tts.is_mock,
+                                    "severity": danger_res.highest_severity,
+                                    "detected_signs": [s.model_dump() for s in danger_res.detected_signs],
+                                    "detected_phrases": danger_res.detected_phrases,
+                                    "instruction_kn": danger_res.spoken_instruction_kn,
+                                    "instruction_en": danger_res.spoken_instruction_en,
+                                    "spoken_native": emergency_tts.text,
+                                    "referral_action": danger_res.referral_action,
+                                    "audio_base64": emergency_tts.audio_base64,
+                                    "simulated_ambulance": sim_amb,
                                 },
                             )
+
+                        # D. If Agent handled Registration, Search, Tasks, Assistant Queries, or Greeting
+                        if agent_resp.intent and agent_resp.intent not in {"VISIT_AWAITING_CONFIRMATION", "CLINICAL_VISIT"}:
+                            # Synthesize natural voice response in active language
+                            spoken_audio = await tts_adapter.synthesize(agent_resp.spoken_text, language=active_lang)
+
+                            await send_event(
+                                "agent_response",
+                                {
+                                    "intent": agent_resp.intent,
+                                    "spoken_text": agent_resp.spoken_text,
+                                    "display_text": agent_resp.display_text,
+                                    "language": active_lang,
+                                    "audio_base64": spoken_audio.audio_base64,
+                                    "latency_ms": spoken_audio.latency_ms,
+                                    "extracted_data": agent_resp.extracted_data,
+                                    "saved_entity_id": agent_resp.saved_entity_id,
+                                    "danger_flag": danger_res.has_danger,
+                                    "alert": danger_res.detected_signs[0].model_dump() if danger_res.has_danger and danger_res.detected_signs else None,
+                                    "transcript": transcript,
+                                },
+                            )
+
+                        # E. Standard Clinical Visit Extraction Flow
+                        if agent_resp.intent in {"VISIT_AWAITING_CONFIRMATION", "CLINICAL_VISIT"} or not agent_resp.intent:
+                            extracted = clinical_extractor.extract(transcript)
+                            current_session.current_record = extracted
+
+                            await send_event(
+                                "record_extracted",
+                                {
+                                    "record": extracted.model_dump(),
+                                    "requires_clarification": extracted.requires_clarification,
+                                    "clarification_prompt": extracted.clarification_prompt,
+                                    "danger_flag": danger_res.has_danger,
+                                    "language": active_lang,
+                                    "transcript": transcript,
+                                },
+                            )
+
+                            # Normal Confirmation Audio in Active Language (if not interrupted by emergency)
+                            if not danger_res.has_danger:
+                                current_session.status = "AWAITING_CONFIRMATION"
+                                readback_text = agent_resp.spoken_text or current_session.build_confirmation_text(language=active_lang)
+                                confirm_tts = await tts_adapter.synthesize(readback_text, language=active_lang)
+
+                                await send_event(
+                                    "confirmation_audio",
+                                    {
+                                        "text": readback_text,
+                                        "language": active_lang,
+                                        "audio_base64": confirm_tts.audio_base64,
+                                        "latency_ms": confirm_tts.latency_ms,
+                                        "is_mock": confirm_tts.is_mock,
+                                    },
+                                )
+                    except Exception as turn_err:
+                        logger.error(f"Error processing voice turn: {turn_err}", exc_info=True)
+                        await send_event(
+                            "error",
+                            {
+                                "code": "TURN_PROCESSING_FAILED",
+                                "message": f"ಸಂಸ್ಕರಣೆಯಲ್ಲಿ ದೋಷ: {str(turn_err)} (Processing error: {str(turn_err)})",
+                                "can_retry": True
+                            }
+                        )
 
                 # 4. EVENT: correct_field
                 elif event == "correct_field":

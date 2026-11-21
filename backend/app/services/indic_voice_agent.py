@@ -118,16 +118,19 @@ class IndicVoiceAgent:
         if self._is_correction_intent(lower_text, lang):
             return self._handle_correction(cleaned_text, session_context, lang)
 
-        # 3. Intent: CLINICAL VISIT RECORDING (Priority when vital metrics or beneficiary logging are present)
-        is_clinical_recording = bool(
-            re.search(r"\b(ben-[a-z]+-\d+|ben-\d+|b-\d{3})\b", lower_text, re.IGNORECASE) or
-            re.search(r"\b(weight|kg|ತೂಕ|किलो|bp|blood pressure|mmhg|injection|dose|ಡೋಸ್|goli|ಮಾತ್ರೆ|tablets?|ifa)\b", lower_text, re.IGNORECASE) or
-            ("visit" in lower_text and any(v in lower_text for v in ["anc", "pnc", "newborn", "routine", "home"]))
-        )
-        if is_clinical_recording:
-            return self._handle_visit_logging(cleaned_text, session_context, lang)
+        # 3. Intent: BENEFICIARY REGISTRATION (Pregnant woman, child, postpartum, adolescent, elderly)
+        if self._is_registration_intent(lower_text, lang):
+            return self._handle_registration(cleaned_text, session_context, lang)
 
-        # 4. Intent: SAKHI INTELLIGENT FIELD OPERATIONS ASSISTANT (High-risk, Vaccines, ANC, Route, Report, Ambulance, Schemes)
+        # 4. Intent: TODAY'S TASKS / PENDING FOLLOW-UPS
+        if self._is_tasks_query(lower_text, lang):
+            return self._handle_tasks_query(lang)
+
+        # 5. Intent: RETRIEVAL / SEARCH (Past visits, beneficiary history, household lookup)
+        if self._is_search_query(lower_text, lang):
+            return self._handle_search(cleaned_text, lang)
+
+        # 6. Intent: SAKHI INTELLIGENT FIELD OPERATIONS ASSISTANT (High-risk, Vaccines, ANC, Route, Report, Ambulance, Schemes)
         from app.services.sakhi_assistant import sakhi_assistant
         ops_intent = sakhi_assistant._classify_intent(lower_text)
         if ops_intent not in {"GENERAL_HEALTH_WORKER_SUPPORT", "REGISTER_BENEFICIARY", "SPECIFIC_BENEFICIARY_LOOKUP"}:
@@ -140,23 +143,16 @@ class IndicVoiceAgent:
                 extracted_data={"records": res.get("records"), "count": res.get("count")}
             )
 
-        # 5. Intent: RETRIEVAL / SEARCH (Past visits, beneficiary history, household lookup)
-        if self._is_search_query(lower_text, lang):
-            return self._handle_search(cleaned_text, lang)
+        # 7. Intent: CLINICAL VISIT RECORDING (Priority when vital metrics or beneficiary logging are present)
+        is_clinical_recording = bool(
+            re.search(r"\b(ben-[a-z]+-\d+|ben-\d+|b-\d{3})\b", lower_text, re.IGNORECASE) or
+            re.search(r"\b(weight|kg|ತೂಕ|किलो|bp|blood pressure|mmhg|injection|dose|ಡೋಸ್|goli|ಮಾತ್ರೆ|tablets?|ifa)\b", lower_text, re.IGNORECASE) or
+            ("visit" in lower_text and any(v in lower_text for v in ["anc", "pnc", "newborn", "routine", "home"]))
+        )
+        if is_clinical_recording:
+            return self._handle_visit_logging(cleaned_text, session_context, lang)
 
-        # 3. Intent: TODAY'S TASKS / PENDING FOLLOW-UPS
-        if self._is_tasks_query(lower_text, lang):
-            return self._handle_tasks_query(lang)
-
-        # 4. Intent: BENEFICIARY REGISTRATION (Pregnant woman, child, postpartum, adolescent, elderly)
-        if self._is_registration_intent(lower_text, lang):
-            return self._handle_registration(cleaned_text, session_context, lang)
-
-        # 5. Intent: FIELD CORRECTION / UPDATE ("Weight is 52 kg not 54 kg", etc.)
-        if self._is_correction_intent(lower_text, lang):
-            return self._handle_correction(cleaned_text, session_context, lang)
-
-        # 6. Intent: GREETING / HELP
+        # 8. Intent: GREETING / HELP
         if self._is_greeting(lower_text, lang):
             return IndicVoiceAgentResponse(
                 intent="GREETING",
