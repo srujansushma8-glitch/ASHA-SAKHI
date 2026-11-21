@@ -26,9 +26,14 @@ import {
   TrendingUp,
   AlertCircle,
   Pill,
-  BarChart3
+  BarChart3,
+  IndianRupee,
+  Volume2,
+  VolumeX,
+  Navigation
 } from 'lucide-react';
 import { api } from '../services/api';
+import { ttsService } from '../services/ttsService';
 
 export default function HomeDashboard({ 
   onStartRecording, 
@@ -46,6 +51,20 @@ export default function HomeDashboard({
   const [todayFollowups, setTodayFollowups] = useState([]);
   const [ambulanceInfo, setAmbulanceInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPlayingBriefing, setIsPlayingBriefing] = useState(false);
+
+  const toggleBriefingAudio = () => {
+    if (isPlayingBriefing) {
+      ttsService.stop();
+      setIsPlayingBriefing(false);
+    } else {
+      setIsPlayingBriefing(true);
+      const briefingText = 'ನಮಸ್ಕಾರ ಶಾರದಾ ಅವರೇ. ಇಂದಿನ ದಿನಚರಿ: 6 ಮನೆ ಭೇಟಿಗಳು ನಿಗದಿಯಾಗಿವೆ. ಮೀನಾಕ್ಷಿಯವರ ತೀವ್ರ ರಕ್ತಹೀನತೆ ತಪಾಸಣೆ ಅತ್ಯಂತ ಪ್ರಮುಖವಾಗಿದೆ. ಪೂಜಾ ಅವರ ಶಿಶುವಿಗೆ ಲಸಿಕೆ ಬಾಕಿ ಇದೆ. ನಿಮ್ಮ ಒಟ್ಟು ಪ್ರೋತ್ಸಾಹಧನ 6850 ರೂಪಾಯಿ ತಲುಪಿದೆ.';
+      ttsService.speakText(briefingText, {
+        onEnd: () => setIsPlayingBriefing(false)
+      });
+    }
+  };
 
   useEffect(() => {
     loadDashboardData();
@@ -110,15 +129,99 @@ export default function HomeDashboard({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 text-xs text-navy-600 font-medium">
-          <span className="flex items-center bg-softblue px-3.5 py-2 rounded-xl border border-navy-200/60">
+          {/* Daily Audio Briefing Play Button */}
+          <button
+            onClick={toggleBriefingAudio}
+            className={`flex items-center space-x-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-sm ${
+              isPlayingBriefing 
+                ? 'bg-emergency text-white animate-pulse shadow-emergency'
+                : 'bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30'
+            }`}
+          >
+            {isPlayingBriefing ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-primary" />}
+            <span className="font-kannada">
+              {isPlayingBriefing ? 'ಬ್ರೀಫಿಂಗ್ ನಿಲ್ಲಿಸಿ (Stop)' : 'ಧ್ವನಿ ಬ್ರೀಫಿಂಗ್ ಕೇಳಿ (Listen Audio Briefing)'}
+            </span>
+          </button>
+
+          <span className="flex items-center bg-softblue px-3.5 py-2.5 rounded-xl border border-navy-200/60">
             <Calendar className="w-4 h-4 mr-1.5 text-primary" />
             <span className="font-kannada font-bold text-navy-900">{todayFormatted}</span>
           </span>
-          <span className="flex items-center bg-softblue px-3.5 py-2 rounded-xl border border-navy-200/60">
+          <span className="flex items-center bg-softblue px-3.5 py-2.5 rounded-xl border border-navy-200/60">
             <MapPin className="w-4 h-4 mr-1.5 text-primary" />
             <span>ಮಂಡ್ಯ ತಾಲೂಕು (ಶಿವಳ್ಳಿ & ಕೆರೆಗೋಡು ವಲಯ)</span>
           </span>
         </div>
+      </div>
+
+      {/* Quick Action Navigation Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <button
+          onClick={() => onStartRecording()}
+          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-primary/30 shadow-sm hover:shadow-md hover:border-primary transition-all flex flex-col items-center text-center group active:scale-95"
+        >
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-2 group-hover:bg-primary group-hover:text-white transition-colors">
+            <Mic className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-bold text-navy-900 dark:text-white font-kannada">ಧ್ವನಿ ಭೇಟಿ</span>
+          <span className="text-[10px] text-navy-400">New Voice Visit</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('route')}
+          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-navy-200/70 dark:border-navy-800 shadow-sm hover:shadow-md hover:border-cyan-500 transition-all flex flex-col items-center text-center group active:scale-95"
+        >
+          <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center mb-2 group-hover:bg-cyan group-hover:text-white transition-colors">
+            <Navigation className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-bold text-navy-900 dark:text-white font-kannada">ಮನೆ ಮಾರ್ಗ</span>
+          <span className="text-[10px] text-navy-400">Household Route</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('maternal')}
+          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-navy-200/70 dark:border-navy-800 shadow-sm hover:shadow-md hover:border-pink-400 transition-all flex flex-col items-center text-center group active:scale-95"
+        >
+          <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center mb-2 group-hover:bg-pink-500 group-hover:text-white transition-colors">
+            <Baby className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-bold text-navy-900 dark:text-white font-kannada">ತಾಯಿ ಆರೋಗ್ಯ</span>
+          <span className="text-[10px] text-navy-400">Maternal & ANC</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('incentives')}
+          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-navy-200/70 dark:border-navy-800 shadow-sm hover:shadow-md hover:border-saffron transition-all flex flex-col items-center text-center group active:scale-95"
+        >
+          <div className="w-10 h-10 rounded-xl bg-saffron/10 text-saffron-600 flex items-center justify-center mb-2 group-hover:bg-saffron group-hover:text-white transition-colors">
+            <IndianRupee className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-bold text-navy-900 dark:text-white font-kannada">ಪ್ರೋತ್ಸಾಹಧನ</span>
+          <span className="text-[10px] text-navy-400">₹6,850 Earned</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('beneficiaries')}
+          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-navy-200/70 dark:border-navy-800 shadow-sm hover:shadow-md hover:border-healthcare transition-all flex flex-col items-center text-center group active:scale-95"
+        >
+          <div className="w-10 h-10 rounded-xl bg-healthcare/10 text-healthcare flex items-center justify-center mb-2 group-hover:bg-healthcare group-hover:text-white transition-colors">
+            <Users className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-bold text-navy-900 dark:text-white font-kannada">ಫಲಾನುಭವಿಗಳು</span>
+          <span className="text-[10px] text-navy-400">48 Registered</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('emergency')}
+          className="p-3.5 rounded-2xl bg-white dark:bg-navy-900 border border-emergency/30 shadow-sm hover:shadow-md hover:border-emergency transition-all flex flex-col items-center text-center group active:scale-95"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emergency/10 text-emergency flex items-center justify-center mb-2 group-hover:bg-emergency group-hover:text-white transition-colors">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-bold text-emergency font-kannada">ತುರ್ತು 108</span>
+          <span className="text-[10px] text-navy-400">Danger SOS</span>
+        </button>
       </div>
 
       {/* ============================================================ */}

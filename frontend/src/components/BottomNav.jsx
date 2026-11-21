@@ -54,7 +54,7 @@ export default function BottomNav({
     <nav 
       role="navigation" 
       aria-label="Mobile Bottom Navigation" 
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-navy-200/60 safe-bottom shadow-card lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-navy-900/95 backdrop-blur-md border-t border-navy-200/60 dark:border-navy-800 safe-bottom shadow-card lg:hidden"
     >
       <div className="max-w-md mx-auto px-2 py-1.5 flex items-center justify-around">
         {tabs.map((tab) => {
@@ -68,7 +68,7 @@ export default function BottomNav({
                 <button
                   onClick={() => setActiveScreen('record')}
                   aria-label={isRecording ? "Stop Voice Recording" : "Start Voice Visit"}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center border-4 border-white active:scale-95 transition-decelerate touch-manipulation ${
+                  className={`w-14 h-14 rounded-full flex items-center justify-center border-4 border-white dark:border-navy-900 active:scale-95 transition-decelerate touch-manipulation ${
                     isRecording
                       ? 'bg-emergency hover:bg-emergency-hover text-white shadow-emergency animate-pulse'
                       : isActive
@@ -83,7 +83,7 @@ export default function BottomNav({
                   )}
                 </button>
                 <span className={`text-[10px] font-bold font-kannada mt-0.5 ${
-                  isActive ? 'text-primary' : 'text-navy-600'
+                  isActive ? 'text-primary dark:text-cyan' : 'text-navy-600 dark:text-navy-300'
                 }`}>
                   {isRecording ? 'ನಿಲ್ಲಿಸಿ' : tab.label_kn}
                 </span>
@@ -101,8 +101,8 @@ export default function BottomNav({
                 isActive 
                   ? tab.isMaternal 
                     ? 'text-pink font-bold'
-                    : 'text-primary font-bold' 
-                  : 'text-navy-400 hover:text-navy-700'
+                    : 'text-primary dark:text-cyan font-bold' 
+                  : 'text-navy-400 dark:text-navy-500 hover:text-navy-700 dark:hover:text-navy-300'
               }`}
             >
               <div className="relative">
@@ -114,7 +114,7 @@ export default function BottomNav({
 
                 {/* Badge for Emergency or Notifications */}
                 {tab.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-emergency text-white text-[9px] font-mono font-bold rounded-full w-4 h-4 flex items-center justify-center animate-pulse border-2 border-white shadow-emergency">
+                  <span className="absolute -top-1.5 -right-2.5 bg-emergency text-white text-[9px] font-mono font-bold rounded-full w-4 h-4 flex items-center justify-center animate-pulse border-2 border-white dark:border-navy-900 shadow-emergency">
                     {tab.badge}
                   </span>
                 )}

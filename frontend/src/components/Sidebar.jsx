@@ -16,7 +16,13 @@ import {
   Settings,
   Baby,
   Activity,
-  Sparkles
+  Sparkles,
+  MapPin,
+  IndianRupee,
+  ExternalLink,
+  Moon,
+  Sun,
+  UserCheck
 } from 'lucide-react';
 import { isDemoMode, setDemoMode, api } from '../services/api';
 
@@ -26,7 +32,12 @@ export default function Sidebar({
   emergencyCount = 0, 
   isRecording = false,
   currentLanguage,
-  onLanguageChange
+  onLanguageChange,
+  onViewLanding,
+  isDarkMode = false,
+  onToggleDarkMode,
+  userRole = 'asha',
+  onOpenAuth
 }) {
   const [demo, setDemo] = useState(isDemoMode());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -105,6 +116,18 @@ export default function Sidebar({
       icon: Users,
     },
     {
+      id: 'route',
+      label_kn: 'ಗ್ರಾಮ ಮಾರ್ಗ ನಕ್ಷೆ',
+      label_en: 'Household Route',
+      icon: MapPin,
+    },
+    {
+      id: 'incentives',
+      label_kn: 'ಪ್ರೋತ್ಸಾಹಧನ ಲೆಕ್ಕ',
+      label_en: 'Incentives & NHM',
+      icon: IndianRupee,
+    },
+    {
       id: 'followups',
       label_kn: 'ಫಾಲೋ-ಅಪ್ ಪಟ್ಟಿ',
       label_en: 'Follow-ups & Reports',
@@ -126,35 +149,62 @@ export default function Sidebar({
     },
   ];
 
+  const getRoleDetails = () => {
+    switch (userRole) {
+      case 'anm':
+        return { name: 'ಪುಷ್ಪಲತಾ (Pushpalatha)', role: 'ANM Supervisor', tag: 'Supervisor' };
+      case 'mo':
+        return { name: 'ಡಾ. ರಾಜೇಶ್ (Dr. Rajesh)', role: 'Medical Officer', tag: 'PHC Doctor' };
+      default:
+        return { name: 'ಶಾರದಾ ಬಾಯಿ (Sharada)', role: 'ASHA Field Leader', tag: 'ASHA Worker' };
+    }
+  };
+
+  const roleInfo = getRoleDetails();
+
   return (
-    <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-navy-200/60 shadow-subtle shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
+    <aside className="hidden lg:flex flex-col w-72 bg-white dark:bg-navy-900 border-r border-navy-200/60 dark:border-navy-800 shadow-subtle shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
       {/* Brand Header */}
-      <div className="p-5 border-b border-navy-100 bg-white">
+      <div className="p-5 border-b border-navy-100 dark:border-navy-800 bg-white dark:bg-navy-900">
         <div 
           onClick={() => setActiveScreen('home')}
           className="flex items-center space-x-3 cursor-pointer group select-none"
         >
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-navy-900 to-primary text-white flex items-center justify-center shadow-card relative group-hover:scale-105 transition-decelerate">
             <HeartPulse className="w-6 h-6 text-cyan" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-cyan rounded-full border-2 border-white animate-pulse"></span>
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-cyan rounded-full border-2 border-white dark:border-navy-900 animate-pulse"></span>
           </div>
           <div>
             <div className="flex items-center space-x-1.5">
-              <span className="font-bold text-lg text-navy-900 font-kannada tracking-tight leading-none">
+              <span className="font-bold text-lg text-navy-900 dark:text-white font-kannada tracking-tight leading-none">
                 ಆಶಾ ಸಖಿ
               </span>
-              <span className="text-[10px] font-bold text-cyan-600 font-mono bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-200">
+              <span className="text-[10px] font-bold text-cyan-600 dark:text-cyan font-mono bg-cyan-50 dark:bg-cyan/10 px-1.5 py-0.5 rounded border border-cyan-200 dark:border-cyan/30">
                 AI SaaS
               </span>
             </div>
-            <p className="text-xs font-bold text-primary font-mono mt-0.5 tracking-wider">
+            <p className="text-xs font-bold text-primary dark:text-cyan font-mono mt-0.5 tracking-wider">
               ASHA SAKHI
             </p>
             <p className="text-[10px] text-navy-400 font-medium">
-              NHM ಕರ್ನಾಟಕ • AI Field Assistant
+              NHM ಕರ್ನಾಟಕ • AI Field Register
             </p>
           </div>
         </div>
+
+        {/* 3D Landing Page Switcher Pill */}
+        {onViewLanding && (
+          <button
+            onClick={onViewLanding}
+            className="w-full mt-3 px-3 py-2 rounded-xl bg-cream-100 dark:bg-navy-800 hover:bg-cream-200 dark:hover:bg-navy-700 border border-navy-200/60 dark:border-navy-700 text-navy-700 dark:text-navy-200 text-xs font-bold flex items-center justify-between group transition-all"
+          >
+            <span className="flex items-center space-x-2">
+              <Sparkles className="w-3.5 h-3.5 text-saffron" />
+              <span>3D ಲ್ಯಾಂಡಿಂಗ್ ಪೇಜ್</span>
+            </span>
+            <ExternalLink className="w-3.5 h-3.5 text-navy-400 group-hover:text-primary transition-colors" />
+          </button>
+        )}
       </div>
 
       {/* Main Navigation Links */}
@@ -328,24 +378,34 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* ASHA Healthcare Worker Profile Widget */}
-      <div className="p-4 border-t border-navy-100 bg-white">
+      {/* ASHA / Supervisor / MO Profile & Theme Toggle */}
+      <div className="p-4 border-t border-navy-100 dark:border-navy-800 bg-white dark:bg-navy-900 space-y-3">
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-navy-900 to-primary text-white border border-cyan-200 flex items-center justify-center text-lg font-bold shadow-sm">
-              👩‍⚕️
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-navy-900 to-primary text-white border border-cyan-200 dark:border-cyan/40 flex items-center justify-center text-lg font-bold shadow-sm">
+              {userRole === 'mo' ? '👨‍⚕️' : userRole === 'anm' ? '👩‍🏫' : '👩‍⚕️'}
             </div>
-            <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+            <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-navy-900 ${
               isOnline ? 'bg-healthcare' : 'bg-warning'
             }`}></span>
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-navy-900 truncate font-kannada">
-              ಶಾರದಾ ಬಾಯಿ (Sharada)
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-bold text-navy-900 dark:text-white truncate font-kannada">
+                {roleInfo.name}
+              </div>
+              {onOpenAuth && (
+                <button
+                  onClick={onOpenAuth}
+                  className="text-[10px] text-primary dark:text-cyan font-bold hover:underline"
+                >
+                  ಬದಲಿಸಿ
+                </button>
+              )}
             </div>
-            <div className="text-[10px] text-navy-500 font-medium truncate">
-              ಮಂಡ್ಯ PHC • ಶಿವಳ್ಳಿ ಉಪಕೇಂದ್ರ
+            <div className="text-[10px] text-navy-500 dark:text-navy-400 font-medium truncate">
+              {roleInfo.role} • {roleInfo.tag}
             </div>
             <div className="flex items-center space-x-1 text-[10px] text-healthcare font-semibold mt-0.5">
               {isOnline ? (
@@ -362,6 +422,20 @@ export default function Sidebar({
             </div>
           </div>
         </div>
+
+        {/* Theme Toggle Button */}
+        {onToggleDarkMode && (
+          <button
+            onClick={onToggleDarkMode}
+            className="w-full py-1.5 px-3 rounded-xl bg-navy-50 dark:bg-navy-800 hover:bg-navy-100 dark:hover:bg-navy-700 text-navy-600 dark:text-navy-300 text-xs font-semibold flex items-center justify-between transition-colors"
+          >
+            <span className="flex items-center space-x-2">
+              {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-500" /> : <Moon className="w-3.5 h-3.5 text-navy-600" />}
+              <span>{isDarkMode ? 'ಲೈಟ್ ಮೋಡ್ (Light)' : 'ಡಾರ್ಕ್ ಮೋಡ್ (Dark)'}</span>
+            </span>
+            <span className="text-[10px] font-mono text-navy-400">Theme</span>
+          </button>
+        )}
       </div>
     </aside>
   );

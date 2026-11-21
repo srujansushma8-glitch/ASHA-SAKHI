@@ -11,18 +11,57 @@ import AmbulanceTrackingScreen from './screens/AmbulanceTrackingScreen';
 import FollowUpDashboard from './screens/FollowUpDashboard';
 import BeneficiaryManagementScreen from './screens/BeneficiaryManagementScreen';
 import MaternalHealthScreen from './screens/MaternalHealthScreen';
+import HouseholdRouteScreen from './screens/HouseholdRouteScreen';
+import IncentivesReportScreen from './screens/IncentivesReportScreen';
+import LandingPage from './components/landing/LandingPage';
+import AuthModal from './components/auth/AuthModal';
+import CommandPalette from './components/CommandPalette';
 import { api } from './services/api';
 import { voiceWs } from './services/websocket';
 
 export default function App() {
-  const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'maternal', 'structured_record', 'emergency', 'ambulance', 'followups', 'beneficiaries'
-  const [currentLanguage, setCurrentLanguage] = useState('kn'); // 'kn', 'kn-en', 'en'
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem('asha_view_mode') || 'landing';
+  }); // 'landing' or 'app'
+  const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'maternal', 'route', 'incentives', 'structured_record', 'emergency', 'ambulance', 'followups', 'beneficiaries'
+  const [currentLanguage, setCurrentLanguage] = useState('kn'); // 'kn', 'hi', 'en'
+  const [userRole, setUserRole] = useState('asha'); // 'asha', 'anm', 'mo'
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('asha_theme') === 'dark';
+    }
+    return false;
+  });
+
   const [emergencyAlerts, setEmergencyAlerts] = useState([]);
   const [currentRecord, setCurrentRecord] = useState(null);
   const [currentDangerAlert, setCurrentDangerAlert] = useState(null);
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState(null);
   const [initialScenarioId, setInitialScenarioId] = useState('anc_routine');
   const [globalSearch, setGlobalSearch] = useState('');
+
+  // Synchronize Dark Mode with html element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('asha_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('asha_theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
+  const handleSetViewMode = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('asha_view_mode', mode);
+  };
 
   useEffect(() => {
     loadEmergencyAlerts();
@@ -34,8 +73,12 @@ export default function App() {
       }
     });
 
+    const handleOpenCmdPalette = () => setIsCommandPaletteOpen(true);
+    window.addEventListener('asha_open_command_palette', handleOpenCmdPalette);
+
     return () => {
       unsubDanger();
+      window.removeEventListener('asha_open_command_palette', handleOpenCmdPalette);
     };
   }, []);
 
@@ -58,6 +101,7 @@ export default function App() {
         setInitialScenarioId('anc_routine');
       }
     }
+    handleSetViewMode('app');
     setActiveScreen('record');
   };
 
@@ -80,134 +124,202 @@ export default function App() {
     setActiveScreen('home');
   };
 
-  return (
-    <div className="min-h-screen bg-appbg text-navy-900 flex flex-col lg:flex-row font-sans selection:bg-cyan-100 selection:text-navy-900">
-      {/* 1. Desktop Persistent Left Sidebar */}
-      <Sidebar
-        activeScreen={activeScreen}
-        setActiveScreen={setActiveScreen}
-        emergencyCount={emergencyAlerts.length}
-        isRecording={activeScreen === 'record'}
-        currentLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
-      />
+  const handleAuthSuccess = (userData) => {
+    if (userData && userData.role) {
+      setUserRole(userData.role);
+    }
+    setIsAuthModalOpen(false);
+    handleSetViewMode('app');
+  };
 
-      {/* 2. Main Application Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        {/* Mobile Top Navbar (Hidden on Desktop) */}
-        <div className="lg:hidden">
-          <Navbar
-            currentLanguage={currentLanguage}
-            onLanguageChange={setCurrentLanguage}
+  return (
+    <div className="min-h-screen bg-appbg dark:bg-navy-950 text-navy-900 dark:text-navy-50 font-sans selection:bg-cyan/20 selection:text-navy-900 transition-colors duration-200">
+      
+      {/* View Mode 1: 3D Landing Page */}
+      {viewMode === 'landing' ? (
+        <LandingPage
+          onLaunchApp={() => handleSetViewMode('app')}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+          currentLanguage={currentLanguage}
+          onLanguageChange={setCurrentLanguage}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+        />
+      ) : (
+        /* View Mode 2: Full Field Web App */
+        <div className="min-h-screen flex flex-col lg:flex-row">
+          {/* 1. Desktop Persistent Left Sidebar */}
+          <Sidebar
             activeScreen={activeScreen}
             setActiveScreen={setActiveScreen}
             emergencyCount={emergencyAlerts.length}
+            isRecording={activeScreen === 'record'}
+            currentLanguage={currentLanguage}
+            onLanguageChange={setCurrentLanguage}
+            onViewLanding={() => handleSetViewMode('landing')}
+            isDarkMode={isDarkMode}
+            onToggleDarkMode={toggleDarkMode}
+            userRole={userRole}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
           />
-        </div>
 
-        {/* Desktop Sticky Header Bar (Hidden on Mobile) */}
-        <DesktopHeader
-          activeScreen={activeScreen}
-          emergencyCount={emergencyAlerts.length}
-          onEmergencyClick={() => setActiveScreen('emergency')}
-          searchValue={globalSearch}
-          onSearchChange={(val) => {
-            setGlobalSearch(val);
-            if (val && activeScreen !== 'beneficiaries') {
-              setActiveScreen('beneficiaries');
-            }
-          }}
-          currentLanguage={currentLanguage}
-          onLanguageChange={setCurrentLanguage}
-        />
+          {/* 2. Main Application Area */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+            {/* Mobile Top Navbar (Hidden on Desktop) */}
+            <div className="lg:hidden">
+              <Navbar
+                currentLanguage={currentLanguage}
+                onLanguageChange={setCurrentLanguage}
+                activeScreen={activeScreen}
+                setActiveScreen={setActiveScreen}
+                emergencyCount={emergencyAlerts.length}
+              />
+            </div>
 
-        {/* Dynamic Screen Content */}
-        <main className="flex-1 w-full overflow-y-auto">
-          {activeScreen === 'home' && (
-            <HomeDashboard
-              onStartRecording={handleStartVoiceRecording}
-              onNavigate={(screen) => setActiveScreen(screen)}
-              onSelectBeneficiary={(id) => {
-                setSelectedBeneficiaryId(id);
-                setActiveScreen('beneficiaries');
-              }}
+            {/* Desktop Sticky Header Bar (Hidden on Mobile) */}
+            <DesktopHeader
+              activeScreen={activeScreen}
               emergencyCount={emergencyAlerts.length}
-            />
-          )}
-
-          {activeScreen === 'maternal' && (
-            <MaternalHealthScreen
-              selectedBeneficiaryId={selectedBeneficiaryId}
-              onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
-              onBack={() => setActiveScreen('home')}
-            />
-          )}
-
-          {activeScreen === 'record' && (
-            <VoiceRecordingScreen
-              initialScenarioId={initialScenarioId}
-              onRecordExtracted={handleRecordExtracted}
-              onDangerAlert={handleDangerAlertReceived}
-              onBack={() => setActiveScreen('home')}
-            />
-          )}
-
-          {activeScreen === 'structured_record' && (
-            <StructuredVisitRecordScreen
-              record={currentRecord}
-              onSaved={handleRecordSaved}
-              onBack={() => setActiveScreen('record')}
-              onTriggerEmergency={(alert) => {
-                setCurrentDangerAlert(alert);
-                setActiveScreen('emergency');
+              onEmergencyClick={() => setActiveScreen('emergency')}
+              searchValue={globalSearch}
+              onSearchChange={(val) => {
+                setGlobalSearch(val);
+                if (val && activeScreen !== 'beneficiaries') {
+                  setActiveScreen('beneficiaries');
+                }
               }}
+              currentLanguage={currentLanguage}
+              onLanguageChange={setCurrentLanguage}
+              onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+              onViewLanding={() => handleSetViewMode('landing')}
+              isDarkMode={isDarkMode}
+              onToggleDarkMode={toggleDarkMode}
+              userRole={userRole}
+              onOpenAuth={() => setIsAuthModalOpen(true)}
             />
-          )}
 
-          {activeScreen === 'emergency' && (
-            <EmergencyAlertScreen
-              alertData={currentDangerAlert}
-              onBack={() => setActiveScreen('home')}
-              onTrackAmbulance={() => setActiveScreen('ambulance')}
+            {/* Dynamic Screen Content */}
+            <main className="flex-1 w-full overflow-y-auto">
+              {activeScreen === 'home' && (
+                <HomeDashboard
+                  onStartRecording={handleStartVoiceRecording}
+                  onNavigate={(screen) => setActiveScreen(screen)}
+                  onSelectBeneficiary={(id) => {
+                    setSelectedBeneficiaryId(id);
+                    setActiveScreen('beneficiaries');
+                  }}
+                  emergencyCount={emergencyAlerts.length}
+                />
+              )}
+
+              {activeScreen === 'route' && (
+                <HouseholdRouteScreen
+                  onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
+                  onBack={() => setActiveScreen('home')}
+                />
+              )}
+
+              {activeScreen === 'incentives' && (
+                <IncentivesReportScreen
+                  onBack={() => setActiveScreen('home')}
+                />
+              )}
+
+              {activeScreen === 'maternal' && (
+                <MaternalHealthScreen
+                  selectedBeneficiaryId={selectedBeneficiaryId}
+                  onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
+                  onBack={() => setActiveScreen('home')}
+                />
+              )}
+
+              {activeScreen === 'record' && (
+                <VoiceRecordingScreen
+                  initialScenarioId={initialScenarioId}
+                  onRecordExtracted={handleRecordExtracted}
+                  onDangerAlert={handleDangerAlertReceived}
+                  onBack={() => setActiveScreen('home')}
+                />
+              )}
+
+              {activeScreen === 'structured_record' && (
+                <StructuredVisitRecordScreen
+                  record={currentRecord}
+                  onSaved={handleRecordSaved}
+                  onBack={() => setActiveScreen('record')}
+                  onTriggerEmergency={(alert) => {
+                    setCurrentDangerAlert(alert);
+                    setActiveScreen('emergency');
+                  }}
+                />
+              )}
+
+              {activeScreen === 'emergency' && (
+                <EmergencyAlertScreen
+                  alertData={currentDangerAlert}
+                  onBack={() => setActiveScreen('home')}
+                  onTrackAmbulance={() => setActiveScreen('ambulance')}
+                />
+              )}
+
+              {activeScreen === 'ambulance' && (
+                <AmbulanceTrackingScreen
+                  onBack={() => setActiveScreen('emergency')}
+                />
+              )}
+
+              {activeScreen === 'followups' && (
+                <FollowUpDashboard
+                  onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
+                  onSelectBeneficiary={(id) => {
+                    setSelectedBeneficiaryId(id);
+                    setActiveScreen('beneficiaries');
+                  }}
+                />
+              )}
+
+              {activeScreen === 'beneficiaries' && (
+                <BeneficiaryManagementScreen
+                  selectedBeneficiaryId={selectedBeneficiaryId}
+                  initialSearchQuery={globalSearch}
+                  onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
+                  onBack={() => setActiveScreen('home')}
+                />
+              )}
+            </main>
+          </div>
+
+          {/* 3. Mobile Fixed Bottom Navigation (Hidden on Desktop) */}
+          <div className="lg:hidden">
+            <BottomNav
+              activeScreen={activeScreen}
+              setActiveScreen={setActiveScreen}
+              emergencyCount={emergencyAlerts.length}
+              isRecording={activeScreen === 'record'}
             />
-          )}
+          </div>
+        </div>
+      )}
 
-          {activeScreen === 'ambulance' && (
-            <AmbulanceTrackingScreen
-              onBack={() => setActiveScreen('emergency')}
-            />
-          )}
+      {/* Global Command Palette (Cmd+K / Ctrl+K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigate={(screen) => setActiveScreen(screen)}
+        onStartRecording={handleStartVoiceRecording}
+        onToggleDarkMode={toggleDarkMode}
+        isDarkMode={isDarkMode}
+        onLanguageChange={setCurrentLanguage}
+        currentLanguage={currentLanguage}
+        onViewLanding={() => handleSetViewMode('landing')}
+      />
 
-          {activeScreen === 'followups' && (
-            <FollowUpDashboard
-              onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
-              onSelectBeneficiary={(id) => {
-                setSelectedBeneficiaryId(id);
-                setActiveScreen('beneficiaries');
-              }}
-            />
-          )}
-
-          {activeScreen === 'beneficiaries' && (
-            <BeneficiaryManagementScreen
-              selectedBeneficiaryId={selectedBeneficiaryId}
-              initialSearchQuery={globalSearch}
-              onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
-              onBack={() => setActiveScreen('home')}
-            />
-          )}
-        </main>
-      </div>
-
-      {/* 3. Mobile Fixed Bottom Navigation (Hidden on Desktop) */}
-      <div className="lg:hidden">
-        <BottomNav
-          activeScreen={activeScreen}
-          setActiveScreen={setActiveScreen}
-          emergencyCount={emergencyAlerts.length}
-          isRecording={activeScreen === 'record'}
-        />
-      </div>
+      {/* OTP Authentication & Role Selection Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }
