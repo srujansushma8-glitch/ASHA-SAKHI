@@ -14,6 +14,41 @@ export default {
         // Soft Cream Background: #FAF9F5
         // Dark Mode Background: #0B1926
 
+        // Rose & Blush Clinic Design System (Reference Palette)
+        rose: {
+          deep: '#A25B74',      // footer, stats card, testimonial band, primary buttons
+          mid: '#C47A92',       // accents, icons, links
+          light: '#E8B4C4',
+          surface: '#F6DEE5',
+          50: '#FDF7F9',
+          100: '#FBF0F3',
+          200: '#F6DEE5',
+          300: '#ECC1CE',
+          400: '#DD9EB2',
+          500: '#C47A92',
+          600: '#A25B74',
+          700: '#84455C',
+          800: '#693749',
+          900: '#532F3B',
+          DEFAULT: '#A25B74',
+        },
+        blush: {
+          DEFAULT: '#F9ECEC',   // page background
+          light: '#FDF6F5',     // section backgrounds
+          surface: '#FAF0F0',
+          50: '#FDF6F5',
+          100: '#F9ECEC',
+          200: '#F4D8D8',
+          300: '#EBBEC0',
+          400: '#DF9FA3',
+          500: '#CD7B81',
+        },
+        plum: {
+          DEFAULT: '#3B2A33',   // headings
+          text: '#3B2A33',
+          muted: '#7A6670',     // body copy
+        },
+
         cream: {
           50: '#FDFCF9',
           100: '#FAF9F5', // Soft Cream
@@ -118,8 +153,11 @@ export default {
         appbg: '#FAF9F5',
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'Poppins', 'Inter', 'system-ui', 'sans-serif'],
-        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        cormorant: ['"Cormorant Garamond"', '"Playfair Display"', 'Georgia', 'serif'],
+        serif: ['"Cormorant Garamond"', '"Playfair Display"', 'Georgia', 'serif'],
+        poppins: ['Poppins', 'sans-serif'],
+        dmsans: ['"DM Sans"', 'sans-serif'],
+        sans: ['Poppins', '"DM Sans"', '"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
         hindi: ['"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
         kannada: ['"Noto Sans Kannada"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],

@@ -172,6 +172,24 @@ def init_db(seed_synthetic: bool = True) -> None:
             """
         )
 
+        # 6. Community Visit Requests table (From Landing Page Booking Form)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS visit_requests (
+                id TEXT PRIMARY KEY,
+                beneficiary_name TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                village TEXT NOT NULL,
+                service_type TEXT NOT NULL,
+                preferred_date TEXT NOT NULL,
+                concern TEXT,
+                status TEXT NOT NULL DEFAULT 'PENDING',
+                assigned_worker TEXT DEFAULT 'Sunita Devi (ASHA)',
+                created_at TEXT NOT NULL
+            );
+            """
+        )
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_visits_ben ON visits(beneficiary_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_followups_ben ON followups(beneficiary_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_danger_alerts_visit ON danger_alerts(visit_id);")

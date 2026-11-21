@@ -2,19 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  *, *::before, *::after {
-    font-style: normal !important;
-  }
+:root {
+  --rose-deep: #A25B74;
+  --rose-mid: #C47A92;
+  --rose-light: #E8B4C4;
+  --blush: #F9ECEC;
+  --blush-light: #FDF6F5;
+  --white: #FFFFFF;
+  --plum-text: #3B2A33;
+  --muted: #7A6670;
+}
 
+@layer base {
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    background-color: #FAF9F5;
-    color: #142B45;
-    font-family: 'Plus Jakarta Sans', 'Poppins', 'Inter', system-ui, sans-serif;
+    background-color: #F9ECEC;
+    color: #3B2A33;
+    font-family: 'Poppins', 'DM Sans', 'Plus Jakarta Sans', system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -167,4 +174,46 @@
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Rose & Blush Clinic Utilities */
+.font-cormorant {
+  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+}
+
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-dmsans {
+  font-family: 'DM Sans', sans-serif;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #C47A92;
+}
+
+.arch-crop {
+  border-radius: 9999px 9999px 32px 32px;
+}
+
+.rose-card-shadow {
+  box-shadow: 0 12px 35px -8px rgba(162, 91, 116, 0.08), 0 2px 8px -1px rgba(162, 91, 116, 0.04);
+}
+
+.rose-button-shadow {
+  box-shadow: 0 8px 25px -4px rgba(162, 91, 116, 0.35);
+}
+
+.bg-rose-gradient {
+  background: linear-gradient(180deg, #FDF6F5 0%, #F9ECEC 100%);
+}
+
+.floral-edge {
+  background-image: radial-gradient(#E8B4C4 0.75px, transparent 0.75px);
+  background-size: 16px 16px;
 }

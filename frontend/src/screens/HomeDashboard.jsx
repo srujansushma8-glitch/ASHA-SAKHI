@@ -49,6 +49,7 @@ export default function HomeDashboard({
   });
   const [recentVisits, setRecentVisits] = useState([]);
   const [todayFollowups, setTodayFollowups] = useState([]);
+  const [communityRequests, setCommunityRequests] = useState([]);
   const [ambulanceInfo, setAmbulanceInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isPlayingBriefing, setIsPlayingBriefing] = useState(false);
@@ -73,12 +74,13 @@ export default function HomeDashboard({
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [beneficiaries, visits, followups, emergencyAlerts, ambulanceData] = await Promise.all([
+      const [beneficiaries, visits, followups, emergencyAlerts, ambulanceData, visitReqs] = await Promise.all([
         api.getBeneficiaries(),
         api.getVisits(),
         api.getFollowups(),
         api.getEmergencyAlerts(),
-        api.getAmbulanceTracking ? api.getAmbulanceTracking() : null
+        api.getAmbulanceTracking ? api.getAmbulanceTracking() : null,
+        api.getVisitRequests ? api.getVisitRequests() : Promise.resolve([])
       ]);
 
       const todayStr = new Date().toISOString().split('T')[0];
@@ -95,10 +97,23 @@ export default function HomeDashboard({
       setRecentVisits(visits.slice(0, 5));
       setTodayFollowups(followups.slice(0, 4));
       if (ambulanceData) setAmbulanceInfo(ambulanceData);
+      if (Array.isArray(visitReqs)) setCommunityRequests(visitReqs);
     } catch (err) {
       console.error('[HomeDashboard] Failed to load dashboard data', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirmRequest = async (reqId) => {
+    try {
+      if (api.updateVisitRequestStatus) {
+        await api.updateVisitRequestStatus(reqId, 'CONFIRMED');
+      }
+      setCommunityRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'CONFIRMED' } : r));
+    } catch (e) {
+      console.warn('Could not update request status', e);
+      setCommunityRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'CONFIRMED' } : r));
     }
   };
 
@@ -779,6 +794,78 @@ export default function HomeDashboard({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Community Visit Requests from Public Portal */}
+          <div className="bg-white rounded-3xl p-5 border border-navy-200/60 shadow-card space-y-3.5">
+            <div className="flex items-center justify-between border-b border-navy-100 pb-2.5">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-deep flex items-center justify-center font-bold">
+                  🌸
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold font-kannada text-navy-900 leading-tight">
+                    ಸಮುದಾಯ ಭೇಟಿ ವಿನಂತಿಗಳು
+                  </h4>
+                  <span className="text-[10px] text-navy-400 font-medium">Portal Visit Requests ({communityRequests.length})</span>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-deep border border-rose-200">
+                {communityRequests.filter(r => r.status === 'PENDING').length} ಹೊಸತು
+              </span>
+            </div>
+
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              {communityRequests.length === 0 ? (
+                <div className="text-center py-4 text-xs text-navy-400 font-medium">
+                  ಯಾವುದೇ ಹೊಸ ವಿನಂತಿಗಳು ಬಾಕಿ ಇಲ್ಲ (No pending requests)
+                </div>
+              ) : (
+                communityRequests.slice(0, 3).map((req) => (
+                  <div key={req.id} className="p-3 rounded-2xl bg-blush-light border border-rose-100 space-y-1.5">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-navy-900 font-kannada block">
+                          {req.mother_name || req.name}
+                        </span>
+                        <span className="text-[10px] text-navy-500 font-medium">
+                          {req.service_type || req.reason || 'ಮನೆ ಭೇಟಿ'} • {req.village || 'ಮಂಡ್ಯ'}
+                        </span>
+                      </div>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
+                        req.status === 'CONFIRMED'
+                          ? 'bg-healthcare-50 text-healthcare border border-healthcare-200'
+                          : 'bg-rose-50 text-rose-deep border border-rose-200'
+                      }`}>
+                        {req.status === 'CONFIRMED' ? 'ಧೃಢೀಕೃತ' : 'ಬಾಕಿ ಇದೆ'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-rose-100">
+                      <span className="font-mono text-navy-500 text-[10px]">
+                        📞 {req.phone}
+                      </span>
+                      {req.status !== 'CONFIRMED' ? (
+                        <button
+                          onClick={() => handleConfirmRequest(req.id)}
+                          className="text-[10px] font-bold text-rose-deep bg-white px-2 py-0.5 rounded-lg border border-rose-200 hover:bg-rose-50 transition-decelerate"
+                        >
+                          ದೃಢೀಕರಿಸಿ (Accept)
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onStartRecording(req.id)}
+                          className="text-[10px] font-bold text-primary hover:underline flex items-center space-x-0.5"
+                        >
+                          <Mic className="w-3 h-3 mr-0.5" />
+                          <span>ಭೇಟಿ ಆರಂಭಿಸಿ</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

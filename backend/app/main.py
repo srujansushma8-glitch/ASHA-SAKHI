@@ -18,6 +18,7 @@ from app.routers import (
     voice_ws_router,
     ambulance_router,
     sync_router,
+    visit_requests_router,
 )
 
 # Configure logging
@@ -63,6 +64,7 @@ app.include_router(followups_router)
 app.include_router(voice_ws_router)
 app.include_router(ambulance_router)
 app.include_router(sync_router)
+app.include_router(visit_requests_router)
 
 
 if __name__ == "__main__":

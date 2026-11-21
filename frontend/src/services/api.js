@@ -688,5 +688,71 @@ export const api = {
     const updated = list.map(item => item.id === followupId ? { ...item, ...updates } : item);
     localStorage.setItem(STORAGE_KEYS.FOLLOWUPS, JSON.stringify(updated));
     return updated;
+  },
+
+  /**
+   * Submit a household visit request from community portal / landing page
+   */
+  async submitVisitRequest(requestData) {
+    if (isDemoMode()) {
+      const mockReq = {
+        id: "REQ-" + Date.now(),
+        status: 'PENDING',
+        assigned_worker: 'Sunita Devi (ASHA)',
+        created_at: new Date().toISOString(),
+        ...requestData
+      };
+      const existing = JSON.parse(localStorage.getItem('asha_visit_requests') || '[]');
+      localStorage.setItem('asha_visit_requests', JSON.stringify([mockReq, ...existing]));
+      return mockReq;
+    }
+
+    const res = await fetch(BASE_URL + '/api/visit-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
+    });
+    if (!res.ok) throw new Error('Failed to submit visit request');
+    return res.json();
+  },
+
+  /**
+   * Get all community visit requests
+   */
+  async getVisitRequests(status = null) {
+    if (isDemoMode()) {
+      const existing = JSON.parse(localStorage.getItem('asha_visit_requests') || '[]');
+      if (status) return existing.filter(r => r.status === status);
+      return existing;
+    }
+    const url = status ? (BASE_URL + '/api/visit-requests?status=' + encodeURIComponent(status)) : (BASE_URL + '/api/visit-requests');
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch visit requests');
+    return res.json();
+  },
+
+  /**
+   * Update status of a community visit request (e.g. CONFIRMED, COMPLETED)
+   */
+  async updateVisitRequestStatus(requestId, status) {
+    if (isDemoMode()) {
+      const existing = JSON.parse(localStorage.getItem('asha_visit_requests') || '[]');
+      const updated = existing.map(r => r.id === requestId ? { ...r, status } : r);
+      localStorage.setItem('asha_visit_requests', JSON.stringify(updated));
+      return { success: true };
+    }
+    const res = await fetch(BASE_URL + '/api/visit-requests/' + encodeURIComponent(requestId) + '/status', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) {
+      // Fallback update in local storage if backend is offline
+      const existing = JSON.parse(localStorage.getItem('asha_visit_requests') || '[]');
+      const updated = existing.map(r => r.id === requestId ? { ...r, status } : r);
+      localStorage.setItem('asha_visit_requests', JSON.stringify(updated));
+      return { success: true };
+    }
+    return res.json();
   }
 };
