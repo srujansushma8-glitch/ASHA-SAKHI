@@ -3,11 +3,12 @@ Sakhi AI Field Operations Assistant REST Router.
 Provides structured query resolution, prompt recommendations, and multilingual voice-readback text.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
 from app.services.sakhi_assistant import sakhi_assistant
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/assistant", tags=["Sakhi AI Operations Assistant"])
 
@@ -30,7 +31,14 @@ class AssistantQueryResponse(BaseModel):
 
 
 @router.post("/query", response_model=AssistantQueryResponse)
-async def query_assistant(req: AssistantQueryRequest):
+async def query_assistant(
+    req: AssistantQueryRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Processes healthcare domain queries against patient registers.
+    Protected endpoint: requires valid JWT bearer token.
+    """
     if not req.query or not req.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty")
     

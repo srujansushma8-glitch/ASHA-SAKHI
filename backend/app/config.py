@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     AUDIO_CHANNELS: int = 1
     MAX_AUDIO_CHUNK_BYTES: int = 1048576  # 1MB per chunk
 
+    # Authentication & Security
+    JWT_SECRET_KEY: str = Field(default="", description="Secret key for signing JWT tokens")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+    ENABLE_DEMO_AUTH: bool = Field(default=True, description="Enable development demo authentication")
+
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",

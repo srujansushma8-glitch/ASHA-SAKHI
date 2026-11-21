@@ -12,17 +12,21 @@ import pytest
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BACKEND_DIR))
 
-# Use an isolated test database
+# Use an isolated test database and test configuration
 os.environ["DATABASE_URL"] = "sqlite:///./data/test_asha_sakhi.db"
 os.environ["ASR_MODE"] = "mock"
 os.environ["TTS_MODE"] = "mock"
 os.environ["EXTRACTION_MODE"] = "deterministic"
+os.environ["JWT_SECRET_KEY"] = "test_jwt_secret_key_for_unit_tests_only_2026"
+os.environ["ENABLE_DEMO_AUTH"] = "True"
 
 from app.config import settings
 from app.database import init_db, get_db_connection
 
-# Update settings database path for testing
+# Update settings database path and jwt key for testing
 settings.DATABASE_PATH = BACKEND_DIR / "data" / "test_asha_sakhi.db"
+settings.JWT_SECRET_KEY = "test_jwt_secret_key_for_unit_tests_only_2026"
+settings.ENABLE_DEMO_AUTH = True
 
 
 @pytest.fixture(autouse=True)
