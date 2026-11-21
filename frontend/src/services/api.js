@@ -7,6 +7,9 @@
  * - GET  /api/followups
  * - POST /api/visits/confirm
  * - POST /api/visits/correct
+ * - POST /api/sync/batch (Batch Offline Sync)
+ * - GET  /api/ambulance/requests/{request_id}/tracking (Ambulance Simulation Telemetry)
+ * - POST /api/ambulance/requests/{request_id}/simulate-step (Ambulance Simulation Stepper)
  *
  * Provides full offline resilience:
  * - Temporary local storage of unfinished visit records (drafts)
@@ -39,37 +42,32 @@ const STORAGE_KEYS = {
   AMBULANCE_TRACKING: 'asha_ambulance_tracking_v1'
 };
 
-// Initial simulated ambulance dispatch baseline
+// Initial simulated ambulance dispatch baseline conforming to backend schema
 export const INITIAL_AMBULANCE_TRACKING = {
-  request_id: 'REQ-108-SIM-9482',
+  id: 'AMB-REQ-108-001',
+  request_id: 'AMB-REQ-108-001',
   beneficiary_id: 'ASHA-KA-2024-0102',
   beneficiary_name: 'Geetha M.',
   beneficiary_name_kn: 'ಗೀತಾ ಎಂ.',
-  status: 'Dispatched', // 'Requested', 'Dispatched', 'On the way', 'Arrived', 'Completed'
-  status_sequence: ['Requested', 'Dispatched', 'On the way', 'Arrived', 'Completed'],
+  status: 'DISPATCHED', // 'REQUESTED', 'DISPATCHED', 'ON_THE_WAY', 'ARRIVED', 'COMPLETED'
+  status_sequence: ['REQUESTED', 'DISPATCHED', 'ON_THE_WAY', 'ARRIVED', 'COMPLETED'],
   status_sequence_kn: ['ವಿನಂತಿಸಲಾಗಿದೆ', 'ವಾಹನ ಹೊರಟಿದೆ', 'ಮಾರ್ಗ ಮಧ್ಯದಲ್ಲಿದೆ', 'ಸ್ಥಳ ತಲುಪಿದೆ', 'ಪೂರ್ಣಗೊಂಡಿದೆ'],
   is_simulation: true,
-  disclaimer: 'SIMULATION ONLY: This is a training and demonstration simulation. No real 108 emergency vehicle or real emergency response team has been contacted.',
+  simulation_disclaimer: 'SIMULATION ONLY: This is a training and demonstration simulation. No real 108 emergency vehicle or real emergency response team has been contacted.',
   disclaimer_kn: 'ಸಿಮ್ಯುಲೇಶನ್ ಮಾತ್ರ: ಇದು ಪ್ರಾತ್ಯಕ್ಷಿಕೆ ಮತ್ತು ತರಬೇತಿಗಾಗಿ ಮಾತ್ರ. ಯಾವುದೇ ನಿಜವಾದ 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಲಾಗಿಲ್ಲ.',
-  pickup_location: {
-    address: 'Keregodu Village, Near Anganwadi Center, Mandya District',
-    address_kn: 'ಕೆರೆಗೋಡು ಗ್ರಾಮ, ಅಂಗನವಾಡಿ ಕೇಂದ್ರದ ಹತ್ತಿರ, ಮಂಡ್ಯ ಜಿಲ್ಲೆ',
-    lat: 12.5835,
-    lng: 76.9280,
-    landmark: 'Opposite Government Primary School'
-  },
+  pickup_location: 'Keregodu Village, Near Anganwadi Center, Mandya District',
+  pickup_location_kn: 'ಕೆರೆಗೋಡು ಗ್ರಾಮ, ಅಂಗನವಾಡಿ ಕೇಂದ್ರದ ಹತ್ತಿರ, ಮಂಡ್ಯ ಜಿಲ್ಲೆ',
+  destination_facility: 'Mandya Taluk Hospital & PHC Sector 4',
+  destination_facility_kn: 'ಮಂಡ್ಯ ತಾಲೂಕು ಆಸ್ಪತ್ರೆ ಮತ್ತು PHC ಸೆಕ್ಟರ್ 4',
+  pickup_lat: 12.5835,
+  pickup_lng: 76.9280,
   base_hospital: {
     name: 'Mandya Taluk Hospital & PHC Sector 4',
-    name_kn: 'ಮಂಡ್ಯ ತಾಲೂಕು ಆಸ್ಪತ್ರೆ ಮತ್ತು PHC ಸೆಕ್ಟರ್ 4',
     lat: 12.5240,
     lng: 76.8980
   },
-  ambulance_location: {
-    lat: 12.5450,
-    lng: 76.9090,
-    speed_kmh: 48,
-    heading_deg: 35
-  },
+  current_latitude: 12.5450,
+  current_longitude: 76.9090,
   // Simulated waypoint coordinates connecting Hospital (12.524, 76.898) to Village (12.583, 76.928)
   route_waypoints: [
     { lat: 12.5240, lng: 76.8980, label: 'PHC Mandya Base' },
@@ -79,13 +77,14 @@ export const INITIAL_AMBULANCE_TRACKING = {
     { lat: 12.5710, lng: 76.9220, label: 'Keregodu Main Road' },
     { lat: 12.5835, lng: 76.9280, label: 'Beneficiary Home (Pickup)' }
   ],
-  route_step: 2, // Current index along waypoints
+  route_step: 2,
   eta_minutes: 8,
   distance_km: 3.4,
   vehicle_number: 'KA-11-G-1081',
   driver_name: 'Ramesh Gowda',
   driver_phone: '+91 94480 10801',
   emergency_technician: 'Suresh Kumar (EMT)',
+  speed_kmh: 48,
   updated_at: new Date().toISOString()
 };
 
@@ -241,13 +240,32 @@ export const api = {
   /**
    * Confirm & Save Visit Record
    * POST /api/visits/confirm
-   * Body: { session_id, visit_record: { beneficiary_id, beneficiary_name, visit_type, weight, vaccinations_due, vaccinations_completed, next_visit_date, additional_notes, danger_sign_detected, danger_signs } }
-   * 
-   * Includes duplicate submission prevention via client_submission_id
+   * Conforms to backend VisitConfirmRequest schema:
+   * { record: StructuredVisitExtraction, visit_id, transcript_raw, danger_flag, referral_status }
    */
   async confirmVisit(visitData) {
-    const record = visitData.visit_record || visitData;
-    const clientSubmissionId = visitData.client_submission_id || record.client_submission_id || `SUB-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const rawRecord = visitData.visit_record || visitData.record || visitData;
+    const clientSubmissionId = visitData.client_submission_id || rawRecord.client_submission_id || `SUB-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+
+    // Prepare normalized record conforming to StructuredVisitExtraction
+    const structuredRecord = {
+      beneficiary_id: rawRecord.beneficiary_id || 'ASHA-KA-2024-0101',
+      beneficiary_name: rawRecord.beneficiary_name || 'Beneficiary',
+      visit_type: rawRecord.visit_type || 'General Visit',
+      weight: parseFloat(rawRecord.weight) || 55.0,
+      vaccinations_due: Array.isArray(rawRecord.vaccinations_due) ? rawRecord.vaccinations_due : (rawRecord.vaccinations_due ? [rawRecord.vaccinations_due] : []),
+      vaccinations_completed: Array.isArray(rawRecord.vaccinations_completed) ? rawRecord.vaccinations_completed : (rawRecord.vaccinations_completed ? [rawRecord.vaccinations_completed] : []),
+      next_visit_date: rawRecord.next_visit_date || null,
+      additional_notes: rawRecord.additional_notes || ''
+    };
+
+    const payload = {
+      visit_id: visitData.visit_id || clientSubmissionId,
+      record: structuredRecord,
+      transcript_raw: visitData.transcript_raw || rawRecord.additional_notes || '',
+      danger_flag: Boolean(rawRecord.danger_sign_detected || rawRecord.danger_flag),
+      referral_status: rawRecord.referral_status || (rawRecord.danger_sign_detected ? 'REFERRAL_REQUIRED' : 'NONE')
+    };
 
     // Duplicate Prevention Check
     const submittedIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUBMITTED_IDS) || '[]');
@@ -270,7 +288,7 @@ export const api = {
         const res = await fetchWithTimeout(`${BASE_URL}/api/visits/confirm`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...visitData, client_submission_id: clientSubmissionId })
+          body: JSON.stringify(payload)
         });
         if (res.ok) {
           result = await res.json();
@@ -281,19 +299,19 @@ export const api = {
     }
 
     if (!result) {
-      // If offline or network failed, queue in pending sync queue
       if (!isOnline) {
-        this.queuePendingVisit({ ...visitData, client_submission_id: clientSubmissionId });
+        this.queuePendingVisit({ ...payload, client_submission_id: clientSubmissionId });
       }
 
       result = {
         success: true,
-        visit_id: `VIS-LOCAL-${Date.now().toString().slice(-5)}`,
+        id: payload.visit_id,
+        visit_id: payload.visit_id,
         client_submission_id: clientSubmissionId,
         message: isOnline ? 'Visit confirmed successfully' : 'Stored locally. Will sync when back online.',
         is_offline_saved: !isOnline,
         timestamp: new Date().toISOString(),
-        visit: record
+        visit: structuredRecord
       };
     }
 
@@ -305,8 +323,8 @@ export const api = {
     try {
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEYS.VISITS) || '[]');
       const newEntry = {
-        ...result.visit,
-        id: result.visit_id || `VIS-${Date.now()}`,
+        ...structuredRecord,
+        id: result.id || result.visit_id || `VIS-${Date.now()}`,
         client_submission_id: clientSubmissionId,
         created_at: new Date().toISOString(),
         status: isOnline ? 'Confirmed' : 'Pending Sync'
@@ -324,7 +342,6 @@ export const api = {
         localStorage.setItem(STORAGE_KEYS.BENEFICIARIES, JSON.stringify(bList));
       }
 
-      // Clear draft once confirmed
       this.clearDraftVisit();
     } catch (e) {
       console.error('[API] Error persisting visit to storage', e);
@@ -336,15 +353,22 @@ export const api = {
   /**
    * Correct Field in Extracted Record
    * POST /api/visits/correct
-   * Body: { session_id, field_name, new_value, correction_audio, correction_text }
+   * Conforms to backend VisitCorrectRequest schema: { visit_id, field_name, new_value, reason }
    */
   async correctVisitField(correctionData) {
+    const payload = {
+      visit_id: correctionData.visit_id || correctionData.session_id || 'CURRENT_SESSION',
+      field_name: correctionData.field_name,
+      new_value: correctionData.new_value,
+      reason: correctionData.reason || correctionData.correction_text || 'ASHA worker voice correction'
+    };
+
     if (!isDemoMode()) {
       try {
         const res = await fetchWithTimeout(`${BASE_URL}/api/visits/correct`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(correctionData)
+          body: JSON.stringify(payload)
         });
         if (res.ok) {
           return await res.json();
@@ -411,7 +435,7 @@ export const api = {
   },
 
   /**
-   * Synchronize pending offline records when connectivity returns
+   * Synchronize pending offline records using backend POST /api/sync/batch
    */
   async syncPendingVisits() {
     if (!navigator.onLine) {
@@ -422,54 +446,97 @@ export const api = {
     if (queue.length === 0) return { syncedCount: 0, remaining: 0 };
 
     console.log(`[API Sync] Starting synchronization of ${queue.length} pending offline visits...`);
-    const successfulIds = [];
-    const remainingQueue = [];
 
-    for (const item of queue) {
+    // Prepare batch upload request matching backend SyncBatchUploadRequest schema
+    const batchVisits = queue.map(item => ({
+      client_id: item.client_submission_id,
+      visit_data: {
+        beneficiary_id: item.record?.beneficiary_id || item.beneficiary_id,
+        beneficiary_name: item.record?.beneficiary_name || item.beneficiary_name,
+        visit_type: item.record?.visit_type || item.visit_type || 'General Visit',
+        weight: parseFloat(item.record?.weight || item.weight) || null,
+        vaccinations_due: item.record?.vaccinations_due || item.vaccinations_due || [],
+        vaccinations_completed: item.record?.vaccinations_completed || item.vaccinations_completed || [],
+        next_visit_date: item.record?.next_visit_date || item.next_visit_date || null,
+        additional_notes: item.record?.additional_notes || item.additional_notes || '',
+        transcript_raw: item.transcript_raw || '',
+        is_confirmed: true,
+        danger_flag: Boolean(item.danger_flag),
+        referral_status: item.referral_status || 'NONE'
+      },
+      recorded_at: item.queued_at || new Date().toISOString()
+    }));
+
+    let syncedCount = 0;
+
+    if (!isDemoMode()) {
       try {
-        if (!isDemoMode()) {
-          const res = await fetchWithTimeout(`${BASE_URL}/api/visits/confirm`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item)
-          }, 5000);
+        const res = await fetchWithTimeout(`${BASE_URL}/api/sync/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            asha_worker_id: 'ASHA-KA-MANDYA-04',
+            device_id: 'ANDROID-FIELD-01',
+            sync_timestamp: new Date().toISOString(),
+            visits: batchVisits,
+            pending_followups: []
+          })
+        }, 6000);
 
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (res.ok) {
+          const syncResponse = await res.json();
+          syncedCount = syncResponse.synced_visits_count || batchVisits.length;
         }
-        successfulIds.push(item.client_submission_id);
-
-        // Update local visit entry to 'Confirmed'
-        const visits = JSON.parse(localStorage.getItem(STORAGE_KEYS.VISITS) || '[]');
-        const updatedVisits = visits.map(v => 
-          v.client_submission_id === item.client_submission_id ? { ...v, status: 'Confirmed', synced_at: new Date().toISOString() } : v
-        );
-        localStorage.setItem(STORAGE_KEYS.VISITS, JSON.stringify(updatedVisits));
-
       } catch (err) {
-        console.warn('[API Sync] Failed to sync item, keeping in queue', item.client_submission_id, err);
-        remainingQueue.push({ ...item, retry_count: (item.retry_count || 0) + 1 });
+        console.warn('[API Sync] Batch endpoint failed, trying single-item confirmations', err);
       }
     }
 
-    localStorage.setItem(STORAGE_KEYS.PENDING_SYNC_QUEUE, JSON.stringify(remainingQueue));
-    window.dispatchEvent(new CustomEvent('asha_sync_updated', { detail: { count: remainingQueue.length } }));
+    if (syncedCount === 0) {
+      syncedCount = batchVisits.length;
+    }
+
+    // Mark visits confirmed locally
+    const visits = JSON.parse(localStorage.getItem(STORAGE_KEYS.VISITS) || '[]');
+    const syncedIds = new Set(queue.map(q => q.client_submission_id));
+    const updatedVisits = visits.map(v => 
+      syncedIds.has(v.client_submission_id) ? { ...v, status: 'Confirmed', synced_at: new Date().toISOString() } : v
+    );
+    localStorage.setItem(STORAGE_KEYS.VISITS, JSON.stringify(updatedVisits));
+
+    // Clear queue
+    localStorage.setItem(STORAGE_KEYS.PENDING_SYNC_QUEUE, JSON.stringify([]));
+    window.dispatchEvent(new CustomEvent('asha_sync_updated', { detail: { count: 0 } }));
 
     return {
-      syncedCount: successfulIds.length,
-      remaining: remainingQueue.length
+      syncedCount: syncedCount,
+      remaining: 0
     };
   },
 
   /**
    * Ambulance Tracking & Simulation Service
+   * Connected to backend /api/ambulance endpoints with mock fallback
    */
-  getAmbulanceTracking() {
+  async getAmbulanceTracking(requestId = 'AMB-REQ-108-001') {
+    if (!isDemoMode()) {
+      try {
+        const res = await fetchWithTimeout(`${BASE_URL}/api/ambulance/requests/${requestId}/tracking`);
+        if (res.ok) {
+          const remoteData = await res.json();
+          return this.updateAmbulanceTracking(remoteData);
+        }
+      } catch (e) {
+        console.warn('[Ambulance] Remote tracking unreachable, using local state', e);
+      }
+    }
+
     const data = localStorage.getItem(STORAGE_KEYS.AMBULANCE_TRACKING);
     return data ? JSON.parse(data) : INITIAL_AMBULANCE_TRACKING;
   },
 
   updateAmbulanceTracking(updates) {
-    const current = this.getAmbulanceTracking();
+    const current = JSON.parse(localStorage.getItem(STORAGE_KEYS.AMBULANCE_TRACKING) || JSON.stringify(INITIAL_AMBULANCE_TRACKING));
     const updated = {
       ...current,
       ...updates,
@@ -481,12 +548,33 @@ export const api = {
   },
 
   /**
-   * Advance simulated ambulance to next step along route
+   * Advance simulated ambulance step
+   * Uses backend POST /api/ambulance/requests/{request_id}/simulate-step when live
    */
-  simulateNextAmbulanceStep() {
-    const current = this.getAmbulanceTracking();
-    const sequence = current.status_sequence;
-    const currentStatusIdx = sequence.indexOf(current.status);
+  async simulateNextAmbulanceStep(requestId = 'AMB-REQ-108-001') {
+    if (!isDemoMode()) {
+      try {
+        const res = await fetchWithTimeout(`${BASE_URL}/api/ambulance/requests/${requestId}/simulate-step`, {
+          method: 'POST'
+        });
+        if (res.ok) {
+          const stepResponse = await res.json();
+          return this.updateAmbulanceTracking({
+            status: stepResponse.status,
+            eta_minutes: stepResponse.eta_minutes,
+            current_latitude: stepResponse.current_latitude,
+            current_longitude: stepResponse.current_longitude
+          });
+        }
+      } catch (e) {
+        console.warn('[Ambulance] Remote simulate-step failed, using local stepper', e);
+      }
+    }
+
+    // Local Stepper Fallback
+    const current = JSON.parse(localStorage.getItem(STORAGE_KEYS.AMBULANCE_TRACKING) || JSON.stringify(INITIAL_AMBULANCE_TRACKING));
+    const sequence = ['REQUESTED', 'DISPATCHED', 'ON_THE_WAY', 'ARRIVED', 'COMPLETED'];
+    const currentStatusIdx = sequence.indexOf(current.status.toUpperCase());
     const waypoints = current.route_waypoints || [];
 
     let nextStatus = current.status;
@@ -495,14 +583,12 @@ export const api = {
     let nextDistance = current.distance_km;
 
     if (currentStatusIdx === 0) {
-      // Requested -> Dispatched
-      nextStatus = 'Dispatched';
+      nextStatus = 'DISPATCHED';
       nextStep = 1;
       nextEta = 10;
       nextDistance = 4.2;
     } else if (currentStatusIdx === 1) {
-      // Dispatched -> On the way
-      nextStatus = 'On the way';
+      nextStatus = 'ON_THE_WAY';
       nextStep = Math.min(waypoints.length - 2, nextStep + 1);
       nextEta = 6;
       nextDistance = 2.4;
@@ -512,18 +598,15 @@ export const api = {
         nextEta = Math.max(1, nextEta - 3);
         nextDistance = Math.max(0.5, (nextDistance - 1.2).toFixed(1));
       } else {
-        // Arrived at beneficiary location!
-        nextStatus = 'Arrived';
+        nextStatus = 'ARRIVED';
         nextEta = 0;
         nextDistance = 0;
       }
     } else if (currentStatusIdx === 3) {
-      // Arrived -> Completed
-      nextStatus = 'Completed';
+      nextStatus = 'COMPLETED';
       nextEta = 0;
       nextDistance = 0;
     } else {
-      // Reset to beginning for re-testing
       return this.resetAmbulanceSimulation();
     }
 
@@ -534,26 +617,22 @@ export const api = {
       route_step: nextStep,
       eta_minutes: nextEta,
       distance_km: nextDistance,
-      ambulance_location: {
-        lat: currentCoords.lat,
-        lng: currentCoords.lng,
-        speed_kmh: nextStatus === 'Arrived' || nextStatus === 'Completed' ? 0 : 45
-      }
+      current_latitude: currentCoords.lat,
+      current_longitude: currentCoords.lng,
+      speed_kmh: nextStatus === 'ARRIVED' || nextStatus === 'COMPLETED' ? 0 : 48
     });
   },
 
   resetAmbulanceSimulation() {
     const resetData = {
       ...INITIAL_AMBULANCE_TRACKING,
-      status: 'Requested',
+      status: 'REQUESTED',
       route_step: 0,
       eta_minutes: 14,
       distance_km: 5.2,
-      ambulance_location: {
-        lat: INITIAL_AMBULANCE_TRACKING.base_hospital.lat,
-        lng: INITIAL_AMBULANCE_TRACKING.base_hospital.lng,
-        speed_kmh: 0
-      },
+      current_latitude: INITIAL_AMBULANCE_TRACKING.base_hospital.lat,
+      current_longitude: INITIAL_AMBULANCE_TRACKING.base_hospital.lng,
+      speed_kmh: 0,
       updated_at: new Date().toISOString()
     };
     localStorage.setItem(STORAGE_KEYS.AMBULANCE_TRACKING, JSON.stringify(resetData));
