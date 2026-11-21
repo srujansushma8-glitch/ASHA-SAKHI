@@ -10,7 +10,12 @@ import {
   ArrowRight,
   CheckCircle2,
   ChevronDown,
-  Volume2
+  Volume2,
+  ArrowLeft,
+  FileText,
+  Activity,
+  Layers,
+  ShieldCheck
 } from 'lucide-react';
 import WaveformVisualizer from '../components/WaveformVisualizer';
 import MicrophonePermissionModal from '../components/MicrophonePermissionModal';
@@ -50,7 +55,6 @@ export default function VoiceRecordingScreen({
   useEffect(() => {
     setIsDemo(isDemoMode());
 
-    // Connect WebSocket
     voiceWs.connect().catch(err => {
       console.warn('[VoiceRecordingScreen] WS connection error', err);
     });
@@ -217,241 +221,276 @@ export default function VoiceRecordingScreen({
   };
 
   return (
-    <div className="space-y-4 pb-28 max-w-2xl mx-auto px-4 pt-3 animate-fade-in">
-      {/* 1. Top Configuration Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-card flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-bold font-kannada text-navy leading-tight">
-            ಧ್ವನಿ ಕ್ಷೇತ್ರ ದಿನಚರಿ (Voice Register)
-          </h2>
-          <p className="text-xs text-navy-500 font-medium mt-0.5">
-            AI4Bharat Indic-Transcribe & Indic-Speak
-          </p>
+    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
+      {/* Top Header Navigation Strip */}
+      <div className="bg-white rounded-3xl p-5 lg:p-6 border border-navy-100 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={onBack}
+            className="p-2.5 rounded-2xl bg-ivory-bg border border-navy-200 text-navy hover:bg-navy-50 active:scale-[0.98] transition-decelerate"
+            title="ಮುಖಪುಟಕ್ಕೆ ಹಿಂತಿರುಗಿ (Back to Home)"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-lg lg:text-xl font-bold font-kannada text-navy leading-tight">
+                ಧ್ವನಿ ಕ್ಷೇತ್ರ ದಿನಚರಿ (Voice Field Register)
+              </h1>
+              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-mint-surface text-primary border border-primary-200">
+                AI4Bharat VAD
+              </span>
+            </div>
+            <p className="text-xs text-navy-500 font-medium mt-0.5">
+              Indic-Transcribe ASR (Kannada/Code-Mixed) & Indic-Speak TTS
+            </p>
+          </div>
         </div>
 
         {/* Language Selection Chips */}
-        <div className="flex bg-navy-50 p-1 rounded-xl border border-navy-100">
-          <button
-            onClick={() => setLanguage('kn')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-decelerate active:scale-[0.98] ${
-              language === 'kn' ? 'bg-primary text-white shadow-subtle' : 'text-navy-600 hover:text-navy-900'
-            }`}
-          >
-            ಕನ್ನಡ
-          </button>
-          <button
-            onClick={() => setLanguage('kn-en')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-decelerate active:scale-[0.98] ${
-              language === 'kn-en' ? 'bg-primary text-white shadow-subtle' : 'text-navy-600 hover:text-navy-900'
-            }`}
-          >
-            ಕನ್+Eng
-          </button>
-          <button
-            onClick={() => setLanguage('en')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-decelerate active:scale-[0.98] ${
-              language === 'en' ? 'bg-primary text-white shadow-subtle' : 'text-navy-600 hover:text-navy-900'
-            }`}
-          >
-            Eng
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Demo Scenario Selector (for Hackathon Evaluation) */}
-      {isDemo && (
-        <div className="bg-mint-surface/40 border border-teal-200 rounded-2xl p-3.5 space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy flex items-center space-x-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              <span>ಪರೀಕ್ಷಾ ಸನ್ನಿವೇಶಗಳು (Evaluation Presets):</span>
-            </span>
-            <span className="text-[10px] bg-white text-primary font-mono px-2 py-0.5 rounded-full font-bold border border-teal-200">
-              AI4Bharat Mock
-            </span>
-          </div>
-          <select
-            value={demoScenario}
-            onChange={(e) => setDemoScenario(e.target.value)}
-            disabled={isRecording || isProcessing}
-            className="w-full bg-white text-navy text-xs font-medium border border-navy-200 rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          >
-            {DEMO_SCENARIOS.map((sc) => (
-              <option key={sc.id} value={sc.id}>
-                {sc.title}
-              </option>
+        <div className="flex items-center space-x-2 self-start sm:self-auto">
+          <span className="text-xs text-navy-400 font-medium hidden sm:inline">ಭಾಷೆ:</span>
+          <div className="flex bg-ivory-bg p-1 rounded-2xl border border-navy-200">
+            {[
+              { id: 'kn', label: 'ಕನ್ನಡ' },
+              { id: 'kn-en', label: 'ಕನ್+Eng' },
+              { id: 'en', label: 'English' }
+            ].map((lang) => (
+              <button
+                key={lang.id}
+                onClick={() => setLanguage(lang.id)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-decelerate active:scale-[0.98] ${
+                  language === lang.id
+                    ? 'bg-primary text-white shadow-subtle'
+                    : 'text-navy-600 hover:text-navy-900'
+                }`}
+              >
+                {lang.label}
+              </button>
             ))}
-          </select>
-          <p className="text-[11px] text-navy-600 font-medium">
-            *ಮೈಕ್ರೊಫೋನ್ ಒತ್ತಿದಾಗ ಆಯ್ದ ಸನ್ನಿವೇಶದ ಧ್ವನಿ ವಿಂಡೋಗಳು ಪರೀಕ್ಷೆಗೆ ಲಭ್ಯವಾಗುತ್ತವೆ.
-          </p>
-        </div>
-      )}
-
-      {/* 3. High-Fidelity Waveform Visualizer */}
-      <WaveformVisualizer 
-        isRecording={isRecording} 
-        isProcessing={isProcessing} 
-        isPlayingTTS={isPlayingTTS} 
-      />
-
-      {/* 4. Main Hero Recording Control Card */}
-      <div className="bg-white rounded-2xl p-6 border border-navy-100 shadow-card text-center relative overflow-hidden">
-        {/* Recording Duration Pill */}
-        <div className="inline-block px-4 py-1 rounded-full bg-ivory-bg border border-navy-100 text-navy font-mono text-sm font-bold mb-4">
-          {formatDuration(duration)}
-        </div>
-
-        {/* Large Prominent Microphone Control */}
-        <div className="relative flex items-center justify-center my-3">
-          {isRecording && (
-            <div className="absolute w-36 h-36 rounded-full bg-emergency-100 animate-ping pointer-events-none"></div>
-          )}
-          {isRecording && (
-            <div className="absolute w-28 h-28 rounded-full bg-emergency-200 animate-pulse pointer-events-none"></div>
-          )}
-
-          <button
-            onClick={isRecording ? handleStopRecording : handleStartRecording}
-            disabled={isProcessing}
-            aria-label={isRecording ? 'Stop Recording' : 'Start Recording'}
-            className={`relative z-10 w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-touch border-4 border-white active:scale-[0.98] transition-decelerate touch-manipulation ${
-              isRecording
-                ? 'bg-emergency hover:bg-emergency-hover text-white shadow-emergency'
-                : isProcessing
-                ? 'bg-navy-300 text-white cursor-not-allowed'
-                : 'bg-primary hover:bg-primary-hover text-white shadow-touch'
-            }`}
-          >
-            {isRecording ? (
-              <>
-                <Square className="w-8 h-8 fill-current" />
-                <span className="text-[11px] font-bold mt-1 font-kannada">ನಿಲ್ಲಿಸಿ</span>
-              </>
-            ) : (
-              <>
-                <Mic className="w-8 h-8" />
-                <span className="text-[11px] font-bold mt-1 font-kannada">ಮಾತನಾಡಿ</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Status Message */}
-        <div className="mt-4">
-          <div className="flex items-center justify-center space-x-2 text-xs font-semibold text-navy">
-            {isProcessing && <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce"></div>}
-            <span>{processingStatus}</span>
           </div>
-          <p className="text-[11px] text-navy-400 mt-1 font-kannada font-medium">
-            {isRecording
-              ? 'ಸ್ಪಷ್ಟವಾಗಿ ಕನ್ನಡದಲ್ಲಿ ಅಥವಾ ವೈದ್ಯಕೀಯ ಪದಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ'
-              : 'ಭೇಟಿ ವಿವರಗಳನ್ನು ಧ್ವನಿ ಮೂಲಕ ನಮೂದಿಸಲು ಮೈಕ್ ಬಟನ್ ಒತ್ತಿ'}
-          </p>
         </div>
-
-        {/* Action Controls: Retry, Stop, Playback */}
-        <div className="flex items-center justify-center space-x-3 mt-5 pt-4 border-t border-navy-100">
-          <button
-            onClick={handleRetry}
-            disabled={isRecording && duration < 1}
-            className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl border border-navy-200 text-navy font-semibold text-xs hover:bg-ivory-bg active:scale-[0.98] transition-decelerate touch-manipulation"
-          >
-            <RotateCcw className="w-4 h-4 text-navy-500" />
-            <span>ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ (Retry)</span>
-          </button>
-
-          {isRecording && (
-            <button
-              onClick={handleStopRecording}
-              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl bg-emergency text-white font-semibold text-xs hover:bg-emergency-hover shadow-emergency active:scale-[0.98] transition-decelerate touch-manipulation"
-            >
-              <Square className="w-4 h-4 fill-current" />
-              <span>ದಾಖಲೆ ಮುಗಿಸಿ (Stop)</span>
-            </button>
-          )}
-
-          {recordedAudioUrl && !isRecording && (
-            <button
-              onClick={toggleAudioPlayback}
-              className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-mint-surface text-primary border border-primary-200 font-semibold text-xs hover:bg-primary-100 active:scale-[0.98] transition-decelerate touch-manipulation"
-            >
-              {isPlayingAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
-              <span>{isPlayingAudio ? 'ವಿರಾಮ' : 'ಕೇಳಿ (Play)'}</span>
-            </button>
-          )}
-        </div>
-
-        {recordedAudioUrl && (
-          <audio
-            ref={audioPlayerRef}
-            src={recordedAudioUrl}
-            onEnded={() => setIsPlayingAudio(false)}
-            className="hidden"
-          />
-        )}
       </div>
 
-      {/* 5. Transcript Display Container */}
-      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-card">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-primary"></span>
-            <h3 className="font-bold text-xs text-navy font-kannada">
-              ಸ್ವೀಕೃತ ಪಠ್ಯ (Indic-Transcribe Transcript)
-            </h3>
-          </div>
-          <span className="text-[10px] text-navy-400 font-mono">
-            {windowCount > 0 ? `Audio Window #${windowCount}` : 'VAD Window'}
-          </span>
-        </div>
+      {/* Main 2-Column Responsive Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* ======================================================== */}
+        {/* LEFT COLUMN: HERO RECORDING CONTROLS & WAVEFORM (Span 5) */}
+        {/* ======================================================== */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Main Hero Card */}
+          <div className="bg-white rounded-3xl p-6 lg:p-8 border border-navy-100 shadow-card text-center relative overflow-hidden space-y-5">
+            {/* Duration Counter Pill */}
+            <div className="inline-flex items-center space-x-2 px-5 py-1.5 rounded-full bg-ivory-bg border border-navy-200 text-navy font-mono text-base font-bold shadow-inner">
+              <span className={`w-2.5 h-2.5 rounded-full ${isRecording ? 'bg-emergency animate-ping' : 'bg-primary'}`}></span>
+              <span>{formatDuration(duration)}</span>
+            </div>
 
-        <div className="min-h-[90px] p-3.5 rounded-xl bg-ivory-bg border border-navy-100 text-xs leading-relaxed font-kannada">
-          {finalTranscript ? (
-            <div className="space-y-2">
-              <p className="text-navy font-medium">{finalTranscript}</p>
-              <div className="flex items-center text-[10px] text-healthcare font-semibold pt-1 border-t border-navy-100">
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-healthcare shrink-0" />
-                <span>AI4Bharat Indic-Transcribe ಧ್ವನಿ ಯಶಸ್ವಿಯಾಗಿ ಪರಿವರ್ತಿಸಿದೆ (ವಿಶ್ವಾಸಾರ್ಹತೆ: 94%)</span>
+            {/* Large Interactive Microphone Button */}
+            <div className="relative flex items-center justify-center py-4">
+              {isRecording && (
+                <div className="absolute w-44 h-44 rounded-full bg-emergency-100 animate-ping pointer-events-none"></div>
+              )}
+              {isRecording && (
+                <div className="absolute w-36 h-36 rounded-full bg-emergency-200 animate-pulse pointer-events-none"></div>
+              )}
+
+              <button
+                onClick={isRecording ? handleStopRecording : handleStartRecording}
+                disabled={isProcessing}
+                aria-label={isRecording ? 'Stop Recording' : 'Start Recording'}
+                className={`relative z-10 w-28 h-28 rounded-full flex flex-col items-center justify-center shadow-touch border-4 border-white active:scale-[0.98] transition-decelerate touch-manipulation ${
+                  isRecording
+                    ? 'bg-emergency hover:bg-emergency-hover text-white shadow-emergency'
+                    : isProcessing
+                    ? 'bg-navy-300 text-white cursor-not-allowed'
+                    : 'bg-primary hover:bg-primary-hover text-white shadow-touch'
+                }`}
+              >
+                {isRecording ? (
+                  <>
+                    <Square className="w-9 h-9 fill-current" />
+                    <span className="text-xs font-bold mt-1 font-kannada">ನಿಲ್ಲಿಸಿ</span>
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-10 h-10" />
+                    <span className="text-xs font-bold mt-1 font-kannada">ಮಾತನಾಡಿ</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Processing Status Text */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-center space-x-2 text-xs font-bold text-navy">
+                {isProcessing && <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce"></div>}
+                <span>{processingStatus}</span>
               </div>
+              <p className="text-xs text-navy-400 font-kannada font-medium">
+                {isRecording
+                  ? 'ಸ್ಪಷ್ಟವಾಗಿ ಕನ್ನಡದಲ್ಲಿ ಅಥವಾ ವೈದ್ಯಕೀಯ ಪದಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ'
+                  : 'ಭೇಟಿ ವಿವರಗಳನ್ನು ಧ್ವನಿ ಮೂಲಕ ನಮೂದಿಸಲು ಮೈಕ್ ಬಟನ್ ಒತ್ತಿ'}
+              </p>
             </div>
-          ) : partialTranscript ? (
-            <p className="text-primary font-medium animate-pulse">
-              {partialTranscript}
-            </p>
-          ) : isRecording ? (
-            <p className="text-navy-400">
-              ಮಾತನಾಡುತ್ತಿರಿ... ಮೊದಲ ಆಡಿಯೋ ವಿಂಡೋ ಪೂರ್ಣಗೊಂಡ ನಂತರ ಪಠ್ಯ ಇಲ್ಲಿ ಮೂಡುತ್ತದೆ.
-            </p>
-          ) : (
-            <p className="text-navy-400">
-              ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಾರಂಭಿಸಿದ ನಂತರ ಕನ್ನಡ ಮತ್ತು ವೈದ್ಯಕೀಯ ಪಠ್ಯ ಇಲ್ಲಿ ದಾಖಲಾಗುತ್ತದೆ.
-            </p>
+
+            {/* Primary Action Controls: Retry, Stop, Playback */}
+            <div className="flex items-center justify-center gap-3 pt-4 border-t border-navy-100">
+              <button
+                onClick={handleRetry}
+                disabled={isRecording && duration < 1}
+                className="flex-1 py-3 px-4 rounded-2xl border border-navy-200 text-navy font-semibold text-xs hover:bg-ivory-bg active:scale-[0.98] transition-decelerate flex items-center justify-center space-x-2"
+              >
+                <RotateCcw className="w-4 h-4 text-navy-500" />
+                <span>ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ</span>
+              </button>
+
+              {isRecording && (
+                <button
+                  onClick={handleStopRecording}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-emergency text-white font-bold text-xs hover:bg-emergency-hover shadow-emergency active:scale-[0.98] transition-decelerate flex items-center justify-center space-x-2"
+                >
+                  <Square className="w-4 h-4 fill-current" />
+                  <span>ಮುಕ್ತಾಯ</span>
+                </button>
+              )}
+
+              {recordedAudioUrl && !isRecording && (
+                <button
+                  onClick={toggleAudioPlayback}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-mint-surface text-primary border border-primary-200 font-bold text-xs hover:bg-primary-100 active:scale-[0.98] transition-decelerate flex items-center justify-center space-x-2"
+                >
+                  {isPlayingAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
+                  <span>{isPlayingAudio ? 'ವಿರಾಮ' : 'ಕೇಳಿ (Play)'}</span>
+                </button>
+              )}
+            </div>
+
+            {recordedAudioUrl && (
+              <audio
+                ref={audioPlayerRef}
+                src={recordedAudioUrl}
+                onEnded={() => setIsPlayingAudio(false)}
+                className="hidden"
+              />
+            )}
+          </div>
+
+          {/* Waveform Visualizer Card */}
+          <WaveformVisualizer 
+            isRecording={isRecording} 
+            isProcessing={isProcessing} 
+            isPlayingTTS={isPlayingTTS} 
+          />
+        </div>
+
+        {/* ======================================================== */}
+        {/* RIGHT COLUMN: TRANSCRIPT, PRESETS & EXTRACTED DATA (7)   */}
+        {/* ======================================================== */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Evaluation Preset Selector */}
+          {isDemo && (
+            <div className="bg-white rounded-3xl p-5 border border-navy-100 shadow-card space-y-3">
+              <div className="flex items-center justify-between border-b border-navy-100 pb-2.5">
+                <span className="text-xs font-bold text-navy flex items-center space-x-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span>ಪರೀಕ್ಷಾ ಸನ್ನಿವೇಶಗಳು (Evaluation Presets for Judges):</span>
+                </span>
+                <span className="text-[10px] bg-mint-surface text-primary font-mono px-2.5 py-0.5 rounded-full font-bold border border-primary-200">
+                  AI4Bharat Mock Active
+                </span>
+              </div>
+
+              <select
+                value={demoScenario}
+                onChange={(e) => setDemoScenario(e.target.value)}
+                disabled={isRecording || isProcessing}
+                className="w-full bg-ivory-bg text-navy text-xs font-bold border border-navy-200 rounded-2xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary font-kannada"
+              >
+                {DEMO_SCENARIOS.map((sc) => (
+                  <option key={sc.id} value={sc.id}>
+                    {sc.title}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-navy-500 font-medium">
+                *ಮೈಕ್ರೊಫೋನ್ ಬಟನ್ ಒತ್ತಿದಾಗ ಈ ಸನ್ನಿವೇಶದ ಆಡಿಯೋ ವಿಂಡೋಗಳನ್ನು Indic-Transcribe ಮಾದರಿಗೆ ರವಾನಿಸಲಾಗುತ್ತದೆ.
+              </p>
+            </div>
+          )}
+
+          {/* Live Transcript Box */}
+          <div className="bg-white rounded-3xl p-6 border border-navy-100 shadow-card space-y-3">
+            <div className="flex items-center justify-between border-b border-navy-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <span className="w-3 h-3 rounded-full bg-primary"></span>
+                <div>
+                  <h3 className="font-bold text-sm text-navy font-kannada">
+                    ಸ್ವೀಕೃತ ಪಠ್ಯ (Live / Received Transcript)
+                  </h3>
+                  <span className="text-[11px] text-navy-400 font-mono">
+                    AI4Bharat Indic-Transcribe Window
+                  </span>
+                </div>
+              </div>
+
+              <span className="text-xs font-mono font-bold text-healthcare bg-healthcare-50 px-3 py-1 rounded-full border border-healthcare-100">
+                {windowCount > 0 ? `Audio Window #${windowCount}` : 'VAD Active'}
+              </span>
+            </div>
+
+            <div className="min-h-[160px] p-4 rounded-2xl bg-ivory-bg border border-navy-100 text-sm leading-relaxed font-kannada flex flex-col justify-between">
+              {finalTranscript ? (
+                <div className="space-y-3">
+                  <p className="text-navy font-semibold text-base leading-relaxed">{finalTranscript}</p>
+                  <div className="flex items-center text-xs text-healthcare font-bold pt-2 border-t border-navy-100">
+                    <CheckCircle2 className="w-4 h-4 mr-1.5 text-healthcare shrink-0" />
+                    <span>AI4Bharat Indic-Transcribe ನಿಂದ ಧ್ವನಿ ಯಶಸ್ವಿಯಾಗಿ ಗುರುತಿಸಲಾಗಿದೆ (ವಿಶ್ವಾಸಾರ್ಹತೆ: 94%)</span>
+                  </div>
+                </div>
+              ) : partialTranscript ? (
+                <p className="text-primary font-semibold text-base animate-pulse">
+                  {partialTranscript}
+                </p>
+              ) : isRecording ? (
+                <p className="text-navy-400 font-medium">
+                  ಮಾತನಾಡುತ್ತಿರಿ... ಮೊದಲ ಆಡಿಯೋ ವಿಂಡೋ ಪೂರ್ಣಗೊಂಡ ನಂತರ ಪಠ್ಯ ಇಲ್ಲಿ ನೈಜ ಸಮಯದಲ್ಲಿ ಮೂಡುತ್ತದೆ.
+                </p>
+              ) : (
+                <p className="text-navy-400 font-medium">
+                  ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಾರಂಭಿಸಿದ ನಂತರ ಕನ್ನಡ ಮತ್ತು ವೈದ್ಯಕೀಯ ಪಠ್ಯ ಇಲ್ಲಿ ದಾಖಲಾಗುತ್ತದೆ.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Extracted Data Notice Banner */}
+          {extractedRecordData && (
+            <div className="bg-healthcare text-white rounded-3xl p-6 shadow-touch flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2 text-mint-surface text-xs font-bold uppercase tracking-wider">
+                  <Check className="w-4 h-4 text-white" />
+                  <span>ಮಾಹಿತಿ ಪ್ರತ್ಯೇಕಿಸಲಾಗಿದೆ (Structured Data Ready)</span>
+                </div>
+                <h4 className="text-lg font-bold font-kannada">
+                  {extractedRecordData.beneficiary_name} • {extractedRecordData.visit_type}
+                </h4>
+                <p className="text-xs text-white/90 font-mono">
+                  ID: {extractedRecordData.beneficiary_id} | ತೂಕ: {extractedRecordData.weight || 'N/A'} kg
+                </p>
+              </div>
+
+              <button
+                onClick={handleProceedToRecord}
+                className="bg-white hover:bg-ivory-bg text-healthcare font-bold py-3.5 px-6 rounded-2xl shadow-card flex items-center justify-center space-x-2 text-sm active:scale-[0.98] transition-decelerate shrink-0"
+              >
+                <span className="font-kannada">ವಿವರ ಪರಿಶೀಲಿಸಿ</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           )}
         </div>
       </div>
-
-      {/* 6. Extracted Result Notice Banner */}
-      {extractedRecordData && (
-        <div className="bg-healthcare text-white rounded-2xl p-4 shadow-touch flex items-center justify-between animate-fade-in">
-          <div>
-            <div className="flex items-center space-x-1.5 text-mint-surface text-xs font-bold">
-              <Check className="w-4 h-4 text-white" />
-              <span>ದಾಖಲೆ ಪ್ರತ್ಯೇಕಿಸಲಾಗಿದೆ (Fields Extracted)</span>
-            </div>
-            <p className="text-xs text-white/95 mt-0.5 font-kannada font-medium">
-              ಫಲಾನುಭವಿ: {extractedRecordData.beneficiary_name} ({extractedRecordData.visit_type})
-            </p>
-          </div>
-          <button
-            onClick={handleProceedToRecord}
-            className="bg-white text-healthcare hover:bg-ivory-bg active:scale-[0.98] text-xs font-bold py-2.5 px-4 rounded-xl shadow-subtle flex items-center space-x-1.5 transition-decelerate touch-manipulation"
-          >
-            <span>ವಿವರ ನೋಡಿ</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       {/* Microphone Permission Modal */}
       <MicrophonePermissionModal

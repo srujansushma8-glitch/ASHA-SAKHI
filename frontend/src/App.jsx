@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import DesktopHeader from './components/DesktopHeader';
 import BottomNav from './components/BottomNav';
 import HomeDashboard from './screens/HomeDashboard';
 import VoiceRecordingScreen from './screens/VoiceRecordingScreen';
@@ -23,7 +25,6 @@ export default function App() {
   useEffect(() => {
     loadEmergencyAlerts();
 
-    // Listen for danger alerts triggered across websocket
     const unsubDanger = voiceWs.on('danger_alert', (payload) => {
       if (payload.alert) {
         setEmergencyAlerts(prev => [payload.alert, ...prev]);
@@ -45,12 +46,11 @@ export default function App() {
     }
   };
 
-  // Flow handlers
   const handleStartVoiceRecording = (beneficiaryIdOrScenario = null) => {
     if (typeof beneficiaryIdOrScenario === 'string') {
-      if (beneficiaryIdOrScenario.startsWith('ASHA-KA-2024-0102') || beneficiaryIdOrScenario.includes('002')) {
+      if (beneficiaryIdOrScenario.startsWith('ASHA-KA-2024-0102') || beneficiaryIdOrScenario.includes('002') || beneficiaryIdOrScenario === 'danger_sign_emergency') {
         setInitialScenarioId('danger_sign_emergency');
-      } else if (beneficiaryIdOrScenario.startsWith('ASHA-KA-2024-0103') || beneficiaryIdOrScenario.includes('003')) {
+      } else if (beneficiaryIdOrScenario.startsWith('ASHA-KA-2024-0103') || beneficiaryIdOrScenario.includes('003') || beneficiaryIdOrScenario === 'child_immunization') {
         setInitialScenarioId('child_immunization');
       } else {
         setInitialScenarioId('anc_routine');
@@ -79,91 +79,115 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory-bg text-navy flex flex-col font-sans">
-      {/* Top Navbar */}
-      <Navbar
-        currentLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
-        activeScreen={activeScreen}
-        setActiveScreen={setActiveScreen}
-        emergencyCount={emergencyAlerts.length}
-      />
-
-      {/* Main Screen Content Area */}
-      <main className="flex-1 w-full max-w-2xl mx-auto">
-        {activeScreen === 'home' && (
-          <HomeDashboard
-            onStartRecording={() => handleStartVoiceRecording('anc_routine')}
-            onNavigate={(screen) => setActiveScreen(screen)}
-            onSelectBeneficiary={(id) => {
-              setSelectedBeneficiaryId(id);
-              setActiveScreen('beneficiaries');
-            }}
-            emergencyCount={emergencyAlerts.length}
-          />
-        )}
-
-        {activeScreen === 'record' && (
-          <VoiceRecordingScreen
-            initialScenarioId={initialScenarioId}
-            onRecordExtracted={handleRecordExtracted}
-            onDangerAlert={handleDangerAlertReceived}
-            onBack={() => setActiveScreen('home')}
-          />
-        )}
-
-        {activeScreen === 'structured_record' && (
-          <StructuredVisitRecordScreen
-            record={currentRecord}
-            onSaved={handleRecordSaved}
-            onBack={() => setActiveScreen('record')}
-            onTriggerEmergency={(alert) => {
-              setCurrentDangerAlert(alert);
-              setActiveScreen('emergency');
-            }}
-          />
-        )}
-
-        {activeScreen === 'emergency' && (
-          <EmergencyAlertScreen
-            alertData={currentDangerAlert}
-            onBack={() => setActiveScreen('home')}
-            onTrackAmbulance={() => setActiveScreen('ambulance')}
-          />
-        )}
-
-        {activeScreen === 'ambulance' && (
-          <AmbulanceTrackingScreen
-            onBack={() => setActiveScreen('emergency')}
-          />
-        )}
-
-        {activeScreen === 'followups' && (
-          <FollowUpDashboard
-            onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
-            onSelectBeneficiary={(id) => {
-              setSelectedBeneficiaryId(id);
-              setActiveScreen('beneficiaries');
-            }}
-          />
-        )}
-
-        {activeScreen === 'beneficiaries' && (
-          <BeneficiaryManagementScreen
-            selectedBeneficiaryId={selectedBeneficiaryId}
-            onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
-            onBack={() => setActiveScreen('home')}
-          />
-        )}
-      </main>
-
-      {/* Bottom Mobile Navigation */}
-      <BottomNav
+    <div className="min-h-screen bg-ivory-bg text-navy flex flex-col lg:flex-row font-sans selection:bg-mint-surface selection:text-navy">
+      {/* 1. Desktop Persistent Left Sidebar */}
+      <Sidebar
         activeScreen={activeScreen}
         setActiveScreen={setActiveScreen}
         emergencyCount={emergencyAlerts.length}
         isRecording={activeScreen === 'record'}
+        currentLanguage={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
       />
+
+      {/* 2. Main Application Area */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        {/* Mobile Top Navbar (Hidden on Desktop) */}
+        <div className="lg:hidden">
+          <Navbar
+            currentLanguage={currentLanguage}
+            onLanguageChange={setCurrentLanguage}
+            activeScreen={activeScreen}
+            setActiveScreen={setActiveScreen}
+            emergencyCount={emergencyAlerts.length}
+          />
+        </div>
+
+        {/* Desktop Sticky Header Bar (Hidden on Mobile) */}
+        <DesktopHeader
+          activeScreen={activeScreen}
+          emergencyCount={emergencyAlerts.length}
+          onEmergencyClick={() => setActiveScreen('emergency')}
+        />
+
+        {/* Dynamic Screen Content with Smart Width */}
+        <main className="flex-1 w-full overflow-y-auto">
+          {activeScreen === 'home' && (
+            <HomeDashboard
+              onStartRecording={handleStartVoiceRecording}
+              onNavigate={(screen) => setActiveScreen(screen)}
+              onSelectBeneficiary={(id) => {
+                setSelectedBeneficiaryId(id);
+                setActiveScreen('beneficiaries');
+              }}
+              emergencyCount={emergencyAlerts.length}
+            />
+          )}
+
+          {activeScreen === 'record' && (
+            <VoiceRecordingScreen
+              initialScenarioId={initialScenarioId}
+              onRecordExtracted={handleRecordExtracted}
+              onDangerAlert={handleDangerAlertReceived}
+              onBack={() => setActiveScreen('home')}
+            />
+          )}
+
+          {activeScreen === 'structured_record' && (
+            <StructuredVisitRecordScreen
+              record={currentRecord}
+              onSaved={handleRecordSaved}
+              onBack={() => setActiveScreen('record')}
+              onTriggerEmergency={(alert) => {
+                setCurrentDangerAlert(alert);
+                setActiveScreen('emergency');
+              }}
+            />
+          )}
+
+          {activeScreen === 'emergency' && (
+            <EmergencyAlertScreen
+              alertData={currentDangerAlert}
+              onBack={() => setActiveScreen('home')}
+              onTrackAmbulance={() => setActiveScreen('ambulance')}
+            />
+          )}
+
+          {activeScreen === 'ambulance' && (
+            <AmbulanceTrackingScreen
+              onBack={() => setActiveScreen('emergency')}
+            />
+          )}
+
+          {activeScreen === 'followups' && (
+            <FollowUpDashboard
+              onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
+              onSelectBeneficiary={(id) => {
+                setSelectedBeneficiaryId(id);
+                setActiveScreen('beneficiaries');
+              }}
+            />
+          )}
+
+          {activeScreen === 'beneficiaries' && (
+            <BeneficiaryManagementScreen
+              selectedBeneficiaryId={selectedBeneficiaryId}
+              onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
+              onBack={() => setActiveScreen('home')}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* 3. Mobile Fixed Bottom Navigation (Hidden on Desktop) */}
+      <div className="lg:hidden">
+        <BottomNav
+          activeScreen={activeScreen}
+          setActiveScreen={setActiveScreen}
+          emergencyCount={emergencyAlerts.length}
+          isRecording={activeScreen === 'record'}
+        />
+      </div>
     </div>
   );
 }
