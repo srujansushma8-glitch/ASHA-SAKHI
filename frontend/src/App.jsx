@@ -15,6 +15,7 @@ import MaternalHealthScreen from './screens/MaternalHealthScreen';
 import HouseholdRouteScreen from './screens/HouseholdRouteScreen';
 import IncentivesReportScreen from './screens/IncentivesReportScreen';
 import LandingPage from './components/landing/LandingPage';
+import AuthScreen from './screens/AuthScreen';
 import AuthModal from './components/auth/AuthModal';
 import CommandPalette from './components/CommandPalette';
 import LanguageSelectorModal from './components/LanguageSelectorModal';
@@ -25,15 +26,20 @@ import { voiceWs } from './services/websocket';
 
 export default function App() {
   const { language: currentLanguage, setLanguage: setCurrentLanguage, isRtl, dir } = useLanguage();
+  // ViewMode order: 1. 'landing' -> 2. 'auth' -> 3. 'app'
+  // On every browser refresh, we strictly reset to the beginning of the order: 'landing'
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('asha_view_mode');
+      sessionStorage.removeItem('asha_view_mode');
       const params = new URLSearchParams(window.location.search);
       const v = params.get('view') || params.get('mode');
+      if (v === 'auth') return 'auth';
       if (v === 'app' || v === 'driver') return 'app';
-      return localStorage.getItem('asha_view_mode') || 'landing';
+      return 'landing';
     }
     return 'landing';
-  }); // 'landing' or 'app'
+  });
   const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'maternal', 'route', 'incentives', 'structured_record', 'emergency', 'ambulance', 'followups', 'beneficiaries'
   const [userRole, setUserRole] = useState('asha'); // 'asha', 'anm', 'mo'
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -93,7 +99,6 @@ export default function App() {
 
   const handleSetViewMode = (mode) => {
     setViewMode(mode);
-    localStorage.setItem('asha_view_mode', mode);
   };
 
   useEffect(() => {
@@ -168,16 +173,23 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#F9ECEC] text-[#3B2A33] font-poppins selection:bg-[#A25B74]/20 selection:text-[#3B2A33] transition-colors duration-200">
       
-      {/* View Mode 1: 3D Landing Page */}
+      {/* Step 1: 3D Landing Page */}
       {viewMode === 'landing' ? (
         <LandingPage
-          onLaunchApp={() => handleSetViewMode('app')}
-          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onLaunchApp={() => setViewMode('auth')}
+          onOpenAuth={() => setViewMode('auth')}
           currentLanguage={currentLanguage}
           onLanguageChange={setCurrentLanguage}
           onOpenLanguageSelector={() => setIsLangModalOpen(true)}
           isDarkMode={isDarkMode}
           onToggleDarkMode={toggleDarkMode}
+        />
+      ) : viewMode === 'auth' ? (
+        /* Step 2: Dedicated Authentication Screen */
+        <AuthScreen
+          onSuccess={handleAuthSuccess}
+          onBackToLanding={() => setViewMode('landing')}
+          onOpenLanguageSelector={() => setIsLangModalOpen(true)}
         />
       ) : (
         /* View Mode 2: Full Field Web App */
