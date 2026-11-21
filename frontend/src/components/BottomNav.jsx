@@ -44,22 +44,25 @@ export default function BottomNav({ activeScreen, setActiveScreen, emergencyCoun
           const Icon = tab.icon;
           const isActive = activeScreen === tab.id;
 
+          // Special Center Microphone Button
           if (tab.isSpecial) {
             return (
               <div key={tab.id} className="relative -top-3">
                 <button
                   onClick={() => setActiveScreen(tab.id)}
                   aria-label="Start Voice Recording"
-                  className={`w-14 h-14 rounded-full flex flex-col items-center justify-center shadow-lg transition-transform active:scale-95 touch-manipulation border-2 border-white ${
+                  className={`w-14 h-14 rounded-full flex flex-col items-center justify-center shadow-touch border-2 border-white active:scale-[0.98] transition-decelerate touch-manipulation ${
                     isRecording
-                      ? 'bg-emergency-600 text-white shadow-emergency animate-pulse'
-                      : 'bg-teal-600 hover:bg-teal-700 text-white shadow-touch'
+                      ? 'bg-emergency text-white shadow-emergency animate-pulse'
+                      : 'bg-primary hover:bg-primary-600 text-white'
                   }`}
                 >
-                  <Icon className={`w-7 h-7 ${isRecording ? 'animate-bounce' : ''}`} />
+                  <Icon className={`w-6 h-6 ${isRecording ? 'animate-bounce' : ''}`} />
                 </button>
-                <span className="block text-center text-[10px] font-semibold text-teal-800 mt-0.5">
-                  {isRecording ? 'ರೆಕಾರ್ಡಿಂಗ್' : 'ಧ್ವನಿ ರೆಕಾರ್ಡ್'}
+                <span className={`block text-center text-[10px] font-semibold mt-0.5 font-kannada ${
+                  isActive ? 'text-primary font-bold' : 'text-navy-600'
+                }`}>
+                  {isRecording ? 'ರೆಕಾರ್ಡಿಂಗ್' : 'ಧ್ವನಿ ಭೇಟಿ'}
                 </span>
               </div>
             );
@@ -71,18 +74,18 @@ export default function BottomNav({ activeScreen, setActiveScreen, emergencyCoun
             <button
               key={tab.id}
               onClick={() => setActiveScreen(tab.id)}
-              className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-lg touch-manipulation transition-colors relative min-h-[48px] ${
+              className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl touch-manipulation active:scale-[0.98] transition-decelerate relative min-h-[48px] ${
                 isActive
                   ? isEmergencyTab
-                    ? 'text-emergency-600 font-bold'
-                    : 'text-teal-700 font-bold'
-                  : 'text-navy-600 hover:text-navy-900 font-medium'
+                    ? 'text-emergency font-bold'
+                    : 'text-primary font-bold'
+                  : 'text-navy-500 hover:text-navy-800 font-medium'
               }`}
             >
               <div className="relative">
-                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-[1.75px]'}`} />
+                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-[1.8px]'}`} />
                 {tab.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-emergency-600 text-white text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center border border-white animate-pulse">
+                  <span className="absolute -top-1.5 -right-2.5 bg-emergency text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white animate-pulse">
                     {tab.badge}
                   </span>
                 )}
@@ -90,6 +93,11 @@ export default function BottomNav({ activeScreen, setActiveScreen, emergencyCoun
               <span className="text-[10px] mt-1 leading-tight font-kannada">
                 {tab.label_kn}
               </span>
+              {isActive && (
+                <span className={`w-1 h-1 rounded-full mt-0.5 ${
+                  isEmergencyTab ? 'bg-emergency' : 'bg-primary'
+                }`}></span>
+              )}
             </button>
           );
         })}

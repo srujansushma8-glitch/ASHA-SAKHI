@@ -47,9 +47,9 @@ export default function App() {
   // Flow handlers
   const handleStartVoiceRecording = (beneficiaryIdOrScenario = null) => {
     if (typeof beneficiaryIdOrScenario === 'string') {
-      if (beneficiaryIdOrScenario.startsWith('ASHA-KA-2024-0102')) {
+      if (beneficiaryIdOrScenario.startsWith('ASHA-KA-2024-0102') || beneficiaryIdOrScenario.includes('002')) {
         setInitialScenarioId('danger_sign_emergency');
-      } else if (beneficiaryIdOrScenario.startsWith('ASHA-KA-2024-0103')) {
+      } else if (beneficiaryIdOrScenario.startsWith('ASHA-KA-2024-0103') || beneficiaryIdOrScenario.includes('003')) {
         setInitialScenarioId('child_immunization');
       } else {
         setInitialScenarioId('anc_routine');
@@ -62,7 +62,6 @@ export default function App() {
     setCurrentRecord(extractedRecord);
     if (dangerAlert) {
       setCurrentDangerAlert(dangerAlert);
-      // If severe danger sign detected, direct to emergency alert screen or allow viewing record
       setActiveScreen('emergency');
     } else {
       setActiveScreen('structured_record');
@@ -75,12 +74,11 @@ export default function App() {
   };
 
   const handleRecordSaved = (result) => {
-    // Show success and navigate back to Home Dashboard or Follow-ups
     setActiveScreen('home');
   };
 
   return (
-    <div className="min-h-screen bg-navy-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-ivory-bg text-navy flex flex-col font-sans">
       {/* Top Navbar */}
       <Navbar
         currentLanguage={currentLanguage}

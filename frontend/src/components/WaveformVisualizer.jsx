@@ -28,11 +28,11 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
 
       ctx.clearRect(0, 0, width, height);
 
-      // Background grid / centerline
+      // Subtle centerline (Warm Navy tint)
       ctx.beginPath();
-      ctx.strokeStyle = '#E2E8F0';
+      ctx.strokeStyle = '#E5ECF2';
       ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
+      ctx.setLineDash([4, 4]);
       ctx.moveTo(0, height / 2);
       ctx.lineTo(width, height / 2);
       ctx.stroke();
@@ -45,7 +45,7 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
         if (realData && audioRecorder.analyser) {
           // Live microphone visualization
           ctx.lineWidth = 2.5;
-          ctx.strokeStyle = '#0D9488'; // Teal
+          ctx.strokeStyle = '#087F8C'; // Primary Deep Teal
           ctx.beginPath();
 
           const sliceWidth = width / bufferLength;
@@ -69,33 +69,33 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
           const barWidth = (width / bufferLength) * 1.5;
           let barX = 0;
           for (let i = 0; i < bufferLength; i += 2) {
-            const barHeight = Math.abs(realData[i] - 128) * 0.8;
-            ctx.fillStyle = i % 4 === 0 ? '#14B8A6' : '#0D9488';
+            const barHeight = Math.abs(realData[i] - 128) * 0.7;
+            ctx.fillStyle = i % 4 === 0 ? '#20A675' : '#087F8C'; // Healthcare Green & Deep Teal
             ctx.fillRect(barX, (height / 2) - barHeight / 2, barWidth - 1, barHeight);
             barX += barWidth + 1;
           }
         } else {
           // Synthesized active wave for demo recording
           phaseRef.current += 0.08;
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = '#0D9488';
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = '#087F8C'; // Primary Deep Teal
           ctx.beginPath();
 
           for (let x = 0; x < width; x += 3) {
             const angle = (x / width) * Math.PI * 4 + phaseRef.current;
-            const y = height / 2 + Math.sin(angle) * (height * 0.35) * Math.sin((x / width) * Math.PI);
+            const y = height / 2 + Math.sin(angle) * (height * 0.32) * Math.sin((x / width) * Math.PI);
             if (x === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
           ctx.stroke();
 
           // Second harmonic
-          ctx.strokeStyle = '#059669';
+          ctx.strokeStyle = '#20A675'; // Healthcare Green
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           for (let x = 0; x < width; x += 4) {
             const angle = (x / width) * Math.PI * 6 - phaseRef.current * 1.2;
-            const y = height / 2 + Math.cos(angle) * (height * 0.2) * Math.sin((x / width) * Math.PI);
+            const y = height / 2 + Math.cos(angle) * (height * 0.18) * Math.sin((x / width) * Math.PI);
             if (x === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
@@ -103,13 +103,13 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
         }
       } else if (isPlayingTTS) {
         // Readback TTS wave
-        phaseRef.current += 0.12;
+        phaseRef.current += 0.10;
         ctx.lineWidth = 2.5;
-        ctx.strokeStyle = '#0284C7'; // Sky/Blue for readback
+        ctx.strokeStyle = '#20A675'; // Healthcare Green for spoken confirmation
         ctx.beginPath();
         for (let x = 0; x < width; x += 3) {
           const angle = (x / width) * Math.PI * 5 + phaseRef.current;
-          const y = height / 2 + Math.sin(angle) * (height * 0.28) * Math.sin((x / width) * Math.PI);
+          const y = height / 2 + Math.sin(angle) * (height * 0.25) * Math.sin((x / width) * Math.PI);
           if (x === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         }
@@ -117,12 +117,12 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
       } else if (isProcessing) {
         // Processing pulse
         phaseRef.current += 0.05;
-        ctx.fillStyle = '#0D9488';
+        ctx.fillStyle = '#087F8C'; // Deep Teal
         const numDots = 5;
         const spacing = width / (numDots + 1);
         for (let i = 1; i <= numDots; i++) {
           const scale = (Math.sin(phaseRef.current + i * 0.8) + 1) / 2;
-          const radius = 3 + scale * 5;
+          const radius = 3 + scale * 4;
           ctx.beginPath();
           ctx.arc(i * spacing, height / 2, radius, 0, Math.PI * 2);
           ctx.fill();
@@ -130,7 +130,7 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
       } else {
         // Idle flat wave with gentle ripple
         ctx.lineWidth = 1.5;
-        ctx.strokeStyle = '#94A3B8';
+        ctx.strokeStyle = '#C7D7E3';
         ctx.beginPath();
         ctx.moveTo(0, height / 2);
         ctx.lineTo(width, height / 2);
@@ -148,22 +148,37 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
   }, [isRecording, isProcessing, isPlayingTTS]);
 
   return (
-    <div className="w-full bg-white rounded-xl p-3 border border-navy-100 shadow-sm relative overflow-hidden">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] font-semibold text-navy-600 flex items-center space-x-1">
+    <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-subtle flex flex-col items-center justify-center">
+      <div className="w-full flex items-center justify-between text-[11px] font-medium text-navy-400 mb-2 px-1">
+        <span className="flex items-center space-x-1.5">
           <span className={`w-2 h-2 rounded-full ${
-            isRecording ? 'bg-emergency-500 animate-ping' : isPlayingTTS ? 'bg-blue-500 animate-pulse' : 'bg-navy-300'
+            isRecording 
+              ? 'bg-emergency animate-ping' 
+              : isPlayingTTS 
+              ? 'bg-healthcare animate-pulse' 
+              : isProcessing 
+              ? 'bg-primary animate-bounce' 
+              : 'bg-navy-300'
           }`}></span>
-          <span>
-            {isRecording ? 'ಲೈವ್ ಆಡಿಯೋ ಇನ್‌ಪುಟ್ (Live Audio Input)' : isPlayingTTS ? 'ಧ್ವನಿ ಓದುವಿಕೆ (TTS Spoken Readback)' : 'ಆಡಿಯೋ ಸ್ಥಿತಿ (Audio Ready)'}
+          <span className="font-kannada font-semibold text-navy-700">
+            {isRecording 
+              ? 'ಧ್ವನಿ ತರಂಗ (Live Voice Stream)' 
+              : isPlayingTTS 
+              ? 'ಧ್ವನಿ ದೃಢೀಕರಣ (Indic-Speak Readback)' 
+              : isProcessing 
+              ? 'Indic-Transcribe ವಿಶ್ಲೇಷಣೆ' 
+              : 'ಧ್ವನಿ ಮಾದರಿ ಸಿದ್ಧವಾಗಿದೆ (Audio Engine Ready)'}
           </span>
         </span>
-        <span className="text-[10px] text-navy-400 font-mono">16kHz PCM</span>
+        <span className="font-mono text-[10px] text-navy-400">16kHz PCM</span>
       </div>
-      <canvas
-        ref={canvasRef}
-        className="w-full h-16 rounded-lg bg-navy-50/50 block"
-      />
+
+      <div className="w-full h-24 bg-ivory-bg rounded-xl overflow-hidden border border-navy-100 flex items-center justify-center relative">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full block"
+        />
+      </div>
     </div>
   );
 }

@@ -1,21 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Mic, 
-  MicOff, 
   Square, 
   RotateCcw, 
   Check, 
-  Volume2, 
-  VolumeX, 
   Play, 
   Pause, 
   Sparkles, 
-  AlertCircle, 
   ArrowRight,
-  Languages,
   CheckCircle2,
-  SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Volume2
 } from 'lucide-react';
 import WaveformVisualizer from '../components/WaveformVisualizer';
 import MicrophonePermissionModal from '../components/MicrophonePermissionModal';
@@ -31,7 +26,6 @@ export default function VoiceRecordingScreen({
   onBack,
   initialScenarioId = 'anc_routine'
 }) {
-  // State variables
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -54,7 +48,6 @@ export default function VoiceRecordingScreen({
   const audioPlayerRef = useRef(null);
 
   useEffect(() => {
-    // Check demo mode setting
     setIsDemo(isDemoMode());
 
     // Connect WebSocket
@@ -62,7 +55,6 @@ export default function VoiceRecordingScreen({
       console.warn('[VoiceRecordingScreen] WS connection error', err);
     });
 
-    // Subscribe to WebSocket events
     const unsubSession = voiceWs.on('session_started', (payload) => {
       setProcessingStatus('ಧ್ವನಿ ಸ್ವೀಕರಿಸಲಾಗುತ್ತಿದೆ... (Listening...)');
     });
@@ -120,14 +112,12 @@ export default function VoiceRecordingScreen({
     };
   }, []);
 
-  // Format mm:ss
   const formatDuration = (secs) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Start recording
   const handleStartRecording = async () => {
     try {
       ttsService.stop();
@@ -138,7 +128,6 @@ export default function VoiceRecordingScreen({
       setWindowCount(0);
       setDuration(0);
 
-      // Start recording with AudioRecorder
       const { stream, mimeType } = await audioRecorder.startRecording({
         timeslice: 1000,
         onChunk: (chunk) => {
@@ -154,7 +143,6 @@ export default function VoiceRecordingScreen({
         }
       });
 
-      // Notify backend via WebSocket
       voiceWs.startSession({
         language,
         audioConfig: { sampleRate: 16000, encoding: mimeType },
@@ -164,7 +152,6 @@ export default function VoiceRecordingScreen({
       setIsRecording(true);
       setProcessingStatus('ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ... (Listening...)');
 
-      // Start duration counter
       timerRef.current = setInterval(() => {
         setDuration(prev => prev + 1);
       }, 1000);
@@ -177,7 +164,6 @@ export default function VoiceRecordingScreen({
     }
   };
 
-  // Stop recording
   const handleStopRecording = async () => {
     if (!isRecording) return;
     clearInterval(timerRef.current);
@@ -197,7 +183,6 @@ export default function VoiceRecordingScreen({
     }
   };
 
-  // Retry / Reset
   const handleRetry = () => {
     clearInterval(timerRef.current);
     audioRecorder.reset();
@@ -214,7 +199,6 @@ export default function VoiceRecordingScreen({
     setProcessingStatus('ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಮಾಡಲು ಸಿದ್ಧ (Ready to Record)');
   };
 
-  // Audio Playback
   const toggleAudioPlayback = () => {
     if (!audioPlayerRef.current) return;
     if (isPlayingAudio) {
@@ -226,7 +210,6 @@ export default function VoiceRecordingScreen({
     }
   };
 
-  // Proceed to structured visit view
   const handleProceedToRecord = () => {
     if (extractedRecordData && onRecordExtracted) {
       onRecordExtracted(extractedRecordData, activeDangerAlert);
@@ -234,40 +217,40 @@ export default function VoiceRecordingScreen({
   };
 
   return (
-    <div className="space-y-4 pb-24 max-w-2xl mx-auto px-4 pt-3">
-      {/* Top Header Card */}
-      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-sm flex items-center justify-between">
+    <div className="space-y-4 pb-28 max-w-2xl mx-auto px-4 pt-3 animate-fade-in">
+      {/* 1. Top Configuration Bar */}
+      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-card flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold font-kannada text-navy-900 leading-tight">
+          <h2 className="text-base font-bold font-kannada text-navy leading-tight">
             ಧ್ವನಿ ಕ್ಷೇತ್ರ ದಿನಚರಿ (Voice Register)
           </h2>
-          <p className="text-xs text-navy-600 mt-0.5">
+          <p className="text-xs text-navy-500 font-medium mt-0.5">
             AI4Bharat Indic-Transcribe & Indic-Speak
           </p>
         </div>
 
         {/* Language Selection Chips */}
-        <div className="flex bg-navy-100/80 p-1 rounded-xl">
+        <div className="flex bg-navy-50 p-1 rounded-xl border border-navy-100">
           <button
             onClick={() => setLanguage('kn')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all touch-manipulation ${
-              language === 'kn' ? 'bg-white text-teal-800 shadow-sm' : 'text-navy-600 hover:text-navy-900'
+            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-decelerate active:scale-[0.98] ${
+              language === 'kn' ? 'bg-primary text-white shadow-subtle' : 'text-navy-600 hover:text-navy-900'
             }`}
           >
             ಕನ್ನಡ
           </button>
           <button
             onClick={() => setLanguage('kn-en')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all touch-manipulation ${
-              language === 'kn-en' ? 'bg-white text-teal-800 shadow-sm' : 'text-navy-600 hover:text-navy-900'
+            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-decelerate active:scale-[0.98] ${
+              language === 'kn-en' ? 'bg-primary text-white shadow-subtle' : 'text-navy-600 hover:text-navy-900'
             }`}
           >
             ಕನ್+Eng
           </button>
           <button
             onClick={() => setLanguage('en')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all touch-manipulation ${
-              language === 'en' ? 'bg-white text-teal-800 shadow-sm' : 'text-navy-600 hover:text-navy-900'
+            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-decelerate active:scale-[0.98] ${
+              language === 'en' ? 'bg-primary text-white shadow-subtle' : 'text-navy-600 hover:text-navy-900'
             }`}
           >
             Eng
@@ -275,15 +258,15 @@ export default function VoiceRecordingScreen({
         </div>
       </div>
 
-      {/* Demo Scenario Preset Selector (when in Demo Mode) */}
+      {/* 2. Demo Scenario Selector (for Hackathon Evaluation) */}
       {isDemo && (
-        <div className="bg-teal-50 border border-teal-200/80 rounded-2xl p-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-bold text-teal-900 flex items-center space-x-1">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-              <span>ಪರೀಕ್ಷಾ ಸನ್ನಿವೇಶಗಳು (Demo Voice Scenarios):</span>
+        <div className="bg-mint-surface/40 border border-teal-200 rounded-2xl p-3.5 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-navy flex items-center space-x-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span>ಪರೀಕ್ಷಾ ಸನ್ನಿವೇಶಗಳು (Evaluation Presets):</span>
             </span>
-            <span className="text-[10px] bg-teal-200 text-teal-900 font-mono px-1.5 py-0.5 rounded font-bold">
+            <span className="text-[10px] bg-white text-primary font-mono px-2 py-0.5 rounded-full font-bold border border-teal-200">
               AI4Bharat Mock
             </span>
           </div>
@@ -291,7 +274,7 @@ export default function VoiceRecordingScreen({
             value={demoScenario}
             onChange={(e) => setDemoScenario(e.target.value)}
             disabled={isRecording || isProcessing}
-            className="w-full bg-white text-navy-900 text-xs font-medium border border-teal-300 rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full bg-white text-navy text-xs font-medium border border-navy-200 rounded-xl py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             {DEMO_SCENARIOS.map((sc) => (
               <option key={sc.id} value={sc.id}>
@@ -299,80 +282,80 @@ export default function VoiceRecordingScreen({
               </option>
             ))}
           </select>
-          <p className="text-[11px] text-teal-700 mt-1">
-            *ಮೈಕ್ರೊಫೋನ್ ಬಟನ್ ಒತ್ತಿದಾಗ ಈ ಸನ್ನಿವೇಶದ ಆಡಿಯೋ ವಿಂಡೋಗಳನ್ನು ಸಂಸ್ಕರಿಸಿ ತೋರಿಸಲಾಗುತ್ತದೆ.
+          <p className="text-[11px] text-navy-600 font-medium">
+            *ಮೈಕ್ರೊಫೋನ್ ಒತ್ತಿದಾಗ ಆಯ್ದ ಸನ್ನಿವೇಶದ ಧ್ವನಿ ವಿಂಡೋಗಳು ಪರೀಕ್ಷೆಗೆ ಲಭ್ಯವಾಗುತ್ತವೆ.
           </p>
         </div>
       )}
 
-      {/* Waveform Visualizer */}
+      {/* 3. High-Fidelity Waveform Visualizer */}
       <WaveformVisualizer 
         isRecording={isRecording} 
         isProcessing={isProcessing} 
         isPlayingTTS={isPlayingTTS} 
       />
 
-      {/* Main Recording Center Card */}
-      <div className="bg-white rounded-2xl p-6 border border-navy-100 shadow-sm text-center relative overflow-hidden">
-        {/* Recording Timer */}
-        <div className="inline-block px-4 py-1 rounded-full bg-navy-100 text-navy-800 font-mono text-sm font-bold mb-4">
+      {/* 4. Main Hero Recording Control Card */}
+      <div className="bg-white rounded-2xl p-6 border border-navy-100 shadow-card text-center relative overflow-hidden">
+        {/* Recording Duration Pill */}
+        <div className="inline-block px-4 py-1 rounded-full bg-ivory-bg border border-navy-100 text-navy font-mono text-sm font-bold mb-4">
           {formatDuration(duration)}
         </div>
 
-        {/* Large Touch-friendly Microphone Button */}
-        <div className="relative flex items-center justify-center my-2">
+        {/* Large Prominent Microphone Control */}
+        <div className="relative flex items-center justify-center my-3">
           {isRecording && (
-            <div className="absolute w-36 h-36 rounded-full bg-teal-400/20 animate-ping pointer-events-none"></div>
+            <div className="absolute w-36 h-36 rounded-full bg-emergency-100 animate-ping pointer-events-none"></div>
           )}
           {isRecording && (
-            <div className="absolute w-28 h-28 rounded-full bg-teal-500/30 animate-pulse pointer-events-none"></div>
+            <div className="absolute w-28 h-28 rounded-full bg-emergency-200 animate-pulse pointer-events-none"></div>
           )}
 
           <button
             onClick={isRecording ? handleStopRecording : handleStartRecording}
             disabled={isProcessing}
             aria-label={isRecording ? 'Stop Recording' : 'Start Recording'}
-            className={`relative z-10 w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-lg transition-transform active:scale-95 touch-manipulation border-4 ${
+            className={`relative z-10 w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-touch border-4 border-white active:scale-[0.98] transition-decelerate touch-manipulation ${
               isRecording
-                ? 'bg-emergency-600 hover:bg-emergency-700 text-white border-white shadow-emergency'
+                ? 'bg-emergency hover:bg-emergency-hover text-white shadow-emergency'
                 : isProcessing
-                ? 'bg-navy-400 text-white border-navy-200 cursor-not-allowed'
-                : 'bg-teal-600 hover:bg-teal-700 text-white border-teal-100 shadow-touch'
+                ? 'bg-navy-300 text-white cursor-not-allowed'
+                : 'bg-primary hover:bg-primary-hover text-white shadow-touch'
             }`}
           >
             {isRecording ? (
               <>
                 <Square className="w-8 h-8 fill-current" />
-                <span className="text-[11px] font-bold mt-1">ನಿಲ್ಲಿಸಿ</span>
+                <span className="text-[11px] font-bold mt-1 font-kannada">ನಿಲ್ಲಿಸಿ</span>
               </>
             ) : (
               <>
-                <Mic className="w-9 h-9" />
-                <span className="text-[11px] font-bold mt-1">ಮಾತನಾಡಿ</span>
+                <Mic className="w-8 h-8" />
+                <span className="text-[11px] font-bold mt-1 font-kannada">ಮಾತನಾಡಿ</span>
               </>
             )}
           </button>
         </div>
 
-        {/* Processing Status Text */}
+        {/* Status Message */}
         <div className="mt-4">
-          <div className="flex items-center justify-center space-x-2 text-xs font-semibold text-navy-700">
-            {isProcessing && <div className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-bounce"></div>}
+          <div className="flex items-center justify-center space-x-2 text-xs font-semibold text-navy">
+            {isProcessing && <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce"></div>}
             <span>{processingStatus}</span>
           </div>
-          <p className="text-[11px] text-navy-400 mt-1 font-kannada">
+          <p className="text-[11px] text-navy-400 mt-1 font-kannada font-medium">
             {isRecording
               ? 'ಸ್ಪಷ್ಟವಾಗಿ ಕನ್ನಡದಲ್ಲಿ ಅಥವಾ ವೈದ್ಯಕೀಯ ಪದಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ'
-              : 'ದಾಖಲಿಸಲು ಮೈಕ್ ಬಟನ್ ಒತ್ತಿ'}
+              : 'ಭೇಟಿ ವಿವರಗಳನ್ನು ಧ್ವನಿ ಮೂಲಕ ನಮೂದಿಸಲು ಮೈಕ್ ಬಟನ್ ಒತ್ತಿ'}
           </p>
         </div>
 
-        {/* Action Controls: Stop, Retry */}
+        {/* Action Controls: Retry, Stop, Playback */}
         <div className="flex items-center justify-center space-x-3 mt-5 pt-4 border-t border-navy-100">
           <button
             onClick={handleRetry}
             disabled={isRecording && duration < 1}
-            className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl border border-navy-200 text-navy-700 font-semibold text-xs hover:bg-navy-50 active:scale-95 transition-all touch-manipulation"
+            className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl border border-navy-200 text-navy font-semibold text-xs hover:bg-ivory-bg active:scale-[0.98] transition-decelerate touch-manipulation"
           >
             <RotateCcw className="w-4 h-4 text-navy-500" />
             <span>ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ (Retry)</span>
@@ -381,7 +364,7 @@ export default function VoiceRecordingScreen({
           {isRecording && (
             <button
               onClick={handleStopRecording}
-              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl bg-emergency-600 text-white font-semibold text-xs hover:bg-emergency-700 shadow-emergency active:scale-95 transition-all touch-manipulation"
+              className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl bg-emergency text-white font-semibold text-xs hover:bg-emergency-hover shadow-emergency active:scale-[0.98] transition-decelerate touch-manipulation"
             >
               <Square className="w-4 h-4 fill-current" />
               <span>ದಾಖಲೆ ಮುಗಿಸಿ (Stop)</span>
@@ -391,7 +374,7 @@ export default function VoiceRecordingScreen({
           {recordedAudioUrl && !isRecording && (
             <button
               onClick={toggleAudioPlayback}
-              className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-teal-50 text-teal-800 border border-teal-200 font-semibold text-xs hover:bg-teal-100 active:scale-95 transition-all touch-manipulation"
+              className="flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-mint-surface text-primary border border-primary-200 font-semibold text-xs hover:bg-primary-100 active:scale-[0.98] transition-decelerate touch-manipulation"
             >
               {isPlayingAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
               <span>{isPlayingAudio ? 'ವಿರಾಮ' : 'ಕೇಳಿ (Play)'}</span>
@@ -399,7 +382,6 @@ export default function VoiceRecordingScreen({
           )}
         </div>
 
-        {/* Hidden Audio element for playback */}
         {recordedAudioUrl && (
           <audio
             ref={audioPlayerRef}
@@ -410,61 +392,60 @@ export default function VoiceRecordingScreen({
         )}
       </div>
 
-      {/* Live / Received Transcript Area */}
-      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-sm">
+      {/* 5. Transcript Display Container */}
+      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-card">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
-            <h3 className="font-bold text-xs text-navy-900 font-kannada">
-              ಸ್ವೀಕೃತ ಪಠ್ಯ (Live / Received Transcript)
+            <span className="w-2.5 h-2.5 rounded-full bg-primary"></span>
+            <h3 className="font-bold text-xs text-navy font-kannada">
+              ಸ್ವೀಕೃತ ಪಠ್ಯ (Indic-Transcribe Transcript)
             </h3>
           </div>
           <span className="text-[10px] text-navy-400 font-mono">
-            {windowCount > 0 ? `Audio Window #${windowCount}` : 'Indic-Transcribe Window'}
+            {windowCount > 0 ? `Audio Window #${windowCount}` : 'VAD Window'}
           </span>
         </div>
 
-        {/* Partial or Final Transcript Box */}
-        <div className="min-h-[90px] p-3 rounded-xl bg-navy-50/70 border border-navy-100 text-xs leading-relaxed font-kannada">
+        <div className="min-h-[90px] p-3.5 rounded-xl bg-ivory-bg border border-navy-100 text-xs leading-relaxed font-kannada">
           {finalTranscript ? (
             <div className="space-y-2">
-              <p className="text-navy-900 font-medium">{finalTranscript}</p>
-              <div className="flex items-center text-[10px] text-emerald-700 font-semibold pt-1 border-t border-navy-100">
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" />
-                <span>AI4Bharat Indic-Transcribe ಮಾದರಿಯಿಂದ ಯಶಸ್ವಿಯಾಗಿ ಧ್ವನಿ ಗುರುತಿಸಲಾಗಿದೆ (Confidence 94%)</span>
+              <p className="text-navy font-medium">{finalTranscript}</p>
+              <div className="flex items-center text-[10px] text-healthcare font-semibold pt-1 border-t border-navy-100">
+                <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-healthcare shrink-0" />
+                <span>AI4Bharat Indic-Transcribe ಧ್ವನಿ ಯಶಸ್ವಿಯಾಗಿ ಪರಿವರ್ತಿಸಿದೆ (ವಿಶ್ವಾಸಾರ್ಹತೆ: 94%)</span>
               </div>
             </div>
           ) : partialTranscript ? (
-            <p className="text-teal-900 font-medium italic animate-pulse">
+            <p className="text-primary font-medium animate-pulse">
               {partialTranscript}
             </p>
           ) : isRecording ? (
-            <p className="text-navy-400 italic">
-              ಮಾತನಾಡುತ್ತಿರಿ... ಮೊದಲ ಆಡಿಯೋ ವಿಂಡೋ ಪೂರ್ಣಗೊಂಡ ನಂತರ ಪಠ್ಯ ಇಲ್ಲಿ ಕಾಣಿಸಿಕೊಳ್ಳುತ್ತದೆ.
+            <p className="text-navy-400">
+              ಮಾತನಾಡುತ್ತಿರಿ... ಮೊದಲ ಆಡಿಯೋ ವಿಂಡೋ ಪೂರ್ಣಗೊಂಡ ನಂತರ ಪಠ್ಯ ಇಲ್ಲಿ ಮೂಡುತ್ತದೆ.
             </p>
           ) : (
-            <p className="text-navy-400 italic">
-              ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಾರಂಭಿಸಿದ ನಂತರ ಪಠ್ಯ ಇಲ್ಲಿ ದಾಖಲಾಗುತ್ತದೆ.
+            <p className="text-navy-400">
+              ಧ್ವನಿ ರೆಕಾರ್ಡಿಂಗ್ ಪ್ರಾರಂಭಿಸಿದ ನಂತರ ಕನ್ನಡ ಮತ್ತು ವೈದ್ಯಕೀಯ ಪಠ್ಯ ಇಲ್ಲಿ ದಾಖಲಾಗುತ್ತದೆ.
             </p>
           )}
         </div>
       </div>
 
-      {/* Next Step Banner (When Extracted) */}
+      {/* 6. Extracted Result Notice Banner */}
       {extractedRecordData && (
-        <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white rounded-2xl p-4 shadow-touch flex items-center justify-between animate-fade-in">
+        <div className="bg-healthcare text-white rounded-2xl p-4 shadow-touch flex items-center justify-between animate-fade-in">
           <div>
-            <div className="flex items-center space-x-1.5 text-emerald-200 text-xs font-bold">
-              <Check className="w-4 h-4 text-emerald-300" />
+            <div className="flex items-center space-x-1.5 text-mint-surface text-xs font-bold">
+              <Check className="w-4 h-4 text-white" />
               <span>ದಾಖಲೆ ಪ್ರತ್ಯೇಕಿಸಲಾಗಿದೆ (Fields Extracted)</span>
             </div>
-            <p className="text-xs text-white/90 mt-0.5 font-kannada">
+            <p className="text-xs text-white/95 mt-0.5 font-kannada font-medium">
               ಫಲಾನುಭವಿ: {extractedRecordData.beneficiary_name} ({extractedRecordData.visit_type})
             </p>
           </div>
           <button
             onClick={handleProceedToRecord}
-            className="bg-white text-emerald-800 hover:bg-emerald-50 active:scale-95 text-xs font-bold py-2.5 px-4 rounded-xl shadow flex items-center space-x-1.5 touch-manipulation"
+            className="bg-white text-healthcare hover:bg-ivory-bg active:scale-[0.98] text-xs font-bold py-2.5 px-4 rounded-xl shadow-subtle flex items-center space-x-1.5 transition-decelerate touch-manipulation"
           >
             <span>ವಿವರ ನೋಡಿ</span>
             <ArrowRight className="w-4 h-4" />

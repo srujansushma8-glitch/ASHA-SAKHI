@@ -27,19 +27,17 @@ export default function StructuredVisitRecordScreen({
   onBack, 
   onTriggerEmergency 
 }) {
-  // Local state for extracted fields
   const [formData, setFormData] = useState({
     beneficiary_id: record?.beneficiary_id || 'ASHA-KA-2024-0101',
-    beneficiary_name: record?.beneficiary_name || 'Lakshmamma K.',
+    beneficiary_name: record?.beneficiary_name || 'ಲಕ್ಷ್ಮಮ್ಮ ಕೆ. (Lakshmamma K.)',
     visit_type: record?.visit_type || 'ANC (Antenatal Care)',
     weight: record?.weight || '58.5',
     vaccinations_due: record?.vaccinations_due || 'TT-2 / TD-2 Booster',
     vaccinations_completed: record?.vaccinations_completed || 'TT-1, Albendazole',
     next_visit_date: record?.next_visit_date || '2026-12-05',
-    additional_notes: record?.additional_notes || 'Normal fetal movement felt. IFA tablets refilled for 30 days.'
+    additional_notes: record?.additional_notes || 'ಭ್ರೂಣದ ಚಲನೆ ಸಾಮಾನ್ಯವಾಗಿದೆ. 30 ದಿನಗಳ ಐರನ್ ಮಾತ್ರೆ (IFA) ವಿತರಿಸಲಾಗಿದೆ.'
   });
 
-  const [isEditing, setIsEditing] = useState(false);
   const [editingField, setEditingField] = useState(null);
   const [editFieldValue, setEditFieldValue] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -51,12 +49,11 @@ export default function StructuredVisitRecordScreen({
 
   // Spoken readback in Kannada (AI4Bharat Indic-Speak representation)
   const generateKannadaReadback = () => {
-    return `${formData.beneficiary_name} ಅವರ ${formData.visit_type} ಭೇಟಿ ದಾಖಲಾಗಿದೆ. ತೂಕ ${formData.weight} ಕೆಜಿ. ಲಸಿಕೆ ${formData.vaccinations_completed}. ಮುಂದಿನ ಭೇಟಿ ದಿನಾಂಕ ${formData.next_visit_date}. ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ ಖಚಿತಪಡಿಸಿ.`;
+    return `${formData.beneficiary_name} ಅವರ ${formData.visit_type} ಭೇಟಿ ದಾಖಲಾಗಿದೆ. ತೂಕ ${formData.weight} ಕೆಜಿ. ಪಡೆದ ಲಸಿಕೆ ${formData.vaccinations_completed}. ಮುಂದಿನ ಭೇಟಿ ದಿನಾಂಕ ${formData.next_visit_date}. ವಿವರ ಸರಿಯಾಗಿದೆಯೇ?`;
   };
 
   const handleListenReadback = () => {
     if (isPlayingReadback) {
-      // Worker interrupted spoken audio
       voiceWs.interruptAudio();
       ttsService.stop();
       setIsPlayingReadback(false);
@@ -72,7 +69,7 @@ export default function StructuredVisitRecordScreen({
     });
   };
 
-  // Open manual edit modal for a field
+  // Manual Edit
   const handleStartEditField = (fieldName, currentValue) => {
     setEditingField(fieldName);
     setEditFieldValue(currentValue || '');
@@ -83,7 +80,6 @@ export default function StructuredVisitRecordScreen({
     const updated = { ...formData, [editingField]: editFieldValue };
     setFormData(updated);
 
-    // Call REST /api/visits/correct and notify WS
     try {
       await api.correctVisitField({
         field_name: editingField,
@@ -103,7 +99,7 @@ export default function StructuredVisitRecordScreen({
     setEditingField(null);
   };
 
-  // Voice Correction Handler
+  // Voice Correction
   const handleStartVoiceCorrection = (fieldKey) => {
     setVoiceCorrectionField(fieldKey);
     setVoiceCorrectionActive(true);
@@ -134,305 +130,311 @@ export default function StructuredVisitRecordScreen({
     setVoiceCorrectionField(null);
   };
 
-  // Confirm and Save
+  // Save Record
   const handleConfirmAndSave = async () => {
     try {
       setIsSaving(true);
-      ttsService.stop();
-
-      // Notify WebSocket confirm_record
-      voiceWs.confirmRecord(formData);
-
-      // Save via REST API
-      const result = await api.confirmVisit({
-        session_id: voiceWs.sessionId,
+      const res = await api.confirmVisit({
+        session_id: voiceWs.sessionId || `SES-${Date.now()}`,
         visit_record: formData
       });
 
-      setIsSaving(false);
-      if (onSaved) onSaved(result);
+      setSuccessToast('ಭೇಟಿ ಯಶಸ್ವಿಯಾಗಿ ರಿಜಿಸ್ಟರ್‌ನಲ್ಲಿ ದಾಖಲಾಗಿದೆ!');
+      setTimeout(() => {
+        if (onSaved) onSaved(res);
+      }, 1200);
     } catch (err) {
       console.error('[StructuredRecord] Save error', err);
+    } finally {
       setIsSaving(false);
     }
   };
 
-  const fieldLabels = {
-    beneficiary_id: { kn: 'ಫಲಾನುಭವಿ ಐಡಿ (Beneficiary ID)', icon: User },
-    beneficiary_name: { kn: 'ಹೆಸರು (Beneficiary Name)', icon: User },
-    visit_type: { kn: 'ಭೇಟಿಯ ವಿಧ (Visit Type)', icon: Calendar },
-    weight: { kn: 'ತೂಕ (Weight in kg)', icon: Scale },
-    vaccinations_due: { kn: 'ಬಾಕಿ ಇರುವ ಲಸಿಕೆಗಳು (Vaccinations Due)', icon: Syringe },
-    vaccinations_completed: { kn: 'ಪೂರ್ಣಗೊಂಡ ಲಸಿಕೆಗಳು (Vaccinations Completed)', icon: CheckCircle },
-    next_visit_date: { kn: 'ಮುಂದಿನ ಭೇಟಿ ದಿನಾಂಕ (Next Visit Date)', icon: Calendar },
-    additional_notes: { kn: 'ಹೆಚ್ಚುವರಿ ಟಿಪ್ಪಣಿಗಳು (Additional Notes)', icon: FileText }
-  };
-
   return (
-    <div className="space-y-4 pb-24 max-w-2xl mx-auto px-4 pt-3">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={onBack}
-          className="p-2 rounded-xl bg-white border border-navy-100 text-navy-700 hover:bg-navy-50"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="text-center">
-          <h2 className="text-base font-bold font-kannada text-navy-900 leading-tight">
-            ರಚನಾತ್ಮಕ ಭೇಟಿ ದಾಖಲೆ
-          </h2>
-          <p className="text-[11px] text-navy-500 font-mono">Structured Visit Record</p>
-        </div>
-        <div className="w-9 h-9"></div> {/* Balancer */}
-      </div>
-
-      {/* Success Toast */}
-      {successToast && (
-        <div className="bg-emerald-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md flex items-center justify-between animate-fade-in">
-          <div className="flex items-center space-x-2">
-            <Check className="w-4 h-4" />
-            <span>{successToast}</span>
-          </div>
-          <button onClick={() => setSuccessToast('')}>
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
-      {/* Spoken Readback Bar (AI4Bharat Indic-Speak) */}
-      <div className="bg-gradient-to-r from-teal-800 to-navy-900 text-white rounded-2xl p-4 shadow-touch flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+    <div className="space-y-4 pb-28 max-w-2xl mx-auto px-4 pt-3 animate-fade-in">
+      {/* 1. Header Bar with Back and Readback Audio */}
+      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-card flex items-center justify-between">
+        <div className="flex items-center space-x-2">
           <button
-            onClick={handleListenReadback}
-            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-              isPlayingReadback
-                ? 'bg-emergency-600 text-white animate-pulse'
-                : 'bg-teal-500 hover:bg-teal-400 text-white'
-            }`}
-            title={isPlayingReadback ? 'Stop Readback (Interrupt)' : 'Listen to Kannada Readback'}
+            onClick={onBack}
+            className="p-2 rounded-xl bg-ivory-bg border border-navy-200 text-navy hover:bg-navy-50 active:scale-[0.98] transition-decelerate"
+            title="ಹಿಂದೆ / Back"
           >
-            {isPlayingReadback ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h4 className="text-xs font-bold font-kannada text-teal-200">
-              {isPlayingReadback ? 'ಧ್ವನಿ ಓದಲಾಗುತ್ತಿದೆ (Reading Back...)' : 'ಧ್ವನಿ ಓದುವಿಕೆ (Listen to Readback)'}
-            </h4>
-            <p className="text-[11px] text-white/80">
-              {isPlayingReadback ? 'ನಿಲ್ಲಿಸಲು ಬಟನ್ ಒತ್ತಿ (Tap to Interrupt)' : 'ದಾಖಲೆಯನ್ನು ಕನ್ನಡದಲ್ಲಿ ಆಲಿಸಿ'}
+            <h2 className="text-base font-bold font-kannada text-navy leading-tight">
+              ದಾಖಲಾದ ಭೇಟಿ ವಿವರಗಳು
+            </h2>
+            <p className="text-[11px] text-navy-500 font-medium">
+              Structured Field Register Entry
             </p>
           </div>
         </div>
-        <span className="text-[10px] bg-teal-900 text-teal-200 px-2 py-0.5 rounded font-mono border border-teal-700">
-          Indic-Speak
-        </span>
+
+        {/* Spoken Readback (Indic-Speak) Button */}
+        <button
+          onClick={handleListenReadback}
+          className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold border active:scale-[0.98] transition-decelerate ${
+            isPlayingReadback
+              ? 'bg-healthcare text-white border-healthcare animate-pulse'
+              : 'bg-mint-surface text-primary border-primary-200 hover:bg-teal-200'
+          }`}
+          title="AI4Bharat Indic-Speak ಧ್ವನಿ ಮೂಲಕ ಓದಿ ಕೇಳಿ"
+        >
+          {isPlayingReadback ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          <span className="font-kannada font-bold">
+            {isPlayingReadback ? 'ನಿಲ್ಲಿಸಿ' : 'ಧ್ವನಿ ಓದುವಿಕೆ'}
+          </span>
+        </button>
       </div>
 
-      {/* Structured Fields Grid */}
-      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-sm space-y-3">
-        <div className="flex items-center justify-between border-b border-navy-100 pb-2">
-          <span className="text-xs font-bold text-navy-800 font-kannada">
-            AI ಗುರುತಿಸಿದ ಕ್ಷೇತ್ರಗಳು (Extracted Fields)
-          </span>
-          <span className="text-[10px] text-navy-400 font-medium">
-            ತಿದ್ದುಪಡಿ ಮಾಡಲು ಕ್ಷೇತ್ರವನ್ನು ಸ್ಪರ್ಶಿಸಿ
-          </span>
+      {/* Success Notification */}
+      {successToast && (
+        <div className="bg-healthcare text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-card flex items-center space-x-2 animate-fade-in">
+          <CheckCircle className="w-4 h-4 shrink-0" />
+          <span>{successToast}</span>
         </div>
+      )}
 
-        {Object.entries(formData).map(([key, value]) => {
-          const config = fieldLabels[key] || { kn: key, icon: FileText };
-          const Icon = config.icon;
-
-          return (
-            <div
-              key={key}
-              className="p-3 rounded-xl border border-navy-100 hover:border-teal-300 bg-navy-50/40 hover:bg-white transition-all group"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-2.5 flex-1 pr-2">
-                  <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center shrink-0 mt-0.5">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-[11px] font-semibold text-navy-500 block leading-tight font-kannada">
-                      {config.kn}
-                    </span>
-                    <span className="text-xs font-bold text-navy-900 block mt-0.5 break-words">
-                      {value || '—'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Edit Controls: Manual & Voice Correction */}
-                <div className="flex items-center space-x-1.5 shrink-0">
-                  {/* Voice Correction Button */}
-                  <button
-                    onClick={() => handleStartVoiceCorrection(key)}
-                    className="p-1.5 rounded-lg text-teal-700 bg-teal-50 hover:bg-teal-100 touch-manipulation"
-                    title="ಧ್ವನಿ ತಿದ್ದುಪಡಿ / Voice Correction"
-                  >
-                    <Mic className="w-3.5 h-3.5" />
-                  </button>
-
-                  {/* Manual Edit Button */}
-                  <button
-                    onClick={() => handleStartEditField(key, value)}
-                    className="p-1.5 rounded-lg text-navy-600 bg-navy-100 hover:bg-navy-200 touch-manipulation"
-                    title="ಬರೆದು ತಿದ್ದುಪಡಿ / Manual Edit"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+      {/* 2. Beneficiary Info Card */}
+      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-card">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center shrink-0">
+              <User className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-bold text-navy font-kannada">
+                  {formData.beneficiary_name}
+                </span>
+                <span className="text-[10px] font-mono font-bold bg-navy-50 text-navy-600 px-2 py-0.5 rounded border border-navy-100">
+                  {formData.beneficiary_id}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center space-x-2 text-xs">
+                <span className="px-2 py-0.5 rounded-full bg-mint-surface text-primary font-bold text-[11px]">
+                  {formData.visit_type}
+                </span>
               </div>
             </div>
-          );
-        })}
+          </div>
+
+          <button
+            onClick={() => handleStartEditField('beneficiary_name', formData.beneficiary_name)}
+            className="p-1.5 rounded-lg text-navy-400 hover:text-navy-700 hover:bg-ivory-bg active:scale-[0.98]"
+            title="Edit Beneficiary Name"
+          >
+            <Edit3 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Confirmation & Save Buttons */}
-      <div className="space-y-2 pt-2">
-        <button
-          onClick={handleConfirmAndSave}
-          disabled={isSaving}
-          className="w-full bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white font-bold py-3.5 px-4 rounded-xl shadow-touch flex items-center justify-center space-x-2 transition-all touch-manipulation"
-        >
-          {isSaving ? (
-            <>
-              <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-              <span>ಉಳಿಸಲಾಗುತ್ತಿದೆ... (Saving...)</span>
-            </>
-          ) : (
-            <>
-              <CheckCircle className="w-5 h-5" />
-              <span className="text-sm font-kannada font-bold">
-                ಖಚಿತಪಡಿಸಿ ಮತ್ತು ಉಳಿಸಿ (Confirm & Save Record)
+      {/* 3. Clinical Vitals & Measurements Card */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Weight Field */}
+        <div className="bg-white rounded-2xl p-3.5 border border-navy-100 shadow-subtle relative">
+          <div className="flex items-center justify-between text-navy-500 mb-1.5">
+            <span className="text-xs font-bold font-kannada flex items-center">
+              <Scale className="w-4 h-4 mr-1 text-primary" />
+              ತಾಯಿ/ಮಗು ತೂಕ (Weight)
+            </span>
+            <button
+              onClick={() => handleStartVoiceCorrection('weight')}
+              className="text-[10px] text-primary font-bold flex items-center space-x-0.5 hover:underline"
+            >
+              <Mic className="w-3 h-3" />
+              <span>ಧ್ವನಿ ತಿದ್ದುಪಡಿ</span>
+            </button>
+          </div>
+          <div className="flex items-baseline space-x-1">
+            <span className="text-2xl font-bold font-mono text-navy">
+              {formData.weight || '--'}
+            </span>
+            <span className="text-xs font-bold text-navy-500">kg</span>
+          </div>
+        </div>
+
+        {/* Next Visit Date */}
+        <div className="bg-white rounded-2xl p-3.5 border border-navy-100 shadow-subtle relative">
+          <div className="flex items-center justify-between text-navy-500 mb-1.5">
+            <span className="text-xs font-bold font-kannada flex items-center">
+              <Calendar className="w-4 h-4 mr-1 text-primary" />
+              ಮುಂದಿನ ಭೇಟಿ (Next Visit)
+            </span>
+            <button
+              onClick={() => handleStartVoiceCorrection('next_visit_date')}
+              className="text-[10px] text-primary font-bold flex items-center space-x-0.5 hover:underline"
+            >
+              <Mic className="w-3 h-3" />
+              <span>ಧ್ವನಿ ತಿದ್ದುಪಡಿ</span>
+            </button>
+          </div>
+          <div className="text-sm font-bold font-mono text-navy">
+            {formData.next_visit_date || 'ನಿಗದಿಪಡಿಸಿಲ್ಲ'}
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Immunization: Due vs Completed Vaccines */}
+      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-card space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-xs text-navy font-kannada flex items-center">
+            <Syringe className="w-4 h-4 mr-1.5 text-primary" />
+            ಲಸಿಕೆಗಳ ವಿವರ (Immunization Records)
+          </h3>
+          <button
+            onClick={() => handleStartVoiceCorrection('vaccinations_completed')}
+            className="text-[11px] text-primary font-bold flex items-center space-x-1 hover:underline"
+          >
+            <Mic className="w-3.5 h-3.5" />
+            <span>ಲಸಿಕೆ ತಿದ್ದುಪಡಿ</span>
+          </button>
+        </div>
+
+        {/* Vaccinations Completed (Healthcare Green) */}
+        <div className="p-3 rounded-xl bg-healthcare-50 border border-healthcare-100">
+          <span className="text-[10px] uppercase font-bold text-healthcare-700 tracking-wider block mb-1">
+            ಪೂರ್ಣಗೊಂಡ ಲಸಿಕೆಗಳು (Vaccinations Completed):
+          </span>
+          <div className="text-xs font-bold text-navy">
+            {formData.vaccinations_completed || 'ಯಾವುದೂ ದಾಖಲಾಗಿಲ್ಲ'}
+          </div>
+        </div>
+
+        {/* Vaccinations Due (Warning Amber) */}
+        <div className="p-3 rounded-xl bg-warning-50 border border-warning-200">
+          <span className="text-[10px] uppercase font-bold text-warning-700 tracking-wider block mb-1">
+            ಮುಂದಿನ ಬಾಕಿ ಲಸಿಕೆಗಳು (Vaccinations Due):
+          </span>
+          <div className="text-xs font-bold text-navy">
+            {formData.vaccinations_due || 'ಯಾವುದೂ ಬಾಕಿ ಇಲ್ಲ'}
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Additional Clinical Notes */}
+      <div className="bg-white rounded-2xl p-4 border border-navy-100 shadow-card space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-xs text-navy font-kannada flex items-center">
+            <FileText className="w-4 h-4 mr-1.5 text-primary" />
+            ಕ್ಷೇತ್ರ ಭೇಟಿ ಟಿಪ್ಪಣಿಗಳು (Field Observation Notes)
+          </h3>
+          <button
+            onClick={() => handleStartEditField('additional_notes', formData.additional_notes)}
+            className="text-[11px] text-primary font-bold flex items-center space-x-1 hover:underline"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>ಬದಲಾಯಿಸಿ</span>
+          </button>
+        </div>
+        <p className="text-xs text-navy-700 font-medium leading-relaxed bg-ivory-bg p-3 rounded-xl border border-navy-100">
+          {formData.additional_notes || 'ಯಾವುದೇ ಹೆಚ್ಚುವರಿ ಟಿಪ್ಪಣಿ ಇಲ್ಲ.'}
+        </p>
+      </div>
+
+      {/* 6. Voice Correction Popover Modal */}
+      {voiceCorrectionActive && (
+        <div className="fixed inset-0 z-50 bg-navy-950/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-5 border border-navy-100 shadow-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-navy font-kannada flex items-center space-x-1.5">
+                <Mic className="w-4 h-4 text-primary" />
+                <span>ಧ್ವನಿ ತಿದ್ದುಪಡಿ: {voiceCorrectionField}</span>
               </span>
-            </>
-          )}
-        </button>
+              <button
+                onClick={() => setVoiceCorrectionActive(false)}
+                className="p-1 rounded-lg hover:bg-navy-50 text-navy-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-        <button
-          onClick={onBack}
-          className="w-full py-2.5 px-4 rounded-xl border border-navy-200 text-navy-700 font-semibold text-xs hover:bg-navy-50 active:scale-98 transition-all touch-manipulation"
-        >
-          ಮತ್ತೆ ಧ್ವನಿ ರೆಕಾರ್ಡ್ ಮಾಡಿ (Record Again)
-        </button>
-      </div>
+            <p className="text-xs text-navy-600 font-medium">
+              ತಿದ್ದುಪಡಿ ಮಾಡಬೇಕಾದ ಹೊಸ ಮೌಲ್ಯವನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಿ:
+            </p>
+
+            <input
+              type="text"
+              value={voiceCorrectionInput}
+              onChange={(e) => setVoiceCorrectionInput(e.target.value)}
+              placeholder="ಉದಾಹರಣೆಗೆ: 59.2 ಅಥವಾ TT-2"
+              className="w-full text-xs font-medium border border-navy-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+
+            <div className="flex space-x-2 pt-2">
+              <button
+                onClick={() => setVoiceCorrectionActive(false)}
+                className="flex-1 py-2 text-xs font-semibold rounded-xl border border-navy-200 text-navy hover:bg-ivory-bg active:scale-[0.98]"
+              >
+                ರದ್ದುಮಾಡಿ
+              </button>
+              <button
+                onClick={handleApplyVoiceCorrection}
+                className="flex-1 py-2 text-xs font-bold rounded-xl bg-primary text-white hover:bg-primary-hover active:scale-[0.98]"
+              >
+                ತಿದ್ದುಪಡಿ ಉಳಿಸಿ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manual Field Edit Modal */}
       {editingField && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-navy-200">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-bold text-navy-900 font-kannada">
-                ಕ್ಷೇತ್ರ ತಿದ್ದುಪಡಿ: {fieldLabels[editingField]?.kn || editingField}
-              </h4>
+        <div className="fixed inset-0 z-50 bg-navy-950/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-5 border border-navy-100 shadow-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-navy font-kannada">
+                ಕ್ಷೇತ್ರ ಬದಲಾವಣೆ: {editingField}
+              </span>
               <button
                 onClick={() => setEditingField(null)}
-                className="p-1 rounded-lg text-navy-400 hover:text-navy-600"
+                className="p-1 rounded-lg hover:bg-navy-50 text-navy-400"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <textarea
+              rows={3}
               value={editFieldValue}
               onChange={(e) => setEditFieldValue(e.target.value)}
-              rows={3}
-              className="w-full p-3 rounded-xl border border-navy-300 text-xs text-navy-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent font-medium"
-              placeholder="ಸರಿಯಾದ ಮೌಲ್ಯವನ್ನು ನಮೂದಿಸಿ..."
+              className="w-full text-xs font-medium border border-navy-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-primary"
             />
 
-            <div className="flex space-x-2 mt-4">
+            <div className="flex space-x-2 pt-2">
               <button
                 onClick={() => setEditingField(null)}
-                className="flex-1 py-2.5 rounded-xl border border-navy-200 text-navy-700 font-semibold text-xs"
+                className="flex-1 py-2 text-xs font-semibold rounded-xl border border-navy-200 text-navy hover:bg-ivory-bg active:scale-[0.98]"
               >
                 ರದ್ದುಮಾಡಿ
               </button>
               <button
                 onClick={handleSaveFieldEdit}
-                className="flex-1 py-2.5 rounded-xl bg-teal-600 text-white font-semibold text-xs hover:bg-teal-700 shadow-touch"
+                className="flex-1 py-2 text-xs font-bold rounded-xl bg-primary text-white hover:bg-primary-hover active:scale-[0.98]"
               >
-                ಉಳಿಸಿ (Save)
+                ಉಳಿಸಿ
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Voice Correction Modal */}
-      {voiceCorrectionActive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-navy-200 text-center">
-            <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center mx-auto mb-3">
-              <Mic className="w-6 h-6 animate-pulse" />
-            </div>
-
-            <h4 className="text-base font-bold text-navy-900 font-kannada">
-              ಧ್ವನಿ ತಿದ್ದುಪಡಿ (Voice Correction)
-            </h4>
-            <p className="text-xs text-navy-500 mb-3 font-medium">
-              ಕ್ಷೇತ್ರ: {fieldLabels[voiceCorrectionField]?.kn || voiceCorrectionField}
-            </p>
-
-            <div className="bg-navy-50 rounded-xl p-3 border border-navy-100 text-xs text-left mb-3">
-              <label className="text-[10px] font-bold text-navy-500 uppercase block mb-1">
-                ಹೊಸ ಮೌಲ್ಯ / New Value:
-              </label>
-              <input
-                type="text"
-                value={voiceCorrectionInput}
-                onChange={(e) => setVoiceCorrectionInput(e.target.value)}
-                placeholder="ಉದಾ: 59 kg ಅಥವಾ ಮುಂದಿನ ಭೇಟಿ 2026-12-10"
-                className="w-full bg-white p-2 rounded-lg border border-navy-200 text-xs text-navy-900 focus:outline-none focus:ring-2 focus:ring-teal-500 font-semibold"
-              />
-            </div>
-
-            {/* Quick Suggestions based on field */}
-            <div className="flex flex-wrap gap-1.5 justify-center mb-4">
-              {voiceCorrectionField === 'weight' && (
-                ['55.0', '58.0', '60.5', '62.0'].map(val => (
-                  <button
-                    key={val}
-                    onClick={() => setVoiceCorrectionInput(val)}
-                    className="text-[11px] px-2 py-1 rounded-lg bg-navy-100 text-navy-700 hover:bg-teal-100 hover:text-teal-800 font-mono"
-                  >
-                    {val} kg
-                  </button>
-                ))
-              )}
-              {voiceCorrectionField === 'vaccinations_completed' && (
-                ['TT-1 Completed', 'TT-2 Completed', 'OPV-3 + Penta-3'].map(val => (
-                  <button
-                    key={val}
-                    onClick={() => setVoiceCorrectionInput(val)}
-                    className="text-[10px] px-2 py-1 rounded-lg bg-navy-100 text-navy-700 hover:bg-teal-100 hover:text-teal-800"
-                  >
-                    {val}
-                  </button>
-                ))
-              )}
-            </div>
-
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setVoiceCorrectionActive(false)}
-                className="flex-1 py-2.5 rounded-xl border border-navy-200 text-navy-700 font-semibold text-xs"
-              >
-                ರದ್ದುಮಾಡಿ
-              </button>
-              <button
-                onClick={handleApplyVoiceCorrection}
-                disabled={!voiceCorrectionInput}
-                className="flex-1 py-2.5 rounded-xl bg-teal-600 text-white font-semibold text-xs hover:bg-teal-700 shadow-touch disabled:opacity-50"
-              >
-                ಅನ್ವಯಿಸಿ (Apply)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 7. Final Confirm & Save Primary Button */}
+      <div className="pt-2">
+        <button
+          onClick={handleConfirmAndSave}
+          disabled={isSaving}
+          className="w-full bg-healthcare hover:bg-healthcare-hover text-white font-bold py-4 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 text-base active:scale-[0.98] transition-decelerate touch-manipulation"
+        >
+          <Save className="w-5 h-5" />
+          <span className="font-kannada">
+            {isSaving ? 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...' : 'ದೃಢೀಕರಿಸಿ ಅಧಿಕೃತವಾಗಿ ಉಳಿಸಿ (Confirm & Save)'}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
