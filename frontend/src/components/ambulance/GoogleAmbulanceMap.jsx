@@ -1,5 +1,37 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+
+// Standalone Google Maps JavaScript API script loader (zero external package dependencies)
+function loadGoogleMapsScript(apiKey, language) {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') return reject(new Error('Window not available'));
+    if (window.google && window.google.maps) {
+      return resolve(window.google);
+    }
+    const scriptId = 'google-maps-js-sdk';
+    let script = document.getElementById(scriptId);
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.type = 'text/javascript';
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places&language=${language}`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    const handleLoad = () => {
+      if (window.google && window.google.maps) {
+        resolve(window.google);
+      } else {
+        reject(new Error('Google Maps SDK loaded but window.google.maps is unavailable'));
+      }
+    };
+    const handleError = (e) => reject(new Error('Failed to load Google Maps script'));
+
+    script.addEventListener('load', handleLoad);
+    script.addEventListener('error', handleError);
+  });
+}
 import { 
   Navigation, 
   MapPin, 
@@ -110,14 +142,9 @@ export default function GoogleAmbulanceMap({
     }
 
     let isMounted = true;
-    const loader = new Loader({
-      apiKey,
-      version: 'weekly',
-      libraries: ['maps', 'marker', 'routes'],
-      language: currentLanguage === 'hi' ? 'hi' : currentLanguage === 'kn' ? 'kn' : 'en'
-    });
+    const lang = currentLanguage === 'hi' ? 'hi' : currentLanguage === 'kn' ? 'kn' : 'en';
 
-    loader.load()
+    loadGoogleMapsScript(apiKey, lang)
       .then((google) => {
         if (!isMounted || !mapContainerRef.current) return;
 
