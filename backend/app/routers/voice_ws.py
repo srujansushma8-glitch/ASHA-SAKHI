@@ -207,8 +207,8 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                             },
                         )
 
-                    # D. If Agent handled Registration, Search, Tasks, or Greeting
-                    if agent_resp.intent in {"BENEFICIARY_REGISTERED", "REGISTRATION_READY", "AWAITING_REGISTRATION_DETAILS", "SEARCH_RESULT", "SEARCH_NOT_FOUND", "TASKS_SUMMARY", "GREETING", "VISIT_SAVED", "CORRECTION_APPLIED"}:
+                    # D. If Agent handled Registration, Search, Tasks, Assistant Queries, or Greeting
+                    if agent_resp.intent and agent_resp.intent not in {"VISIT_AWAITING_CONFIRMATION", "CLINICAL_VISIT"}:
                         # Synthesize natural voice response in active language
                         spoken_audio = await tts_adapter.synthesize(agent_resp.spoken_text, language=active_lang)
 
@@ -304,7 +304,42 @@ async def voice_websocket_endpoint(websocket: WebSocket):
 
                     active_lang = current_session.language or "kn"
 
-                    # Check if there is a pending agent-level action (like registration)
+                    # Priority 1: If structured clinical visit record exists, commit visit to database & schedule follow-ups
+                    if current_session.current_record:
+                        saved_result = current_session.commit_visit_to_db()
+
+                        ack_translations = {
+                            "kn": "ದಾಖಲೆ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ.",
+                            "hi": "स्वास्थ्य रिकॉर्ड सफलतापूर्वक सुरक्षित कर लिया गया है।",
+                            "te": "రికార్డు విజయవంతంగా సేవ్ చేయబడింది.",
+                            "ta": "பதிவு வெற்றிகரமாக சேமிக்கப்பட்டது.",
+                            "ml": "റെക്കോർഡ് വിജയകരമായി സേവ് ചെയ്തു.",
+                            "bn": "রেকর্ড সফলভাবে সংরক্ষিত হয়েছে।",
+                            "mr": "नोंद यशस्वीपणे सेव्ह झाली आहे.",
+                            "gu": "રેકોર્ડ સફળતાપૂર્વક સાચવી લીધો છે.",
+                            "ur": "ریکارڈ کامیابی سے محفوظ کر لیا گیا۔",
+                            "pa": "ਰਿਕਾਰਡ ਸੇਵ ਹੋ ਗਿਆ ਹੈ।",
+                            "or": "ରେକର୍ଡ ସଫଳତାର ସହ ସେଭ ହୋଇଛି।",
+                            "as": "ৰেকৰ্ড সফলভাৱে সংৰক্ষণ কৰা হ'ল।"
+                        }
+                        ack_save = ack_translations.get(active_lang, "Record successfully saved to field register.")
+                        save_tts = await tts_adapter.synthesize(ack_save, language=active_lang)
+
+                        await send_event(
+                            "visit_saved",
+                            {
+                                "visit": saved_result["visit"],
+                                "followups": saved_result["followups"],
+                                "danger_alerts": saved_result["danger_alerts"],
+                                "simulated_ambulance": saved_result.get("simulated_ambulance"),
+                                "audio_base64": save_tts.audio_base64,
+                                "confirmation_text": ack_save,
+                                "language": active_lang,
+                            },
+                        )
+                        continue
+
+                    # Priority 2: Check if there is a pending agent-level action (like registration)
                     if current_session.context.get("pending_action"):
                         agent_resp = indic_voice_agent.process_turn("confirm", active_lang, current_session.context)
                         ack_save = agent_resp.spoken_text
@@ -319,41 +354,7 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                         )
                         continue
 
-                    if not current_session.current_record:
-                        await send_event("error", {"message": "No record available to confirm."})
-                        continue
-
-                    saved_result = current_session.commit_visit_to_db()
-
-                    ack_translations = {
-                        "kn": "ದಾಖಲೆ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ.",
-                        "hi": "स्वास्थ्य रिकॉर्ड सफलतापूर्वक सुरक्षित कर लिया गया है।",
-                        "te": "రికార్డు విజయవంతంగా సేవ్ చేయబడింది.",
-                        "ta": "பதிவு வெற்றிகரமாக சேமிக்கப்பட்டது.",
-                        "ml": "റെക്കോർഡ് വിജയകരമായി സേവ് ചെയ്തു.",
-                        "bn": "রেকর্ড সফলভাবে সংরক্ষিত হয়েছে।",
-                        "mr": "नोंद यशस्वीपणे सेव्ह झाली आहे.",
-                        "gu": "રેકોર્ડ સફળતાપૂર્વક સાચવી લીધો છે.",
-                        "ur": "ریکارڈ کامیابی سے محفوظ کر لیا گیا۔",
-                        "pa": "ਰਿਕਾਰਡ ਸੇਵ ਹੋ ਗਿਆ ਹੈ।",
-                        "or": "ରେକର୍ଡ ସଫଳତାର ସହ ସେଭ ହୋଇଛି।",
-                        "as": "ৰেকৰ্ড সফলভাৱে সংৰক্ষণ কৰা হ'ল।"
-                    }
-                    ack_save = ack_translations.get(active_lang, "Record successfully saved to field register.")
-                    save_tts = await tts_adapter.synthesize(ack_save, language=active_lang)
-
-                    await send_event(
-                        "visit_saved",
-                        {
-                            "visit": saved_result["visit"],
-                            "followups": saved_result["followups"],
-                            "danger_alerts": saved_result["danger_alerts"],
-                            "simulated_ambulance": saved_result.get("simulated_ambulance"),
-                            "audio_base64": save_tts.audio_base64,
-                            "confirmation_text": ack_save,
-                            "language": active_lang,
-                        },
-                    )
+                    await send_event("error", {"message": "No record available to confirm."})
 
                 # 5B. EVENT: assistant_query (Text or recognized question)
                 elif event == "assistant_query":
@@ -396,6 +397,14 @@ async def voice_websocket_endpoint(websocket: WebSocket):
         if current_session:
             session_manager.remove_session(current_session.session_id)
     except Exception as e:
+        # Check if client cleanly disconnected via Starlette or connection dropped
+        if "disconnect" in type(e).__name__.lower() or "disconnect" in str(e).lower():
+            active_connections.discard(websocket)
+            logger.info(f"WebSocket client disconnected for session: {current_session.session_id if current_session else 'unknown'}")
+            if current_session:
+                session_manager.remove_session(current_session.session_id)
+            return
+
         logger.error(f"Unexpected error in WebSocket loop: {e}", exc_info=True)
         await send_event("error", {"message": f"Internal server error: {e}"})
         if current_session:

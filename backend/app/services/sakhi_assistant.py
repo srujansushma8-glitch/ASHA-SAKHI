@@ -90,7 +90,7 @@ class SakhiAssistant:
 
         # 3. ANC Follow-ups
         if any(w in text for w in [
-            "anc follow", "anc check", "need anc", "anc due", "anc follow-up",
+            "anc follow", "need anc", "anc due", "anc follow-up", "who needs anc",
             "anc ಫಾಲೋ-ಅಪ್", "anc ತಪಾಸಣೆ", "ಗರ್ಭಿಣಿ ತಪಾಸಣೆ",
             "एएनसी फॉलो-अप", "एएनसी जांच", "गर्भवती फॉलो-अप"
         ]):

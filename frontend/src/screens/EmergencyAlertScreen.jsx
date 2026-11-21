@@ -249,11 +249,11 @@ export default function EmergencyAlertScreen({
                 <div>
                   <h3 className="text-sm font-bold text-[#3B2A33] flex items-center space-x-2 font-serif">
                     <span>{t('emergency.ambulanceSimulation')}</span>
-                    <span className="text-[10px] bg-[#FDF6F5] text-[#A25B74] px-2 py-0.5 rounded-full font-mono font-bold">
-                      LIVE
+                    <span className="text-[10px] bg-[#FFF4E5] text-[#8C5200] border border-[#FFE2B8] px-2 py-0.5 rounded-full font-mono font-bold">
+                      SIMULATED
                     </span>
                   </h3>
-                  <p className="text-xs text-[#C47A92] font-medium">Status & Telemetry Simulator</p>
+                  <p className="text-xs text-[#C47A92] font-medium">108 Dispatch Telemetry Demonstration</p>
                 </div>
               </div>
 
@@ -265,6 +265,12 @@ export default function EmergencyAlertScreen({
                 <RotateCw className={`w-3.5 h-3.5 ${isAdvancingAmbulance ? 'animate-spin' : ''}`} />
                 <span>{t('emergency.advanceStage')}</span>
               </button>
+            </div>
+
+            {/* Simulation Disclaimer Banner */}
+            <div className="bg-[#FFF8F0] border border-[#FFE6CC] rounded-2xl p-3 text-[11px] text-[#8C5200] leading-relaxed flex items-start space-x-2 font-medium">
+              <span className="font-bold shrink-0">⚠️ Demonstration Notice:</span>
+              <span>Architectural prototype demonstration. No actual 108 emergency vehicle is contacted or dispatched.</span>
             </div>
 
             {/* Stepper Status Progression */}
