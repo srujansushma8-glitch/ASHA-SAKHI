@@ -14,6 +14,21 @@ from app.schemas.danger_alert import (
     DangerAlertResponse,
 )
 from app.schemas.voice_session import WSIncomingMessage, WSOutgoingMessage, VoiceSessionState
+from app.schemas.ambulance import (
+    AmbulanceStatus,
+    AmbulanceRequestCreate,
+    AmbulanceStatusUpdate,
+    AmbulanceLocationUpdate,
+    AmbulanceRequestResponse,
+    AmbulanceTrackingResponse,
+)
+from app.schemas.sync import (
+    OfflineVisitItem,
+    SyncBatchUploadRequest,
+    SyncBatchUploadResponse,
+    SyncDeltaResponse,
+    SyncedItemMapping,
+)
 
 __all__ = [
     "BeneficiaryBase",
@@ -33,4 +48,15 @@ __all__ = [
     "WSIncomingMessage",
     "WSOutgoingMessage",
     "VoiceSessionState",
+    "AmbulanceStatus",
+    "AmbulanceRequestCreate",
+    "AmbulanceStatusUpdate",
+    "AmbulanceLocationUpdate",
+    "AmbulanceRequestResponse",
+    "AmbulanceTrackingResponse",
+    "OfflineVisitItem",
+    "SyncBatchUploadRequest",
+    "SyncBatchUploadResponse",
+    "SyncDeltaResponse",
+    "SyncedItemMapping",
 ]

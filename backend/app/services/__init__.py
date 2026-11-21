@@ -7,6 +7,8 @@ from app.services.llm_extractor import DeterministicExtractor, GeminiLLMExtracto
 from app.services.followup_engine import FollowupEngine, followup_engine
 from app.services.audio_manager import AudioManager, audio_manager
 from app.services.session_manager import SessionManager, session_manager
+from app.services.ambulance_service import AmbulanceSimulationService, ambulance_service
+from app.services.sync_service import SyncService, sync_service
 
 __all__ = [
     "BaseASRAdapter",
@@ -28,4 +30,8 @@ __all__ = [
     "audio_manager",
     "SessionManager",
     "session_manager",
+    "AmbulanceSimulationService",
+    "ambulance_service",
+    "SyncService",
+    "sync_service",
 ]

@@ -8,13 +8,13 @@
 
 ## 1. System Architecture
 
-The **ASHA Sakhi Backend** is an end-to-end clinical voice engine tailored for Accredited Social Health Activists (ASHA workers) conducting field visits in rural and semi-urban Karnataka. The system processes conversational Kannada and Kannada-English code-mixed speech, performs real-time danger sign detection, extracts validated clinical data, conducts interactive voice confirmation/corrections, and automatically generates evidence-based maternal/child follow-up schedules.
+The **ASHA Sakhi Backend** is an end-to-end clinical voice engine tailored for Accredited Social Health Activists (ASHA workers) conducting field visits in rural and semi-urban Karnataka. The system processes conversational Kannada and Kannada-English code-mixed speech, performs real-time danger sign detection, extracts validated clinical data, conducts interactive voice confirmation/corrections, automatically generates evidence-based maternal/child follow-up schedules, simulates emergency ambulance triage, and supports offline synchronization.
 
 ```
                      +---------------------------------------+
                      |    ASHA Worker (Field Android/Web)    |
                      +---------------------------------------+
-                                        |  WebSocket (/ws/voice)
+                                        |  WebSocket (/ws/voice) / REST
                                         v
                  +-----------------------------------------------+
                  |              Voice Session Manager            |
@@ -44,16 +44,16 @@ The **ASHA Sakhi Backend** is an end-to-end clinical voice engine tailored for A
         "ಈ ಫಲಾನುಭವಿಗೆ ತಕ್ಷಣ             | - Zero-hallucination validation   |
         PHC ಗೆ ರೆಫರ್ ಮಾಡಿ."             | - Due vs Completed vaccinations   |
         High-Priority Alert Flag        | - Uncertainty / clarification     |
-                                        +-----------------------------------+
-                                                          |
-                                                          v
-                                        +-----------------------------------+
-                                        |      Voice Confirmation &         |
-                                        |      Correction Lifecycle         |
-                                        +-----------------------------------+
-                                                          | (Explicit Save)
-                                                          v
-                                        +-----------------------------------+
+                   |                    +-----------------------------------+
+                   v                                      |
+        +-----------------------+                         v
+        |  Ambulance Simulation |       +-----------------------------------+
+        |  (108 Triage Demo)    |       |      Voice Confirmation &         |
+        | - REQUESTED           |       |      Correction Lifecycle         |
+        | - DISPATCHED          |       +-----------------------------------+
+        | - ON_THE_WAY          |                         | (Explicit Save)
+        | - ARRIVED / COMPLETED |                         v
+        +-----------------------+       +-----------------------------------+
                                         |    Follow-Up Engine (MoHFW)       |
                                         | - ANC Follow-ups                  |
                                         | - UIP Vaccination Schedules       |
@@ -65,7 +65,15 @@ The **ASHA Sakhi Backend** is an end-to-end clinical voice engine tailored for A
                                         +-----------------------------------+
                                         |       SQLite Database (WAL)       |
                                         | (beneficiaries, visits,           |
-                                        |  followups, danger_alerts)        |
+                                        |  followups, danger_alerts,        |
+                                        |  ambulance_requests)              |
+                                        +-----------------------------------+
+                                                          ^
+                                                          | (Offline Sync)
+                                        +-----------------------------------+
+                                        |    Offline Sync Engine (/sync)    |
+                                        | - Batch Upload (No Network Area)  |
+                                        | - Delta Cache Updates             |
                                         +-----------------------------------+
 ```
 
@@ -101,263 +109,178 @@ The danger-sign detector is **completely independent and deterministic**. It doe
    * *Example*: `"ಹಿಂದಿನ ಗರ್ಭಾವಸ್ಥೆಯಲ್ಲಿ previous pregnancy last year bleeding ittu, ಈಗೇನೂ ತೊಂದರೆ ಇಲ್ಲ"`
    * *Result*: Classified as `is_historical=True`. Does **not** trigger an acute emergency interrupt, preventing false emergency alarms while preserving clinical history.
 
-3. **Conservative Fuzzy Matching**:
-   Uses RapidFuzz with strict partial ratio thresholds ($\ge 85\%$) on phrases of length $\ge 8$ characters to prevent short common conversational words from triggering false alarms.
-
-4. **Emergency Referral Protocol**:
-   When an active danger sign is identified:
-   1. Visit record is flagged (`danger_flag = 1`, `referral_status = 'IMMEDIATE_REFERRAL_PHC'`).
-   2. High-priority emergency WebSocket event `danger_alert` is emitted immediately.
-   3. Normal confirmation dialogue is interrupted.
-   4. Speaks the fixed clinical instruction: **"ಈ ಫಲಾನುಭವಿಗೆ ತಕ್ಷಣ PHC ಗೆ ರೆಫರ್ ಮಾಡಿ."** (*Refer this beneficiary to PHC immediately*).
-   5. Generates a mandatory **24-hour verification follow-up task** in the database.
-   6. Strictly provides referral guidance — **never diagnoses, prescribes, or advises treatment**.
-
 ---
 
-## 3. Speech AI: AI4Bharat Integration Architecture
+## 3. Ambulance Simulation Engine (108 Triage Demo)
 
-### 3.1 Speech Recognition (ASR)
-* **Primary Model**: AI4Bharat **Indic-Transcribe** (1B+ Canary FastConformer/Transformer multilingual architecture).
-* **Secondary Model**: AI4Bharat **IndicConformer** (NeMo hybrid conformer STT).
-* **Hosted Cloud API**: Connects to the official **AI4Bharat / Bhashini Dhruva Pipeline API**:
-  * Endpoint: `https://dhruva-api.bhashini.gov.in/services/inference/pipeline`
-  * Task Type: `"asr"`
-  * Service ID: `bhashini/ai4bharat/conformer-multilingual-asr`
-  * Language: `kn` (Kannada)
-* **High-Fidelity Mock Adapter (`MockASRAdapter`)**:
-  * Simulates realistic inference latency ($\approx 120\text{ ms}$).
-  * Accurately transcribes Kannada-English code-mixed health phrases.
-  * Preserves critical maternal and child health terms: `ANC checkup`, `TT injection`, `IFA goli`, `PHC`, `newborn`, `vaccination`, `weight`.
-  * Outputs are explicitly flagged with `is_mock: true` and model identifier `mock-ai4bharat-kannada-conformer`.
+> ⚠️ **CRITICAL SAFETY DISCLAIMER**: This module is strictly a **demonstration simulation** for triage training and hackathon presentation. It **never** places real telephone calls, books, or dispatches actual 108 emergency government ambulances.
 
-### 3.2 Speech Generation (TTS)
-* **Primary Model**: AI4Bharat **Indic-TTS Kannada** (Female voice) / **Indic-Speak**.
-* **Hosted Cloud API**: Connects to the official **AI4Bharat / Bhashini Dhruva Pipeline API**:
-  * Endpoint: `https://dhruva-api.bhashini.gov.in/services/inference/pipeline`
-  * Task Type: `"tts"`
-  * Service ID: `bhashini/ai4bharat/indic-tts-kn`
-  * Gender: `female`
-* **Zero-Latency Emergency Audio Fallback**:
-  * If network latency occurs or TTS fails, the backend delivers a pre-generated fixed emergency alert chime and spoken instruction: **"ಈ ಫಲಾನುಭವಿಗೆ ತಕ್ಷಣ PHC ಗೆ ರೆಫರ್ ಮಾಡಿ."**
-  * Emergency alert delivery is **never delayed** waiting for cloud model inference ($\text{latency} < 1\text{ ms}$).
+### 3.1 Simulated Ambulance Lifecycle
+When an emergency referral is triggered (e.g. vaginal bleeding or newborn respiratory distress), the backend automatically creates a simulated dispatch record:
 
----
+$$\text{REQUESTED} \xrightarrow{\text{ETA: } 15\text{m}} \text{DISPATCHED} \xrightarrow{\text{ETA: } 12\text{m}} \text{ON\_THE\_WAY} \xrightarrow{\text{ETA: } 6\text{m}} \text{ARRIVED} \xrightarrow{\text{ETA: } 0\text{m}} \text{COMPLETED}$$
 
-## 4. Structured Clinical Extraction Engine
+### 3.2 Frontend API Contract for Ambulance Simulation
 
-Converts ASHA worker voice transcripts into strictly validated JSON records conforming to the `StructuredVisitExtraction` schema.
-
-### 4.1 Schema Fields
-- `beneficiary_id`: Normalized string (e.g., `BEN-KA-001`, `BEN-KA-002`)
-- `beneficiary_name`: String in Kannada or English (e.g., `ಲಕ್ಷ್ಮಿ`, `ಸುಮಿತ್ರಾ`)
-- `visit_type`: Clinical category (`ANC checkup`, `PNC visit`, `Newborn home visit`, `Immunization`, `General Visit`)
-- `weight`: Validated clinical float in kg ($0.5 \le w \le 200.0$)
-- `vaccinations_due`: Array of strings strictly verified as pending/due
-- `vaccinations_completed`: Array of strings verified as administered during this visit
-- `next_visit_date`: Validated ISO date `YYYY-MM-DD`
-- `additional_notes`: Structured clinical notes (`IFA tablets distributed`, `BP normal`, `Diet counseling`)
-- `uncertainty_notes`: List of identified ambiguities
-- `requires_clarification`: Boolean flag
-- `clarification_prompt`: Spoken Kannada question if critical data is ambiguous
-
-### 4.2 Clinical Extraction Rules
-1. **Never Invent Missing Values**: If a weight or date is not stated, it remains `None`/`null`. Missing data is never assumed to be normal or negative.
-2. **Strict Vaccine Discrimination**:
-   * Phrases like `"TT injection ಕೊಟ್ಟಿದ್ದೇವೆ"` or `"completed"` map to `vaccinations_completed`.
-   * Phrases like `"Pentavalent 1 ಬಾಕಿ ಇದೆ"` or `"due"` map to `vaccinations_due`.
-   * Bare phrases like `"next visit date"` do **not** inadvertently mark vaccines as due.
-3. **Kannada Numerals & Units**: Converts Kannada native numerals (`೦`, `೧`, `೨`, `೩`, `೪`, `೫`, `೬`, `೭`, `೮`, `೯`) and decimal fractions into standard floats.
-
----
-
-## 5. Voice Confirmation and Correction Lifecycle
-
-The backend manages the stateful interaction over WebSockets:
-1. **Structured Readback**: The backend synthesizes a natural Kannada voice summary:
-   > *"ದಾಖಲಿಸಿದ ವಿವರಗಳು: ಫಲಾನುಭವಿ ಲಕ್ಷ್ಮಿ, ಭೇಟಿ ANC checkup, ತೂಕ 54 ಕೆಜಿ, ನೀಡಿದ ಲಸಿಕೆ TT injection, ಮುಂದಿನ ಭೇಟಿ ದಿನಾಂಕ 2026-12-15. ನೀವು ದಾಖಲಿಸಿರುವ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?"*
-2. **Voice Correction**: The ASHA worker can speak corrections (e.g., `"ತೂಕ 54 kg ಅಲ್ಲ, 52 kg"` or send a `correct_field` event).
-3. **Field Update & Spoken Acknowledgment**: The backend validates the new value, updates the session state, and replies:
-   > *"ತೂಕವನ್ನು 52.0 ಎಂದು ಬದಲಾಯಿಸಲಾಗಿದೆ. ಈಗ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?"*
-4. **Explicit Confirmation**: Saving to SQLite and generating follow-ups **only occurs** upon explicit confirmation (`confirm_record` event or `"ಹೌದು"` / `"ಸರಿ"`).
-
----
-
-## 6. Follow-Up Engine
-
-Follow-up tasks are automatically generated upon confirmed visit logging, adhering to national health schedules:
-
-1. **ANC Follow-ups** (*MoHFW Guidelines for Antenatal Care and Skilled Attendance at Birth*):
-   * Schedules routine 4-week checkups or confirmed next visit date. Priority: `HIGH`.
-2. **Universal Immunization Programme (UIP)** (*MoHFW UIP National Schedule*):
-   * For every pending vaccine in `vaccinations_due`, calculates follow-up due date (e.g., 4 weeks for subsequent primary pentavalent doses). Priority: `HIGH`.
-3. **Home Based Newborn Care (HBNC)** (*MoHFW HBNC Operational Guidelines*):
-   * Generates home visit schedule (Days 3, 7, 14, 21, 28, 42). Priority: `HIGH`.
-4. **Emergency Referral Verification** (*MoHFW Emergency Obstetric & Neonatal Referral Protocol*):
-   * When an acute danger sign is detected, creates a **24-hour verification task** (`DANGER_SIGN_CHECK`). Priority: `CRITICAL`.
-
----
-
-## 7. Database Architecture (SQLite)
-
-The backend uses a local SQLite database with write-ahead logging (WAL) and foreign keys enabled.
-
-### 7.1 Tables
-- `beneficiaries`: Master registry of synthetic beneficiaries (name, age, category, village, LMP date, delivery date).
-- `visits`: Complete visit records (beneficiary link, visit type, weight, vaccinations, next visit date, notes, raw transcript, confirmation status, danger flag, referral status).
-- `followups`: Actionable tasks (beneficiary link, task type, due date, priority, completion status, guideline source).
-- `danger_alerts`: Logged emergencies (sign ID, category, detected phrase, severity, guideline citation, referral action, resolution status).
-
-### 7.2 Safe Backup Mechanism
-The backend provides an automated backup function (`backup_database()`) that creates a timestamped copy in `data/backups/` before any destructive database modification.
-
----
-
-## 8. API Specification
-
-### 8.1 REST Endpoints
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/health` | Service health status, model modes, and database connection. |
-| `GET` | `/api/beneficiaries` | List all synthetic beneficiaries in registry. |
-| `GET` | `/api/beneficiaries/{id}` | Retrieve specific beneficiary details. |
-| `GET` | `/api/visits` | Retrieve all logged field visits (with vaccination lists and referral statuses). |
-| `GET` | `/api/followups` | Retrieve scheduled follow-ups (supports `?beneficiary_id=` and `?status=` filters). |
-| `POST` | `/api/visits/confirm` | Explicitly confirm and save a visit draft; triggers follow-up engine. |
-| `POST` | `/api/visits/correct` | Apply a correction to a visit field; returns spoken acknowledgment audio. |
-
-### 8.2 WebSocket Interface (`/ws/voice`)
-
-The WebSocket endpoint provides real-time bidirectional communication.
-
-#### Frontend $\rightarrow$ Backend Events
-
+#### A. Create Simulated Ambulance Request
+`POST /api/ambulance/requests`
 ```json
-// 1. start_session
+// Request Payload:
 {
-  "event": "start_session",
-  "session_id": "SES-001",
-  "data": { "beneficiary_id": "BEN-KA-001" }
+  "beneficiary_id": "BEN-KA-001",
+  "emergency_id": "DNG-MAT-001",
+  "visit_id": "VIS-A1B2C3D4",
+  "pickup_location": "Hoskote Village",
+  "destination_facility": "Hoskote Taluk Hospital / PHC",
+  "notes": "Emergency referral for antepartum haemorrhage"
 }
 
-// 2. audio_chunk (sent incrementally during recording)
+// Response (HTTP 200):
 {
-  "event": "audio_chunk",
-  "session_id": "SES-001",
-  "data": { "audio_base64": "<BASE64_PCM_OR_WAV>" }
-}
-
-// 3. stop_recording (triggers ASR -> Danger Check -> Extraction -> TTS)
-{
-  "event": "stop_recording",
-  "session_id": "SES-001"
-}
-
-// 4. correct_field
-{
-  "event": "correct_field",
-  "session_id": "SES-001",
-  "data": { "field_name": "weight", "new_value": 52.5 }
-}
-
-// 5. confirm_record (persists to SQLite and generates followups)
-{
-  "event": "confirm_record",
-  "session_id": "SES-001"
-}
-
-// 6. interrupt_audio (stops current speech output)
-{
-  "event": "interrupt_audio",
-  "session_id": "SES-001"
+  "id": "AMB-SIM-4E9A12",
+  "beneficiary_id": "BEN-KA-001",
+  "emergency_id": "DNG-MAT-001",
+  "visit_id": "VIS-A1B2C3D4",
+  "pickup_location": "Hoskote Village",
+  "status": "REQUESTED",
+  "vehicle_number": "KA-04-G-108",
+  "driver_name": "ರಮೇಶ್ (Ramesh)",
+  "driver_phone": "9876500108",
+  "eta_minutes": 15,
+  "current_latitude": 13.0732,
+  "current_longitude": 77.7915,
+  "destination_facility": "Hoskote Taluk Hospital / PHC",
+  "is_simulation": true,
+  "simulation_disclaimer": "SIMULATION ONLY - NOT A REAL 108 AMBULANCE DISPATCH",
+  "notes": "Emergency referral for antepartum haemorrhage",
+  "created_at": "2026-11-21T13:40:00",
+  "updated_at": "2026-11-21T13:40:00"
 }
 ```
 
-#### Backend $\rightarrow$ Frontend Events
+#### B. Advance Simulation Step
+`POST /api/ambulance/requests/{request_id}/simulate-step`  
+*Advances status along the progression line and linearly interpolates vehicle GPS coordinates towards the beneficiary location.*
 
+#### C. Real-Time Tracking Telemetry
+`GET /api/ambulance/requests/{request_id}/tracking`
 ```json
-// 1. session_started
+// Response (HTTP 200):
 {
-  "event": "session_started",
-  "session_id": "SES-001",
-  "data": { "status": "ready", "sample_rate": 16000, "format": "wav_pcm" }
+  "request_id": "AMB-SIM-4E9A12",
+  "status": "ON_THE_WAY",
+  "vehicle_number": "KA-04-G-108",
+  "driver_name": "ರಮೇಶ್ (Ramesh)",
+  "driver_phone": "9876500108",
+  "eta_minutes": 6,
+  "current_latitude": 13.0542,
+  "current_longitude": 77.7640,
+  "pickup_location": "Hoskote Village",
+  "destination_facility": "Hoskote Taluk Hospital / PHC",
+  "progress_percentage": 70,
+  "is_simulation": true,
+  "simulation_disclaimer": "SIMULATION ONLY - NOT A REAL 108 AMBULANCE DISPATCH"
 }
+```
 
-// 2. transcript_final
+#### D. Manual Location / Status Update
+`PATCH /api/ambulance/requests/{request_id}/location`
+```json
 {
-  "event": "transcript_final",
-  "session_id": "SES-001",
-  "data": {
-    "transcript": "ಫಲಾನುಭವಿ ಲಕ್ಷ್ಮಿ BEN-KA-001, ANC checkup, weight 54 kg...",
-    "latency_ms": 120.0,
-    "is_mock": true,
-    "model_name": "mock-ai4bharat-kannada-conformer"
-  }
-}
-
-// 3. danger_alert (fired immediately upon danger sign detection)
-{
-  "event": "danger_alert",
-  "session_id": "SES-001",
-  "data": {
-    "severity": "CRITICAL",
-    "detected_signs": [{ "sign_id": "DNG-MAT-001", "english_phrase": "Bleeding during pregnancy" }],
-    "instruction_kn": "ಈ ಫಲಾನುಭವಿಗೆ ತಕ್ಷಣ PHC ಗೆ ರೆಫರ್ ಮಾಡಿ.",
-    "instruction_en": "Refer to Primary Health Centre (PHC) immediately.",
-    "referral_action": "IMMEDIATE_REFERRAL_PHC",
-    "audio_base64": "<BASE64_EMERGENCY_AUDIO>"
-  }
-}
-
-// 4. record_extracted
-{
-  "event": "record_extracted",
-  "session_id": "SES-001",
-  "data": {
-    "record": {
-      "beneficiary_id": "BEN-KA-001",
-      "beneficiary_name": "ಲಕ್ಷ್ಮಿ",
-      "visit_type": "ANC checkup",
-      "weight": 54.0,
-      "vaccinations_due": [],
-      "vaccinations_completed": ["TT injection"],
-      "next_visit_date": "2026-12-15"
-    },
-    "requires_clarification": false,
-    "danger_flag": false
-  }
-}
-
-// 5. confirmation_audio
-{
-  "event": "confirmation_audio",
-  "session_id": "SES-001",
-  "data": {
-    "text": "ದಾಖಲಿಸಿದ ವಿವರಗಳು: ಫಲಾನುಭವಿ ಲಕ್ಷ್ಮಿ, ಭೇಟಿ ANC checkup... ಸರಿಯಾಗಿವೆಯೇ?",
-    "audio_base64": "<BASE64_WAV>",
-    "latency_ms": 110.0
-  }
-}
-
-// 6. visit_saved
-{
-  "event": "visit_saved",
-  "session_id": "SES-001",
-  "data": {
-    "visit": { "id": "VIS-A1B2C3D4", "weight": 54.0, "is_confirmed": true },
-    "followups": [{ "id": "FOL-E5F6G7H8", "task_type": "ANC_CHECKUP", "due_date": "2026-12-15" }],
-    "audio_base64": "<BASE64_SAVED_AUDIO>",
-    "confirmation_text": "ದಾಖಲೆ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ."
-  }
+  "current_latitude": 13.0650,
+  "current_longitude": 77.7800,
+  "eta_minutes": 3,
+  "status": "ON_THE_WAY"
 }
 ```
 
 ---
 
-## 9. Latency Benchmark Results
+## 4. Offline Synchronization Engine (`/api/sync`)
 
-Measured empirically across test runs on a standard laptop:
+Enables rural ASHA field workers without 3G/4G connectivity to record visits locally and synchronize upon regaining cellular coverage.
+
+### 4.1 Batch Upload (`POST /api/sync/batch`)
+```json
+// Request Payload:
+{
+  "asha_worker_id": "ASHA-KA-007",
+  "device_id": "ANDROID-TAB-01",
+  "sync_timestamp": "2026-11-21T13:30:00",
+  "visits": [
+    {
+      "client_id": "LOCAL-UUID-8841",
+      "recorded_at": "2026-11-21T11:15:00",
+      "visit_data": {
+        "beneficiary_id": "BEN-KA-001",
+        "beneficiary_name": "ಲಕ್ಷ್ಮಿ",
+        "visit_type": "ANC checkup",
+        "weight": 54.0,
+        "vaccinations_completed": ["TT injection"],
+        "vaccinations_due": [],
+        "next_visit_date": "2026-12-18",
+        "is_confirmed": true,
+        "transcript_raw": "ಲಕ್ಷ್ಮಿ ANC checkup, weight 54 kg"
+      }
+    }
+  ],
+  "pending_followups": []
+}
+
+// Response:
+{
+  "status": "SUCCESS",
+  "synced_visits_count": 1,
+  "synced_followups_count": 1,
+  "mappings": [
+    {
+      "client_id": "LOCAL-UUID-8841",
+      "server_id": "VIS-B8820A1F",
+      "status": "SYNCED"
+    }
+  ],
+  "conflicts_resolved": 0,
+  "server_timestamp": "2026-11-21T13:45:00"
+}
+```
+
+### 4.2 Delta Cache Retrieval (`GET /api/sync/delta?since=YYYY-MM-DDTHH:MM:SS`)
+Fetches records modified or added since the client's last synchronization timestamp, keeping mobile device storage up to date.
+
+---
+
+## 5. Staged Development Verification Matrix
+
+| Stage | Subsystem / Capability | Key Components | Test Coverage | Status |
+| :---: | :--- | :--- | :--- | :---: |
+| **1** | **Backend & Database** | SQLite, connection pooling, safe backups (`backup_database`), synthetic seeding | `test_api.py` (DB seeding & backup tests) | ✅ **VERIFIED** |
+| **2** | **Voice Integration** | AI4Bharat ASR (Indic-Transcribe/Conformer), TTS (Indic-TTS/Speak), Audio Manager | `test_benchmarks.py`, `test_websocket.py` | ✅ **VERIFIED** |
+| **3** | **Structured Extraction** | Kannada numerals (`೦`-`೯`), zero hallucination, due vs completed vaccinations | `test_extractor.py` (20 synthetic cases) | ✅ **VERIFIED** |
+| **4** | **Voice Confirmation & Correction** | Live conversational state machine, natural Kannada readback & verbal corrections | `test_api.py`, `test_websocket.py` | ✅ **VERIFIED** |
+| **5** | **Danger-Sign Detection** | MoHFW guidelines, clause conjunction barriers, negation & historical isolation | `test_danger_detector.py` (14 unit tests) | ✅ **VERIFIED** |
+| **6** | **Ambulance Simulation** | 108 dispatch lifecycle, simulated GPS telemetry, ETA progression, safety flag | `test_ambulance.py` (4 integration tests) | ✅ **VERIFIED** |
+| **7** | **Follow-Up Engine** | UIP vaccination schedules, HBNC newborn visits, 24-hr emergency verification | `test_followup_engine.py` (5 unit tests) | ✅ **VERIFIED** |
+| **8** | **Offline Synchronization** | Batch upload, client UUID to server ID mapping, delta sync | `test_sync.py` (batch & delta tests) | ✅ **VERIFIED** |
+| **9** | **Testing & Deployment** | 57 automated tests passing, Windows native setup, zero Docker reliance | Pytest suite (57 tests passing in ~5.6s) | ✅ **VERIFIED** |
+
+---
+
+## 6. Integration Notes for Member 2 (Frontend Developer)
+
+1. **WebSocket Event Contract (`/ws/voice`)**:
+   - When a danger sign is detected in an utterance, `danger_alert` now includes an optional `"simulated_ambulance"` object containing `id`, `eta_minutes`, `status`, `driver_name`, and `vehicle_number`.
+   - The frontend `EmergencyAlertScreen.jsx` can render this object directly.
+2. **New REST Endpoints**:
+   - `GET /api/ambulance/requests/{id}/tracking` provides real-time progress percentage (10% to 100%) and coordinates for the visual map or route bar.
+   - `POST /api/ambulance/requests/{id}/simulate-step` can be bound to a "Next Step (Demo)" button on the emergency UI to advance the simulation during live judges' presentations.
+   - `POST /api/sync/batch` handles uploading drafts collected while the device was in demo/offline mode.
+3. **No Overwrites**: All frontend files in `frontend/` remain untouched and preserved.
+
+---
+
+## 7. Latency Benchmark Results
+
+Measured empirically across test runs on Windows:
 
 | Pipeline Component | Metric Measured | Average Latency | 95th Percentile ($p_{95}$) | Evaluation SLA Target |
 | :--- | :--- | :--- | :--- | :--- |
@@ -369,44 +292,16 @@ Measured empirically across test runs on a standard laptop:
 
 ---
 
-## 10. Local Setup & Execution (Windows)
+## 8. Local Setup & Execution (Windows)
 
-### Prerequisites
-* Python 3.11+ installed.
-* PowerShell or Windows Terminal.
-* No Docker required.
-
-### Step 1: Install Dependencies
 ```powershell
-cd "ASHA SAKHI/backend"
-python -m pip install -r requirements.txt
+# 1. Start Backend Server (port 8000)
+cd "backend"
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# 2. Run All 57 Tests
+python -m pytest tests -v
 ```
 
-### Step 2: Configure Environment
-Copy `.env.example` to `.env`:
-```powershell
-Copy-Item .env.example .env
-```
-Default configuration runs in offline/mock mode (`ASR_MODE=mock`, `TTS_MODE=mock`, `EXTRACTION_MODE=auto`). To enable live AI4Bharat Dhruva cloud endpoints, insert your `AI4BHARAT_API_KEY` and `AI4BHARAT_USER_ID` in `.env`.
-
-### Step 3: Run the Application
-```powershell
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
 * **Interactive OpenAPI Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-* **WebSocket Endpoint**: `ws://localhost:8000/ws/voice`
-
-### Step 4: Run the Complete Test Suite
-```powershell
-python -m pytest backend/tests -v -s
-```
-**All 51 unit, integration, and benchmark tests run and pass in ~4.6 seconds.**
-
----
-
-## 11. Privacy, Responsible AI & Safety Disclaimers
-
-1. **Synthetic Data Only**: All beneficiaries (`BEN-KA-001` through `BEN-KA-005`) are purely synthetic personas. No real identifiable patient health information (PHI) is stored or processed.
-2. **Zero Clinical Prescriptions or Diagnosis**: The engine does not diagnose clinical conditions or recommend medications (such as anti-hypertensives or antibiotics). When danger signs are detected, the system exclusively instructs urgent referral to the nearest Primary Health Centre (PHC).
-3. **Audio Privacy Lifecycle**: Raw audio streams buffered in memory during recording are cleared immediately following transcription; raw audio files are not permanently stored on disk.
-4. **Model Transparency**: All API and WebSocket responses explicitly differentiate between simulated mock adapters and live AI model inferences via the `is_mock` boolean flag and `model_name` metadata.
+* **Frontend Web Application**: [http://localhost:5173/](http://localhost:5173/)

@@ -144,9 +144,39 @@ def init_db(seed_synthetic: bool = True) -> None:
             """
         )
 
+        # 5. Ambulance Requests table (SIMULATION ONLY - NOT A REAL 108 DISPATCH)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS ambulance_requests (
+                id TEXT PRIMARY KEY,
+                beneficiary_id TEXT,
+                emergency_id TEXT,
+                visit_id TEXT,
+                pickup_location TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'REQUESTED',
+                vehicle_number TEXT NOT NULL DEFAULT 'KA-04-G-108',
+                driver_name TEXT NOT NULL DEFAULT 'ರಮೇಶ್ (Ramesh)',
+                driver_phone TEXT NOT NULL DEFAULT '9876500108',
+                eta_minutes INTEGER NOT NULL DEFAULT 15,
+                current_latitude REAL NOT NULL DEFAULT 13.0732,
+                current_longitude REAL NOT NULL DEFAULT 77.7915,
+                destination_facility TEXT NOT NULL DEFAULT 'Hoskote Taluk Hospital / PHC',
+                is_simulation INTEGER NOT NULL DEFAULT 1,
+                simulation_disclaimer TEXT NOT NULL DEFAULT 'SIMULATION ONLY - NOT A REAL 108 AMBULANCE DISPATCH',
+                notes TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (beneficiary_id) REFERENCES beneficiaries (id),
+                FOREIGN KEY (visit_id) REFERENCES visits (id)
+            );
+            """
+        )
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_visits_ben ON visits(beneficiary_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_followups_ben ON followups(beneficiary_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_danger_alerts_visit ON danger_alerts(visit_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_amb_ben ON ambulance_requests(beneficiary_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_amb_status ON ambulance_requests(status);")
 
         # Check if beneficiaries exist; if not and seeding requested, insert synthetic records
         cursor.execute("SELECT COUNT(*) FROM beneficiaries")

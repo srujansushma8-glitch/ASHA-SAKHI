@@ -5,7 +5,7 @@ Maintains stateful visit record throughout the audio conversational lifecycle:
 2. Spoken Record Readback ->
 3. Voice Correction Handling ->
 4. Explicit Confirmation & Database Commitment ->
-5. High-Priority Emergency Interruption for Danger Signs.
+5. High-Priority Emergency Interruption & Simulated Ambulance Dispatch.
 """
 
 import uuid
@@ -17,9 +17,11 @@ from app.services.danger_detector import danger_detector
 from app.services.llm_extractor import clinical_extractor
 from app.services.tts_adapter import get_tts_adapter, BaseTTSAdapter, TTSResult
 from app.services.followup_engine import followup_engine
+from app.services.ambulance_service import ambulance_service
 from app.models.visit import VisitRepository
 from app.models.followup import FollowupRepository
 from app.models.danger_alert import DangerAlertRepository
+from app.models.beneficiary import BeneficiaryRepository
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +38,7 @@ class VoiceSession:
         self.danger_result: Optional[DangerAlertDetectionResult] = None
         self.is_confirmed = False
         self.saved_visit_id: Optional[str] = None
+        self.simulated_ambulance: Optional[Dict[str, Any]] = None
 
     def build_confirmation_text_kn(self) -> str:
         """Constructs a natural Kannada readback of the extracted structured record."""
@@ -94,7 +97,6 @@ class VoiceSession:
         setattr(self.current_record, field_name, new_value)
         logger.info(f"[Session {self.session_id}] Field '{field_name}' updated to '{new_value}'")
 
-        # Spoken confirmation of the change
         field_labels_kn = {
             "weight": "ತೂಕವನ್ನು",
             "beneficiary_name": "ಹೆಸರನ್ನು",
@@ -108,7 +110,8 @@ class VoiceSession:
 
     def commit_visit_to_db(self) -> Dict[str, Any]:
         """
-        Saves the confirmed visit and automatically schedules follow-ups and logs danger alerts.
+        Saves confirmed visit, schedules follow-ups, logs danger alerts,
+        and initiates simulated ambulance dispatch if emergency triggered.
         """
         if not self.current_record:
             raise ValueError("No record to save.")
@@ -168,10 +171,29 @@ class VoiceSession:
                 saved_alert = DangerAlertRepository.create(alert_create)
                 saved_alerts.append(saved_alert)
 
+        # 3. Trigger simulated ambulance dispatch if emergency referral triggered
+        simulated_amb = None
+        if has_danger:
+            pickup_loc = "Hoskote Village"
+            if visit_create.beneficiary_id:
+                ben = BeneficiaryRepository.get_by_id(visit_create.beneficiary_id)
+                if ben and ben.get("village"):
+                    pickup_loc = ben["village"]
+
+            simulated_amb = ambulance_service.create_request(
+                beneficiary_id=visit_create.beneficiary_id,
+                emergency_id=saved_alerts[0]["id"] if saved_alerts else None,
+                visit_id=saved_visit["id"],
+                pickup_location=pickup_loc,
+                notes="Automatic simulated 108 triage dispatch for emergency maternal/neonatal referral.",
+            )
+            self.simulated_ambulance = simulated_amb
+
         return {
             "visit": saved_visit,
             "followups": saved_followups,
             "danger_alerts": saved_alerts,
+            "simulated_ambulance": simulated_amb,
         }
 
 
@@ -190,7 +212,6 @@ class SessionManager:
 
     def remove_session(self, session_id: str) -> None:
         if session_id in self._sessions:
-            # Privacy: clear buffer
             self._sessions[session_id].audio_buffer.clear()
             del self._sessions[session_id]
 

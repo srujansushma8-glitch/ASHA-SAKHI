@@ -4,6 +4,7 @@ Handles full conversational duplex communication between frontend and backend:
 - Utterance streaming & VAD-based chunk processing
 - AI4Bharat ASR transcription
 - Independent MoHFW danger sign detection with immediate emergency interruption
+- Automated simulated ambulance dispatch creation
 - Structured clinical extraction
 - Spoken Kannada confirmation & voice correction lifecycle
 - Database persistence and automated follow-up task generation.
@@ -24,6 +25,7 @@ from app.services.tts_adapter import BaseTTSAdapter, get_tts_adapter
 from app.services.danger_detector import danger_detector
 from app.services.llm_extractor import clinical_extractor
 from app.services.audio_manager import audio_manager
+from app.services.ambulance_service import ambulance_service
 
 logger = logging.getLogger(__name__)
 
@@ -98,18 +100,15 @@ async def voice_websocket_endpoint(websocket: WebSocket):
 
                     current_session.status = "PROCESSING"
                     raw_audio = bytes(current_session.audio_buffer)
-                    # Privacy: clear memory buffer immediately after taking reference
                     current_session.audio_buffer.clear()
 
-                    # Convert / wrap to valid 16kHz WAV format
                     wav_audio = audio_manager.validate_or_wrap_wav(raw_audio)
 
-                    # A. Run Speech Recognition (AI4Bharat / Mock)
+                    # A. Speech Recognition (AI4Bharat / Mock)
                     asr_res = await asr_adapter.transcribe(wav_audio, language="kn")
                     transcript = asr_res.transcript
                     current_session.transcript_history.append(transcript)
 
-                    # Emit transcript_final
                     await send_event(
                         "transcript_final",
                         {
@@ -124,11 +123,32 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                     danger_res = danger_detector.detect(transcript)
                     current_session.danger_result = danger_res
 
+                    # C. Structured Clinical Extraction
+                    extracted = clinical_extractor.extract(transcript)
+                    current_session.current_record = extracted
+
+                    # If danger detected: generate simulated ambulance request & emergency alert
+                    sim_amb = None
                     if danger_res.has_danger:
-                        # HIGH-PRIORITY EMERGENCY EVENT: Interrupt normal confirmation!
                         current_session.status = "INTERRUPTED_EMERGENCY"
-                        # Generate emergency alert audio without waiting
                         emergency_tts = tts_adapter.get_emergency_audio()
+
+                        # Automatically trigger simulated ambulance dispatch
+                        ben_id = extracted.beneficiary_id
+                        pickup = "Hoskote Village"
+                        if ben_id:
+                            from app.models.beneficiary import BeneficiaryRepository
+                            ben = BeneficiaryRepository.get_by_id(ben_id)
+                            if ben and ben.get("village"):
+                                pickup = ben["village"]
+
+                        sim_amb = ambulance_service.create_request(
+                            beneficiary_id=ben_id,
+                            emergency_id=danger_res.detected_signs[0].sign_id if danger_res.detected_signs else None,
+                            pickup_location=pickup,
+                            notes=f"Auto-triggered simulated 108 dispatch for danger sign: {danger_res.highest_severity}",
+                        )
+                        current_session.simulated_ambulance = sim_amb
 
                         await send_event(
                             "danger_alert",
@@ -140,12 +160,9 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                                 "instruction_en": danger_res.spoken_instruction_en,
                                 "referral_action": danger_res.referral_action,
                                 "audio_base64": emergency_tts.audio_base64,
+                                "simulated_ambulance": sim_amb,
                             },
                         )
-
-                    # C. Structured Clinical Extraction
-                    extracted = clinical_extractor.extract(transcript)
-                    current_session.current_record = extracted
 
                     await send_event(
                         "record_extracted",
@@ -157,7 +174,7 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                         },
                     )
 
-                    # D. Normal Confirmation Audio (Only if not interrupted by emergency)
+                    # Normal Confirmation Audio (Only if not interrupted by emergency)
                     if not danger_res.has_danger:
                         current_session.status = "AWAITING_CONFIRMATION"
                         readback_text = current_session.build_confirmation_text_kn()
@@ -196,7 +213,6 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                         },
                     )
 
-                    # Synthesize voice acknowledgment of the correction
                     ack_tts = await tts_adapter.synthesize(ack_msg, language="kn")
                     await send_event(
                         "confirmation_audio",
@@ -223,6 +239,7 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                             "visit": saved_result["visit"],
                             "followups": saved_result["followups"],
                             "danger_alerts": saved_result["danger_alerts"],
+                            "simulated_ambulance": saved_result.get("simulated_ambulance"),
                             "audio_base64": save_tts.audio_base64,
                             "confirmation_text": ack_save,
                         },
@@ -232,7 +249,6 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                 elif event == "interrupt_audio":
                     logger.info(f"[Session {current_session.session_id if current_session else 'NONE'}] Audio output interrupted.")
 
-            # Raw binary frame received over WebSocket
             elif "bytes" in message and message["bytes"]:
                 if not current_session:
                     current_session = session_manager.get_or_create_session()

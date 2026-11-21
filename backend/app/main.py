@@ -16,6 +16,8 @@ from app.routers import (
     visits_router,
     followups_router,
     voice_ws_router,
+    ambulance_router,
+    sync_router,
 )
 
 # Configure logging
@@ -40,7 +42,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     description="Backend AI Engine and Voice Field Register for ASHA Workers in Karnataka, India.",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan,
 )
 
@@ -59,6 +61,8 @@ app.include_router(beneficiaries_router)
 app.include_router(visits_router)
 app.include_router(followups_router)
 app.include_router(voice_ws_router)
+app.include_router(ambulance_router)
+app.include_router(sync_router)
 
 
 if __name__ == "__main__":

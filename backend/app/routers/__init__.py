@@ -3,6 +3,8 @@ from app.routers.beneficiaries import router as beneficiaries_router
 from app.routers.visits import router as visits_router
 from app.routers.followups import router as followups_router
 from app.routers.voice_ws import router as voice_ws_router
+from app.routers.ambulance import router as ambulance_router
+from app.routers.sync import router as sync_router
 
 __all__ = [
     "health_router",
@@ -10,4 +12,6 @@ __all__ = [
     "visits_router",
     "followups_router",
     "voice_ws_router",
+    "ambulance_router",
+    "sync_router",
 ]
