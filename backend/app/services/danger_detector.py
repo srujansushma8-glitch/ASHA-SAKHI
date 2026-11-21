@@ -7,6 +7,7 @@ historical vs current event differentiation, and comprehensive coverage of all 2
 """
 
 import re
+import unicodedata
 import logging
 from typing import List, Tuple, Optional, Dict, Any
 from rapidfuzz import fuzz
@@ -187,7 +188,10 @@ GUIDELINE_DANGER_SIGNS: List[DangerSignDefinition] = [
             "difficulty breathing newborn", "chest indrawing baby", "usirata tondare", "ede olage hogtide",
             "fast breathing infant", "grunting breath baby", "swasa tondare",
             "ಮಗುವಿಗೆ ಉಸಿರಾಟದ ತೊಂದರೆ", "ಎದೆ ಒಳಗೆ ಹೋಗುತ್ತಿದೆ",
-            "सांस लेने में तकलीफ", "पसलियां चलना", "శ్వాస తీసుకోవడంలో ఇబ్బంది", "மூச்சுத்திணறல்"
+            "सांस लेने में तकलीफ", "पसलियां चलना", "శ్వాస తీసుకోవడంలో ఇబ్బంది", "மூச்சுத்திணறல்",
+            "fast breathing", "chest indrawing", "ede kusiyuttide", "severe respiratory distress",
+            "respiratory distress", "rapid breathing", "chest in-drawing", "indrawing of chest",
+            "ede kusiyuvudu", "ಎದೆ ಕುಸಿಯುತ್ತಿದೆ", "ಎದೆ ಕುಸಿತ", "ವೇಗದ ಉಸಿರಾಟ", "ತೀವ್ರ ಉಸಿರಾಟದ ತೊಂದರೆ"
         ],
         severity="CRITICAL",
         source_document="MoHFW HBNC Protocols on Acute Respiratory Infection in Newborn, GoI",
@@ -283,9 +287,11 @@ class DangerSignDetector:
     def clean_text(self, text: str) -> str:
         """Normalizes whitespace and cleans characters for matching across all Indic scripts."""
         text = text.lower()
-        # Retain all Unicode word characters and whitespace across all 22 Indian scripts
-        text = re.sub(r"[^\w\s]", " ", text)
-        return " ".join(text.split())
+        cleaned = "".join(
+            c if (c.isalnum() or c.isspace() or unicodedata.category(c)[0] in ("L", "M", "N")) else " "
+            for c in text
+        )
+        return " ".join(cleaned.split())
 
     def _is_negated_in_window(self, tokens: List[str], match_start_idx: int, match_end_idx: int) -> bool:
         """
@@ -293,21 +299,25 @@ class DangerSignDetector:
         Stops expanding the window if a clause conjunction (e.g. 'but' / 'ಆದರೆ' / 'लेकिन') is crossed.
         """
         before_tokens = []
-        for i in range(match_start_idx - 1, max(-1, match_start_idx - 4), -1):
+        for i in range(match_start_idx - 1, max(-1, match_start_idx - 6), -1):
             tok = tokens[i]
             if tok in BOUNDARY_CONJUNCTIONS:
                 break
             before_tokens.insert(0, tok)
 
         after_tokens = []
-        for i in range(match_end_idx + 1, min(len(tokens), match_end_idx + 4)):
+        for i in range(match_end_idx + 1, min(len(tokens), match_end_idx + 6)):
             tok = tokens[i]
             if tok in BOUNDARY_CONJUNCTIONS:
                 break
             after_tokens.append(tok)
 
         window_tokens = before_tokens + after_tokens
-        return any(neg in window_tokens for neg in NEGATION_WORDS)
+        window_text = " ".join(window_tokens)
+        for neg in NEGATION_WORDS:
+            if neg in window_tokens or ((" " in neg) and neg in window_text):
+                return True
+        return False
 
     def _is_historical_in_window(self, text: str, match_start_char: int, match_end_char: int) -> bool:
         """Checks for past pregnancy or resolved history markers."""

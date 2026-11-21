@@ -5,6 +5,7 @@ Health check and multilingual languages router.
 from fastapi import APIRouter
 from app.config import settings
 from app.services.indic_languages import INDIC_LANGUAGES
+from app.database import get_db_connection
 
 router = APIRouter(prefix="/api", tags=["Health & Languages"])
 
@@ -12,6 +13,9 @@ router = APIRouter(prefix="/api", tags=["Health & Languages"])
 @router.get("/health")
 async def health_check():
     """Health check reporting system and model adapter statuses."""
+    with get_db_connection() as conn:
+        conn.execute("SELECT 1").fetchone()
+
     return {
         "status": "healthy",
         "app_name": settings.APP_NAME,

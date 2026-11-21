@@ -26,7 +26,13 @@ import { voiceWs } from './services/websocket';
 export default function App() {
   const { language: currentLanguage, setLanguage: setCurrentLanguage, isRtl, dir } = useLanguage();
   const [viewMode, setViewMode] = useState(() => {
-    return localStorage.getItem('asha_view_mode') || 'landing';
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get('view') || params.get('mode');
+      if (v === 'app' || v === 'driver') return 'app';
+      return localStorage.getItem('asha_view_mode') || 'landing';
+    }
+    return 'landing';
   }); // 'landing' or 'app'
   const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'maternal', 'route', 'incentives', 'structured_record', 'emergency', 'ambulance', 'followups', 'beneficiaries'
   const [userRole, setUserRole] = useState('asha'); // 'asha', 'anm', 'mo'
@@ -48,13 +54,17 @@ export default function App() {
   const [initialScenarioId, setInitialScenarioId] = useState('anc_routine');
   const [globalSearch, setGlobalSearch] = useState('');
 
-  // Handle direct driver portal URL (?view=driver or ?mode=driver)
+  // Handle direct URL params (?view=app, ?view=driver, ?screen=ambulance, etc.)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('view') === 'driver' || params.get('mode') === 'driver') {
         setViewMode('app');
         setActiveScreen('ambulance_driver');
+      } else if (params.get('view') === 'app' || params.get('mode') === 'app') {
+        setViewMode('app');
+        const screenParam = params.get('screen');
+        if (screenParam) setActiveScreen(screenParam);
       }
     }
   }, []);

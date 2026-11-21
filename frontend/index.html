@@ -20,6 +20,24 @@
   </head>
   <body class="bg-[#FAF9F5] text-[#142B45] antialiased selection:bg-[#19B8D5]/20 selection:text-[#142B45] min-h-screen font-sans">
     <div id="root"></div>
+
+    <script>
+      window.addEventListener('error', function(e) {
+        console.error('[GLOBAL ERROR]', e.message, e.filename, e.lineno, e.error);
+        var el = document.getElementById('root');
+        if (el) {
+          el.innerHTML = '<div style="padding:30px;color:#900;font-family:sans-serif;background:#fff0f0;border:2px solid red;margin:20px;border-radius:12px;"><h2>JavaScript Runtime Error</h2><p><b>' + e.message + '</b></p><pre style="white-space:pre-wrap;background:#fff;padding:15px;border-radius:8px;">' + (e.error ? e.error.stack : '') + '</pre></div>';
+        }
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('[UNHANDLED REJECTION]', e.reason);
+        var el = document.getElementById('root');
+        if (el) {
+          el.innerHTML = '<div style="padding:30px;color:#900;font-family:sans-serif;background:#fff0f0;border:2px solid red;margin:20px;border-radius:12px;"><h2>Unhandled Promise Rejection</h2><pre style="white-space:pre-wrap;background:#fff;padding:15px;border-radius:8px;">' + (e.reason ? (e.reason.stack || e.reason) : e) + '</pre></div>';
+        }
+      });
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
     <script>
       // Register PWA Service Worker if supported

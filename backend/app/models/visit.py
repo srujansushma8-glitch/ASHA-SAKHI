@@ -9,6 +9,18 @@ from app.database import get_db_connection
 from app.schemas.visit import VisitCreate
 
 
+def _parse_json_list(val: Any) -> list:
+    if not val:
+        return []
+    if isinstance(val, list):
+        return val
+    try:
+        loaded = json.loads(val)
+        return loaded if isinstance(loaded, list) else [str(loaded)]
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return [s.strip() for s in str(val).split(",") if s.strip()]
+
+
 class VisitRepository:
     @staticmethod
     def get_all(limit: int = 50) -> List[Dict[str, Any]]:
@@ -19,8 +31,8 @@ class VisitRepository:
             results = []
             for row in rows:
                 item = dict(row)
-                item["vaccinations_due"] = json.loads(item["vaccinations_due"]) if item["vaccinations_due"] else []
-                item["vaccinations_completed"] = json.loads(item["vaccinations_completed"]) if item["vaccinations_completed"] else []
+                item["vaccinations_due"] = _parse_json_list(item["vaccinations_due"])
+                item["vaccinations_completed"] = _parse_json_list(item["vaccinations_completed"])
                 item["is_confirmed"] = bool(item["is_confirmed"])
                 item["danger_flag"] = bool(item["danger_flag"])
                 results.append(item)
@@ -35,8 +47,8 @@ class VisitRepository:
             if not row:
                 return None
             item = dict(row)
-            item["vaccinations_due"] = json.loads(item["vaccinations_due"]) if item["vaccinations_due"] else []
-            item["vaccinations_completed"] = json.loads(item["vaccinations_completed"]) if item["vaccinations_completed"] else []
+            item["vaccinations_due"] = _parse_json_list(item["vaccinations_due"])
+            item["vaccinations_completed"] = _parse_json_list(item["vaccinations_completed"])
             item["is_confirmed"] = bool(item["is_confirmed"])
             item["danger_flag"] = bool(item["danger_flag"])
             return item
@@ -50,8 +62,8 @@ class VisitRepository:
             results = []
             for row in rows:
                 item = dict(row)
-                item["vaccinations_due"] = json.loads(item["vaccinations_due"]) if item["vaccinations_due"] else []
-                item["vaccinations_completed"] = json.loads(item["vaccinations_completed"]) if item["vaccinations_completed"] else []
+                item["vaccinations_due"] = _parse_json_list(item["vaccinations_due"])
+                item["vaccinations_completed"] = _parse_json_list(item["vaccinations_completed"])
                 item["is_confirmed"] = bool(item["is_confirmed"])
                 item["danger_flag"] = bool(item["danger_flag"])
                 results.append(item)
@@ -90,8 +102,8 @@ class VisitRepository:
             cursor.execute("SELECT * FROM visits WHERE id = ?", (visit_id,))
             row = cursor.fetchone()
             item = dict(row)
-            item["vaccinations_due"] = json.loads(item["vaccinations_due"]) if item["vaccinations_due"] else []
-            item["vaccinations_completed"] = json.loads(item["vaccinations_completed"]) if item["vaccinations_completed"] else []
+            item["vaccinations_due"] = _parse_json_list(item["vaccinations_due"])
+            item["vaccinations_completed"] = _parse_json_list(item["vaccinations_completed"])
             item["is_confirmed"] = bool(item["is_confirmed"])
             item["danger_flag"] = bool(item["danger_flag"])
             return item
@@ -120,8 +132,8 @@ class VisitRepository:
             if not row:
                 return None
             item = dict(row)
-            item["vaccinations_due"] = json.loads(item["vaccinations_due"]) if item["vaccinations_due"] else []
-            item["vaccinations_completed"] = json.loads(item["vaccinations_completed"]) if item["vaccinations_completed"] else []
+            item["vaccinations_due"] = _parse_json_list(item["vaccinations_due"])
+            item["vaccinations_completed"] = _parse_json_list(item["vaccinations_completed"])
             item["is_confirmed"] = bool(item["is_confirmed"])
             item["danger_flag"] = bool(item["danger_flag"])
             return item

@@ -4,7 +4,7 @@ Supports both LIVE GPS Mode (real device telemetry) and DEMO SIMULATION Mode.
 Provides real-time telemetry streaming, driver dispatch actions, and WebSocket broadcast.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional, Dict, Any
 from app.models.ambulance import AmbulanceRepository
 from app.schemas.ambulance import (
@@ -17,8 +17,13 @@ from app.schemas.ambulance import (
 )
 from app.services.ambulance_service import ambulance_service
 from app.routers.voice_ws import broadcast_ws_event
+from app.auth import get_current_user
 
-router = APIRouter(prefix="/api/ambulance", tags=["Ambulance Operations & Live GPS"])
+router = APIRouter(
+    prefix="/api/ambulance",
+    tags=["Ambulance Operations & Live GPS"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.post("/requests", response_model=AmbulanceRequestResponse)

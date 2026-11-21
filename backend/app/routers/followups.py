@@ -2,12 +2,17 @@
 Followups REST API router.
 """
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from typing import List, Optional
 from app.models.followup import FollowupRepository
 from app.schemas.followup import FollowupResponse
+from app.auth import get_current_user
 
-router = APIRouter(prefix="/api/followups", tags=["Followups"])
+router = APIRouter(
+    prefix="/api/followups",
+    tags=["Followups"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("", response_model=List[FollowupResponse])

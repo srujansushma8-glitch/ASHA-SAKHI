@@ -161,17 +161,79 @@ export const setApiLanguage = (lang) => {
   currentApiLanguage = lang;
 };
 
-// Helper for fetch with timeout
-const fetchWithTimeout = async (url, options = {}, timeoutMs = 4000) => {
+let authTokenPromise = null;
+
+export const getAuthToken = async () => {
+  if (typeof window === 'undefined') return null;
+  let token = localStorage.getItem('asha_auth_token') || localStorage.getItem('token');
+  if (token) return token;
+
+  // Auto-login with default asha demo account if no token exists yet
+  if (!authTokenPromise) {
+    authTokenPromise = (async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'asha', password: 'password' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.access_token) {
+            localStorage.setItem('asha_auth_token', data.access_token);
+            return data.access_token;
+          }
+        }
+      } catch (e) {
+        console.warn('[API Auth] Auto-login failed:', e);
+      } finally {
+        authTokenPromise = null;
+      }
+      return null;
+    })();
+  }
+  return authTokenPromise;
+};
+
+export const setAuthToken = (token) => {
+  if (typeof window !== 'undefined') {
+    if (token) {
+      localStorage.setItem('asha_auth_token', token);
+    } else {
+      localStorage.removeItem('asha_auth_token');
+    }
+  }
+};
+
+// Helper for fetch with timeout and automatic JWT Bearer header
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 6000) => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    let token = null;
+    if (!url.includes('/api/auth/login') && !url.includes('/api/health')) {
+      token = await getAuthToken();
+    }
+
     const headers = {
       'Accept-Language': currentApiLanguage,
       'X-Language': currentApiLanguage,
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...(options.headers || {})
     };
-    const response = await fetch(url, { ...options, headers, signal: controller.signal });
+
+    let response = await fetch(url, { ...options, headers, signal: controller.signal });
+
+    // Auto-retry once on 401 with refreshed token
+    if (response.status === 401 && !url.includes('/api/auth/login')) {
+      if (typeof window !== 'undefined') localStorage.removeItem('asha_auth_token');
+      const newToken = await getAuthToken();
+      if (newToken) {
+        headers['Authorization'] = `Bearer ${newToken}`;
+        response = await fetch(url, { ...options, headers, signal: controller.signal });
+      }
+    }
+
     clearTimeout(id);
     return response;
   } catch (err) {
@@ -181,6 +243,24 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 4000) => {
 };
 
 export const api = {
+  async login(username, password = 'password') {
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAuthToken(data.access_token);
+        return data;
+      }
+      throw new Error(`Login failed: ${res.statusText}`);
+    } catch (err) {
+      console.error('[API] Login error:', err);
+      throw err;
+    }
+  },
   setLanguage(lang) {
     setApiLanguage(lang);
   },

@@ -3,15 +3,20 @@ Offline Synchronization REST API Router.
 Enables offline batch upload and delta sync for mobile field registers.
 """
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from app.schemas.sync import (
     SyncBatchUploadRequest,
     SyncBatchUploadResponse,
     SyncDeltaResponse,
 )
 from app.services.sync_service import sync_service
+from app.auth import get_current_user
 
-router = APIRouter(prefix="/api/sync", tags=["Offline Synchronization"])
+router = APIRouter(
+    prefix="/api/sync",
+    tags=["Offline Synchronization"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.post("/batch", response_model=SyncBatchUploadResponse)

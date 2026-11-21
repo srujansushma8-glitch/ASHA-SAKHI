@@ -39,3 +39,36 @@ def setup_test_db():
     init_db(seed_synthetic=True)
     yield
     # Cleanup after test session if needed
+
+
+@pytest.fixture(scope="session")
+def test_token() -> str:
+    """Generates a valid test JWT for testing authenticated endpoints."""
+    from app.auth import create_access_token
+    return create_access_token(data={"sub": "asha", "role": "asha"})
+
+
+@pytest.fixture(autouse=True)
+def auto_auth_client(monkeypatch, test_token):
+    """
+    Ensures httpx.AsyncClient automatically carries the Authorization Bearer header
+    for existing tests unless explicitly overridden.
+    """
+    from httpx import AsyncClient
+    orig_init = AsyncClient.__init__
+
+    def patched_init(self, *args, **kwargs):
+        headers = kwargs.get("headers")
+        if headers is None:
+            headers = {}
+        elif not isinstance(headers, dict):
+            headers = dict(headers)
+        else:
+            headers = dict(headers)
+
+        if "Authorization" not in headers and "authorization" not in headers:
+            headers["Authorization"] = f"Bearer {test_token}"
+        kwargs["headers"] = headers
+        orig_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(AsyncClient, "__init__", patched_init)

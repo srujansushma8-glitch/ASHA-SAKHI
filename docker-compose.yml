@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: asha_sakhi_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - APP_ENV=development
+      - ASR_MODE=mock
+      - TTS_MODE=mock
+      - EXTRACTION_MODE=auto
+      - DATABASE_PATH=/app/data/asha_sakhi.db
+      - DATABASE_URL=sqlite:////app/data/asha_sakhi.db
+    volumes:
+      - backend-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  backend-data:

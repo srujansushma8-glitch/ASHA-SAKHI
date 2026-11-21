@@ -10,6 +10,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { INDIC_LANGUAGES, getLanguageByCode } from '../services/languages';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LanguageSelectorModal({
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Lock, Phone, KeyRound, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { api } from '../../services/api';
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
   const { t } = useLanguage();
@@ -21,10 +22,15 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
     }, 600);
   };
 
-  const handleVerifyOtp = (e) => {
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const username = role === 'mo' ? 'supervisor' : 'asha';
+      await api.login(username);
+    } catch (err) {
+      console.warn('[Auth] Remote login warning:', err);
+    } finally {
       setLoading(false);
       if (onLoginSuccess) {
         onLoginSuccess({
@@ -34,7 +40,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
         });
       }
       onClose();
-    }, 800);
+    }
   };
 
   return (

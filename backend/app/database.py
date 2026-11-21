@@ -40,6 +40,8 @@ def get_db_connection() -> Generator[sqlite3.Connection, None, None]:
     db_path = get_db_path()
     conn = sqlite3.connect(str(db_path), timeout=10.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA busy_timeout = 5000;")
     conn.execute("PRAGMA foreign_keys = ON;")
     try:
         yield conn
@@ -191,7 +193,9 @@ def init_db(seed_synthetic: bool = True) -> None:
         )
 
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_visits_ben ON visits(beneficiary_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_visits_created_at ON visits(created_at);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_followups_ben ON followups(beneficiary_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_followups_due_date_status ON followups(due_date, completion_status);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_danger_alerts_visit ON danger_alerts(visit_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_amb_ben ON ambulance_requests(beneficiary_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_amb_status ON ambulance_requests(status);")

@@ -3,13 +3,17 @@ ASHA Sakhi Voice Field Register - FastAPI Backend Application.
 Entry point for REST API, WebSocket voice streaming, and AI pipeline orchestration.
 """
 
+import os
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import settings
 from app.database import init_db
+from app.auth import router as auth_router
 from app.routers import (
     health_router,
     beneficiaries_router,
@@ -24,7 +28,7 @@ from app.routers import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO if settings.DEBUG else logging.WARNING,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("asha_sakhi")
@@ -48,17 +52,114 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Enable CORS for frontend integration
+# Restrict CORS origins via environment configuration
+cors_origins_env = os.getenv(
+    "ALLOWED_ORIGINS",
+    os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"),
+)
+allowed_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def validate_query_limits(request: Request, call_next):
+    limit_str = request.query_params.get("limit")
+    if limit_str is not None:
+        try:
+            val = int(limit_str)
+            if val > 100:
+                return JSONResponse(
+                    status_code=422,
+                    content={
+                        "detail": [
+                            {
+                                "loc": ["query", "limit"],
+                                "msg": "Input should be less than or equal to 100",
+                                "type": "less_than_equal",
+                            }
+                        ]
+                    },
+                )
+            if val < 1:
+                return JSONResponse(
+                    status_code=422,
+                    content={
+                        "detail": [
+                            {
+                                "loc": ["query", "limit"],
+                                "msg": "Input should be greater than or equal to 1",
+                                "type": "greater_than_equal",
+                            }
+                        ]
+                    },
+                )
+        except ValueError:
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": [
+                        {
+                            "loc": ["query", "limit"],
+                            "msg": "Input should be a valid integer",
+                            "type": "int_parsing",
+                        }
+                    ]
+                },
+            )
+    offset_str = request.query_params.get("offset")
+    if offset_str is not None:
+        try:
+            val = int(offset_str)
+            if val < 0:
+                return JSONResponse(
+                    status_code=422,
+                    content={
+                        "detail": [
+                            {
+                                "loc": ["query", "offset"],
+                                "msg": "Input should be greater than or equal to 0",
+                                "type": "greater_than_equal",
+                            }
+                        ]
+                    },
+                )
+        except ValueError:
+            return JSONResponse(
+                status_code=422,
+                content={
+                    "detail": [
+                        {
+                            "loc": ["query", "offset"],
+                            "msg": "Input should be a valid integer",
+                            "type": "int_parsing",
+                        }
+                    ]
+                },
+            )
+    return await call_next(request)
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Global exception: {exc}", exc_info=True)
+    status_code = getattr(exc, "status_code", 500)
+    code = getattr(exc, "code", "INTERNAL_SERVER_ERROR")
+    message = getattr(exc, "detail", str(exc) or "Internal server error")
+    return JSONResponse(
+        status_code=status_code if isinstance(status_code, int) and 400 <= status_code <= 599 else 500,
+        content={"error": {"code": code, "message": str(message)}},
+    )
+
 # Register routers
 app.include_router(health_router)
+app.include_router(auth_router)
 app.include_router(beneficiaries_router)
 app.include_router(visits_router)
 app.include_router(followups_router)

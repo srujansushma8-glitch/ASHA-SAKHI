@@ -3,7 +3,7 @@ Visits REST API router.
 Supports listing visits, confirming and committing visits, and voice-correction updates.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Depends, Query
 from typing import List, Dict, Any
 from app.models.visit import VisitRepository
 from app.models.followup import FollowupRepository
@@ -16,15 +16,23 @@ from app.schemas.visit import (
 )
 from app.services.followup_engine import followup_engine
 from app.services.tts_adapter import get_tts_adapter
+from app.auth import get_current_user
 
-router = APIRouter(prefix="/api/visits", tags=["Visits"])
+router = APIRouter(
+    prefix="/api/visits",
+    tags=["Visits"],
+    dependencies=[Depends(get_current_user)],
+)
 tts_adapter = get_tts_adapter()
 
 
 @router.get("", response_model=List[VisitResponse])
-async def list_visits(limit: int = 50):
+async def list_visits(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
     """Retrieves all logged ASHA field visits."""
-    return VisitRepository.get_all(limit=limit)
+    return VisitRepository.get_all(limit=limit + offset)[offset : offset + limit]
 
 
 @router.post("/confirm")
