@@ -2,512 +2,339 @@ import React, { useState } from 'react';
 import { 
   MapPin, 
   Navigation, 
-  Mic, 
+  ArrowLeft, 
+  CheckCircle2, 
   Clock, 
   AlertTriangle, 
-  CheckCircle2, 
-  ChevronRight, 
   Phone, 
+  Mic, 
+  TrendingUp, 
+  Users, 
   Baby, 
-  Syringe, 
-  Sparkles, 
-  Layers, 
-  Share2, 
-  Compass, 
-  HeartPulse,
-  Info
+  Sparkles,
+  ExternalLink,
+  ChevronRight,
+  Compass,
+  Footprints
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
-export default function HouseholdRouteScreen({
-  currentLanguage = 'kn', onStartVoiceVisit, onBack }) {
-  const [selectedStopId, setSelectedStopId] = useState(2); // Default to highest risk
-  const [filter, setFilter] = useState('all'); // 'all', 'high_risk', 'vaccine', 'anc'
-  const [routeMode, setRouteMode] = useState('ai_priority'); // 'ai_priority', 'shortest'
+export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
+  const { t, currentLanguage } = useLanguage();
+  const [selectedWaypoint, setSelectedWaypoint] = useState(1);
+  const [routeMode, setRouteMode] = useState('optimized'); // 'optimized' or 'shortest'
+  const [visitedStops, setVisitedStops] = useState([0]); // PHC depot is visited
+  const [filterType, setFilterType] = useState('all');
 
-  const stops = [
+  const waypoints = [
+    {
+      id: 0,
+      name_en: 'Mandya Primary Health Centre (PHC)',
+      name_kn: 'ಮಂಡ್ಯ ಪ್ರಾಥಮಿಕ ಆರೋಗ್ಯ ಕೇಂದ್ರ (PHC)',
+      name_hi: 'मांड्या प्राथमिक स्वास्थ्य केंद्र (PHC)',
+      role_en: 'Starting Depot',
+      role_kn: 'ಆರಂಭಿಕ ಕೇಂದ್ರ',
+      role_hi: 'प्रारंभिक केंद्र',
+      lat: 12.5240,
+      lng: 76.8980,
+      distanceFromPrev: '0 km',
+      walkTime: '0 min',
+      address_en: 'Main Road, Shivalli',
+      address_kn: 'ಮುಖ್ಯ ರಸ್ತೆ, ಶಿವಳ್ಳಿ',
+      address_hi: 'मुख्य मार्ग, शिवल्ली',
+      description_en: 'Medicine kit, BP monitor, and weighing scale collected.',
+      description_kn: 'ಔಷಧಿ ಕಿಟ್, ಬಿಪಿ ಮಾನಿಟರ್, ತೂಕ ಯಂತ್ರ ಸಂಗ್ರಹಿಸಲಾಗಿದೆ.',
+      description_hi: 'दवा किट, बीपी मॉनिटर और वजन मशीन एकत्र की गई।',
+      type: 'depot',
+      isCompleted: true
+    },
     {
       id: 1,
-      name_kn: 'ಮಂಡ್ಯ ಪ್ರಾಥಮಿಕ ಆರೋಗ್ಯ ಕೇಂದ್ರ (PHC)',
-      name_en: 'Mandya Primary Health Centre',
-      role: 'ಆರಂಭಿಕ ಕೇಂದ್ರ (Starting Depot)',
-      type: 'depot',
-      distance: '0.0 km',
-      eta: '09:00 AM',
-      coords: { x: 120, y: 70 },
-      status: 'completed',
-      address: 'ಮುಖ್ಯ ರಸ್ತೆ, ಶಿವಳ್ಳಿ',
-      description: 'ಔಷಧಿ ಕಿಟ್, ಬಿಪಿ ಮಾನಿಟರ್, ತೂಕ ಯಂತ್ರ ಸಂಗ್ರಹಿಸಲಾಗಿದೆ.'
+      name_en: 'Meenakshi',
+      name_kn: 'ಮೀನಾಕ್ಷಿ',
+      name_hi: 'मीनाक्षी',
+      beneficiaryId: 'ASHA-KA-2024-0102',
+      priority_en: 'Critical High Risk',
+      priority_kn: 'ಅತ್ಯಂತ ತುರ್ತು',
+      priority_hi: 'अति गंभीर जोखिम',
+      lat: 12.5360,
+      lng: 76.9030,
+      distanceFromPrev: '1.2 km',
+      walkTime: '15 min',
+      address_en: 'House #28, Lake View Street, Shivalli',
+      address_kn: 'ಮನೆ ನಂ 28, ಕೆರೆ ಅಂಚು ಬೀದಿ, ಶಿವಳ್ಳಿ',
+      address_hi: 'मकान नं 28, झील किनारा मार्ग, शिवल्ली',
+      clinicalNote_en: 'Severe anemia (Hb 7.8 g/dL), high headache and edema. Gestation 32 weeks.',
+      clinicalNote_kn: 'ರಕ್ತಹೀನತೆ (Hb 7.8 g/dL), ತೀವ್ರ ತಲೆನೋವು ಮತ್ತು ಮುಖದಲ್ಲಿ ಊತ. ಗರ್ಭಾವಸ್ಥೆ 32 ವಾರ.',
+      clinicalNote_hi: 'गंभीर एनीमिया (Hb 7.8), सिरदर्द और सूजन। 32 सप्ताह की गर्भावस्था।',
+      type: 'high_risk',
+      phone: '+91 98450 11202',
+      isCompleted: visitedStops.includes(1)
     },
     {
       id: 2,
-      beneficiaryId: 'ASHA-KA-2024-0102',
-      name_kn: 'ಮೀನಾಕ್ಷಿ (Meenakshi)',
-      name_en: 'Meenakshi - 28 yrs',
-      type: 'high_risk',
-      priority: 'ಅತ್ಯಂತ ತುರ್ತು (Critical High Risk)',
-      distance: '0.9 km',
-      eta: '09:20 AM',
-      coords: { x: 260, y: 130 },
-      phone: '+91 98450 12345',
-      address: 'ಮನೆ ನಂ 28, ಕೆರೆ ಅಂಚು ಬೀದಿ, ಶಿವಳ್ಳಿ',
-      clinicalNote: 'ರಕ್ತಹೀನತೆ (Hb 7.8 g/dL), ತೀವ್ರ ತಲೆನೋವು ಮತ್ತು ಮುಖದಲ್ಲಿ ಊತ. ಗರ್ಭಾವಸ್ಥೆ 32 ವಾರ.',
-      actionLabel: 'ANC ತಪಾಸಣೆ & ತುರ್ತು ರೆಫರಲ್'
+      name_en: 'Lakshmi Devi',
+      name_kn: 'ಲಕ್ಷ್ಮಿ ದೇವಿ',
+      name_hi: 'लक्ष्मी देवी',
+      beneficiaryId: 'ASHA-KA-2024-0101',
+      priority_en: 'Routine ANC',
+      priority_kn: 'ನಿಯಮಿತ ಭೇಟಿ',
+      priority_hi: 'नियमित एएनसी',
+      lat: 12.5480,
+      lng: 76.9110,
+      distanceFromPrev: '0.8 km',
+      walkTime: '10 min',
+      address_en: 'House #14, Temple Road, Shivalli',
+      address_kn: 'ಮನೆ ನಂ 14, ಮಾರಮ್ಮ ದೇವಸ್ಥಾನ ರಸ್ತೆ',
+      address_hi: 'मकान नं 14, मंदिर मार्ग, शिवल्ली',
+      clinicalNote_en: '36 weeks pregnant. Weight check, fetal movement and IFA tablets distribution.',
+      clinicalNote_kn: '36 ವಾರಗಳ ಗರ್ಭಿಣಿ. ತೂಕ ಪರೀಕ್ಷೆ, ಭ್ರೂಣದ ಚಲನೆ ಮತ್ತು IFA ಮಾತ್ರೆಗಳ ವಿತರಣೆ.',
+      clinicalNote_hi: '36 सप्ताह की गर्भावस्था। वजन जांच और आईएफए वितरण।',
+      type: 'anc',
+      phone: '+91 94480 33401',
+      isCompleted: visitedStops.includes(2)
     },
     {
       id: 3,
-      beneficiaryId: 'ASHA-KA-2024-0101',
-      name_kn: 'ಲಕ್ಷ್ಮಿ ದೇವಿ (Lakshmi Devi)',
-      name_en: 'Lakshmi Devi - 24 yrs',
-      type: 'anc',
-      priority: 'ನಿಯಮಿತ ಭೇಟಿ (Routine ANC)',
-      distance: '1.6 km',
-      eta: '09:55 AM',
-      coords: { x: 380, y: 220 },
-      phone: '+91 94480 54321',
-      address: 'ಮನೆ ನಂ 14, ಮಾರಮ್ಮ ದೇವಸ್ಥಾನ ರಸ್ತೆ',
-      clinicalNote: '36 ವಾರಗಳ ಗರ್ಭಿಣಿ. ತೂಕ ಪರೀಕ್ಷೆ, ಭ್ರೂಣದ ಚಲನೆ ಮತ್ತು IFA ಮಾತ್ರೆಗಳ ವಿತರಣೆ.',
-      actionLabel: '4ನೇ ತ್ರೈಮಾಸಿಕ ANC ಪರಿಶೀಲನೆ'
+      name_en: 'Pooja Suresh & Infant',
+      name_kn: 'ಪೂಜಾ ಸುರೇಶ್ ಮತ್ತು ಮಗು',
+      name_hi: 'पूजा सुरेश एवं शिशु',
+      beneficiaryId: 'ASHA-KA-2024-0103',
+      priority_en: 'Vaccination Due',
+      priority_kn: 'ಲಸಿಕೆ ಬಾಕಿ',
+      priority_hi: 'टीकाकरण देय',
+      lat: 12.5620,
+      lng: 76.9190,
+      distanceFromPrev: '0.9 km',
+      walkTime: '12 min',
+      address_en: 'House #42, Basaveshwara Layout',
+      address_kn: 'ಮನೆ ನಂ 42, ಬಸವೇಶ್ವರ ಬಡಾವಣೆ',
+      address_hi: 'मकान नं 42, बसवेश्वर लेआउट',
+      clinicalNote_en: 'Infant age 6 weeks. OPV-1, Pentavalent-1 and Rota-1 pending.',
+      clinicalNote_kn: 'ಮಗು ವಯಸ್ಸು 6 ವಾರ. OPV-1, Pentavalent-1 ಮತ್ತು Rota-1 ಲಸಿಕೆ ಬಾಕಿ ಇದೆ.',
+      clinicalNote_hi: 'शिशु आयु 6 सप्ताह। पेंटावेलेंट-1 और रोटा-1 लंबित।',
+      type: 'vaccine',
+      phone: '+91 99000 55603',
+      isCompleted: visitedStops.includes(3)
     },
     {
       id: 4,
-      beneficiaryId: 'ASHA-KA-2024-0103',
-      name_kn: 'ಪೂಜಾ ಸುರೇಶ್ ಮತ್ತು ಮಗು (Pooja Suresh)',
-      name_en: 'Pooja Suresh & Infant',
-      type: 'vaccine',
-      priority: 'ಲಸಿಕೆ ಬಾಕಿ (Vaccination Due)',
-      distance: '2.3 km',
-      eta: '10:30 AM',
-      coords: { x: 210, y: 310 },
-      phone: '+91 97410 87654',
-      address: 'ಮನೆ ನಂ 42, ಬಸವೇಶ್ವರ ಬಡಾವಣೆ',
-      clinicalNote: 'ಮಗು ವಯಸ್ಸು 6 ವಾರ. OPV-1, Pentavalent-1 ಮತ್ತು Rota-1 ಲಸಿಕೆ ಬಾಕಿ ಇದೆ.',
-      actionLabel: 'ಲಸಿಕಾ ದಿನಚರಿ & ತೂಕ ದಾಖಲೆ'
-    },
-    {
-      id: 5,
+      name_en: 'Soundarya Kumar',
+      name_kn: 'ಸೌಂದರ್ಯ ಕುಮಾರ್',
+      name_hi: 'सौंदर्या कुमार',
       beneficiaryId: 'ASHA-KA-2024-0104',
-      name_kn: 'ಸೌಂದರ್ಯ ಕುಮಾರ್ (Soundarya Kumar)',
-      name_en: 'Soundarya Kumar - 22 yrs',
-      type: 'hbnc',
-      priority: 'ನವಜಾತ ಶಿಶು ಆರೈಕೆ (HBNC)',
-      distance: '3.1 km',
-      eta: '11:15 AM',
-      coords: { x: 440, y: 370 },
-      phone: '+91 96110 33221',
-      address: 'ಮನೆ ನಂ 53, ಶಾಲೆ ರಸ್ತೆ, ಕೆರೆಗೋಡು',
-      clinicalNote: 'ಪ್ರಸವದ 14ನೇ ದಿನ. ತಾಯಿಯ ಎದೆಹಾಲುಣಿಸುವಿಕೆ ಮತ್ತು ಶಿಶುವಿನ ಹೊಕ್ಕಳು ಶುಚಿತ್ವ ಪರೀಕ್ಷೆ.',
-      actionLabel: 'HBNC 3ನೇ ಮನೆ ಭೇಟಿ'
-    },
-    {
-      id: 6,
-      beneficiaryId: 'ASHA-KA-2024-0105',
-      name_kn: 'ರೇಣುಕಾ ಬಾಯಿ (Renuka Bai)',
-      name_en: 'Renuka Bai - 26 yrs',
-      type: 'anc',
-      priority: 'ನಿಯಮಿತ ಭೇಟಿ (Routine ANC)',
-      distance: '3.8 km',
-      eta: '11:50 AM',
-      coords: { x: 550, y: 260 },
-      phone: '+91 99800 66778',
-      address: 'ಮನೆ ನಂ 67, ಅಂಚೆ ಕಚೇರಿ ಹತ್ತಿರ',
-      clinicalNote: '24 ವಾರಗಳ ಗರ್ಭಿಣಿ. ಕ್ಯಾಲ್ಸಿಯಂ & ಜಂತುಹುಳು ಮಾತ್ರೆ ನೀಡಿಕೆ, ಟೆಟಾನಸ್ (Td) ಲಸಿಕೆ.',
-      actionLabel: '2ನೇ ತ್ರೈಮಾಸಿಕ ANC ಫಾಲೋ-ಅಪ್'
+      priority_en: 'Postnatal (HBNC)',
+      priority_kn: 'ನವಜಾತ ಶಿಶು ಆರೈಕೆ',
+      priority_hi: 'प्रसवोत्तर देखभाल',
+      lat: 12.5760,
+      lng: 76.9240,
+      distanceFromPrev: '0.5 km',
+      walkTime: '7 min',
+      address_en: 'House #53, School Road, Keregodu',
+      address_kn: 'ಮನೆ ನಂ 53, ಶಾಲೆ ರಸ್ತೆ, ಕೆರೆಗೋಡು',
+      address_hi: 'मकान नं 53, स्कूल रोड, केरेगोडु',
+      clinicalNote_en: 'Day 14 postpartum. Breastfeeding and infant cord hygiene verification.',
+      clinicalNote_kn: 'ಪ್ರಸವದ 14ನೇ ದಿನ. ತಾಯಿಯ ಎದೆಹಾಲುಣಿಸುವಿಕೆ ಮತ್ತು ಶಿಶುವಿನ ಹೊಕ್ಕಳು ಶುಚಿತ್ವ ಪರೀಕ್ಷೆ.',
+      clinicalNote_hi: 'प्रसव के 14 दिन। स्तनपान और शिशु की नाभि स्वच्छता जांच।',
+      type: 'pnc',
+      phone: '+91 97410 77804',
+      isCompleted: visitedStops.includes(4)
     }
   ];
 
-  const filteredStops = stops.filter(s => {
-    if (filter === 'all') return true;
-    if (filter === 'high_risk') return s.type === 'high_risk';
-    if (filter === 'vaccine') return s.type === 'vaccine';
-    if (filter === 'anc') return s.type === 'anc' || s.type === 'hbnc';
-    return true;
-  });
+  const getLocalizedName = (w) => {
+    if (currentLanguage === 'kn') return w.name_kn || w.name_en;
+    if (currentLanguage === 'hi') return w.name_hi || w.name_en;
+    return w.name_en;
+  };
 
-  const activeStop = stops.find(s => s.id === selectedStopId) || stops[1];
+  const getLocalizedAddress = (w) => {
+    if (currentLanguage === 'kn') return w.address_kn || w.address_en;
+    if (currentLanguage === 'hi') return w.address_hi || w.address_en;
+    return w.address_en;
+  };
+
+  const getLocalizedNote = (w) => {
+    if (currentLanguage === 'kn') return w.clinicalNote_kn || w.clinicalNote_en;
+    if (currentLanguage === 'hi') return w.clinicalNote_hi || w.clinicalNote_en;
+    return w.clinicalNote_en;
+  };
+
+  const currentStop = waypoints.find(w => w.id === selectedWaypoint) || waypoints[1];
+
+  const toggleVisitStatus = (id) => {
+    setVisitedStops(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
-      {/* 1. Header Banner */}
-      <div className="bg-white  rounded-3xl p-6 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#FDF6F5] text-[#A25B74] dark:text-[#A25B74] text-xs font-bold border border-[#F0DDE2] mb-2">
-            <Navigation className="w-3.5 h-3.5 animate-pulse" />
-            <span>ದಿನನಿತ್ಯದ ಕ್ಷೇತ್ರ ಮಾರ್ಗ (Daily Field Visit Optimization)</span>
+      {/* 1. Top Header */}
+      <div className="bg-white rounded-3xl p-5 lg:p-6 border border-[#F0DDE2] shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3.5">
+          <button
+            onClick={onBack}
+            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#F9ECEC] active:scale-[0.98] transition-decelerate"
+            title={t("common.back")}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center">
+                <Navigation className="w-4 h-4" />
+              </div>
+              <h1 className="text-lg lg:text-xl font-bold text-[#3B2A33] leading-tight">
+                {t("route.title")}
+              </h1>
+            </div>
+            <p className="text-xs text-[#7A6670] font-medium mt-0.5">
+              {t("route.subtitle")}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold font-kannada text-[#3B2A33]  leading-tight">
-            ಶಿವಳ್ಳಿ & ಕೆರೆಗೋಡು ವಲಯ ಮನೆ ಭೇಟಿ ನಕ್ಷೆ
-          </h1>
-          <p className="text-xs text-[#7A6670]  mt-1">
-            ಮಂಡ್ಯ ತಾಲೂಕು PHC • ಒಟ್ಟು 5 ಮನೆ ಭೇಟಿಗಳು • ಅಂದಾಜು ನಡಿಗೆ: 3.8 ಕಿ.ಮೀ • ಆಫ್‌ಲೈನ್ ಮ್ಯಾಪ್ ಲಭ್ಯ
-          </p>
         </div>
 
-        {/* Route Optimization Toggle & Distance Pill */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex bg-[#FDF6F5]  p-1 rounded-2xl text-xs font-bold">
-            <button
-              onClick={() => setRouteMode('ai_priority')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                routeMode === 'ai_priority'
-                  ? 'bg-[#A25B74] text-white shadow-sm'
-                  : 'text-[#7A6670]  hover:text-[#3B2A33]'
-              }`}
-            >
-              <span className="flex items-center space-x-1">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>AI ಆದ್ಯತೆ (High Risk First)</span>
-              </span>
-            </button>
-            <button
-              onClick={() => setRouteMode('shortest')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                routeMode === 'shortest'
-                  ? 'bg-[#A25B74] text-white shadow-sm'
-                  : 'text-[#7A6670]  hover:text-[#3B2A33]'
-              }`}
-            >
-              <span>ಕಡಿಮೆ ದೂರ (Shortest)</span>
-            </button>
-          </div>
-
-          <div className="bg-[#E8F7F1] dark:bg-[#477A60]/10 border border-[#C8EEDD] dark:border-healthcare/30 px-3 py-2 rounded-2xl text-xs font-bold text-[#477A60] flex items-center space-x-2">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>ಮಾರ್ಗ ಆಪ್ಟಿಮೈಸ್ಡ್ ಆಗಿದೆ</span>
-          </div>
+        <div className="flex items-center space-x-2">
+          <span className="px-3 py-1.5 rounded-full bg-[#E8F7F1] text-[#477A60] font-bold text-xs border border-[#C8EEDD] flex items-center space-x-1.5">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{t("route.optimizedBadge")}</span>
+          </span>
         </div>
       </div>
 
-      {/* 2. Interactive Split: Vector Map on Left, Route List & Detail on Right */}
+      {/* 2. Map and Detail Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left: Vector Interactive Map (7 cols) */}
-        <div className="lg:col-span-7 bg-white  rounded-3xl p-5 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2 text-xs font-bold text-[#3B2A33] ">
-              <Compass className="w-4 h-4 text-[#A25B74]" />
-              <span>ಲೈವ್ ಜಿಪಿಎಸ್ ವೆಕ್ಟರ್ ನಕ್ಷೆ (Live Field Vector Map)</span>
-            </div>
-            <span className="text-[10px] font-mono font-bold bg-[#FDF6F5]  text-[#7A6670]  px-2.5 py-1 rounded-full border border-[#F0DDE2] dark:border-[#F0DDE2]">
-              Offline GPS Caching Active
-            </span>
-          </div>
+        {/* Route Stops List (Span 7) */}
+        <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
+          <h3 className="font-bold text-base text-[#3B2A33]">
+            {t("route.waypointsTitle")}
+          </h3>
 
-          {/* Interactive SVG Canvas */}
-          <div className="relative w-full h-80 sm:h-96 bg-[#FFF9F7]  rounded-2xl border border-[#F0DDE2] dark:border-[#F0DDE2] overflow-hidden flex items-center justify-center select-none">
-            <svg 
-              className="w-full h-full" 
-              viewBox="0 0 640 420" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Background Village Terrain & Lanes */}
-              <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-[#F0DDE2] dark:text-[#3B2A33]/40" />
-                </pattern>
-                <linearGradient id="routeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#A25B74" />
-                  <stop offset="50%" stopColor="#B94A58" />
-                  <stop offset="100%" stopColor="#477A60" />
-                </linearGradient>
-              </defs>
-
-              <rect width="640" height="420" fill="url(#grid)" />
-
-              {/* Village Green Groves */}
-              <path d="M 20 20 Q 90 60 140 20 T 260 30 Q 300 90 240 120 Z" fill="#20A675" fillOpacity="0.08" />
-              <path d="M 400 300 Q 520 280 580 340 T 520 400 Q 420 410 400 300 Z" fill="#20A675" fillOpacity="0.08" />
-
-              {/* Village Roads / Lanes */}
-              <path d="M 40 70 L 600 70" stroke="#CBD5E1" strokeWidth="6" strokeLinecap="round" className="" />
-              <path d="M 120 70 Q 200 130 260 130 T 380 220" stroke="#CBD5E1" strokeWidth="5" strokeLinecap="round" className="" />
-              <path d="M 260 130 Q 210 240 210 310" stroke="#CBD5E1" strokeWidth="4" strokeLinecap="round" className="" />
-              <path d="M 210 310 Q 340 340 440 370 T 550 260" stroke="#CBD5E1" strokeWidth="4" strokeLinecap="round" className="" />
-
-              {/* Active Recommended Walking Path with Dash Glow */}
-              <path 
-                d="M 120 70 Q 200 130 260 130 T 380 220 Q 300 280 210 310 T 440 370 T 550 260" 
-                stroke="url(#routeGrad)" 
-                strokeWidth="4" 
-                strokeDasharray="8 6" 
-                className="animate-pulse"
-              />
-
-              {/* Landmark: Shivalli Lake */}
-              <ellipse cx="280" cy="180" rx="35" ry="20" fill="#A25B74" fillOpacity="0.15" />
-              <text x="260" y="184" fill="#A25B74" fontSize="10" fontWeight="bold" fontFamily="sans-serif">ಕೆರೆ (Lake)</text>
-
-              {/* Map Pins / Household Nodes */}
-              {stops.map((stop) => {
-                const isSelected = stop.id === selectedStopId;
-                const isCritical = stop.type === 'high_risk';
-                const isDepot = stop.type === 'depot';
-
-                let pinColor = '#A25B74'; // default teal
-                if (isCritical) pinColor = '#B94A58'; // emergency red
-                else if (stop.type === 'vaccine') pinColor = '#B88745'; // amber
-                else if (isDepot) pinColor = '#A25B74';
-
-                return (
-                  <g 
-                    key={stop.id} 
-                    className="cursor-pointer transition-transform hover:scale-110"
-                    onClick={() => setSelectedStopId(stop.id)}
-                  >
-                    {/* Pulsing ring for critical high risk or selected */}
-                    {(isSelected || isCritical) && (
-                      <circle 
-                        cx={stop.coords.x} 
-                        cy={stop.coords.y} 
-                        r={isSelected ? "22" : "18"} 
-                        fill={pinColor} 
-                        fillOpacity="0.25"
-                        className="animate-ping"
-                      />
-                    )}
-
-                    {/* Outer Circle */}
-                    <circle 
-                      cx={stop.coords.x} 
-                      cy={stop.coords.y} 
-                      r={isSelected ? "16" : "13"} 
-                      fill={pinColor} 
-                      stroke="#FFFFFF" 
-                      strokeWidth="3" 
-                      className="shadow-lg"
-                    />
-
-                    {/* Pin Number */}
-                    <text 
-                      x={stop.coords.x} 
-                      y={stop.coords.y + 4} 
-                      textAnchor="middle" 
-                      fill="#FFFFFF" 
-                      fontSize="10" 
-                      fontWeight="bold" 
-                      fontFamily="sans-serif"
-                    >
-                      {stop.id}
-                    </text>
-
-                    {/* Pin Label Floating Badge */}
-                    <rect 
-                      x={stop.coords.x - 45} 
-                      y={stop.coords.y - 28} 
-                      width="90" 
-                      height="18" 
-                      rx="6" 
-                      fill="#FFFFFF" 
-                      stroke={pinColor} 
-                      strokeWidth="1" 
-                      className=" shadow-sm"
-                    />
-                    <text 
-                      x={stop.coords.x} 
-                      y={stop.coords.y - 15} 
-                      textAnchor="middle" 
-                      fill={isCritical ? "#D94343" : "#18364A"} 
-                      fontSize="9" 
-                      fontWeight="bold" 
-                      fontFamily="sans-serif"
-                    >
-                      {stop.name_kn.split(' ')[0]}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-
-            {/* Bottom Floating Legend */}
-            <div className="absolute bottom-3 left-3 right-3 bg-white/90 /90 backdrop-blur-md px-3 py-2 rounded-xl border border-[#F0DDE2] dark:border-[#F0DDE2] flex flex-wrap items-center justify-between text-[11px] font-bold">
-              <div className="flex items-center space-x-4">
-                <span className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#B94A58]"></span>
-                  <span className="text-[#3B2A33] ">ತುರ್ತು (Critical High-Risk)</span>
-                </span>
-                <span className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                  <span className="text-[#3B2A33] ">ಲಸಿಕೆ ಬಾಕಿ (Vaccine)</span>
-                </span>
-                <span className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#A25B74]"></span>
-                  <span className="text-[#3B2A33] ">ನಿಯಮಿತ ANC</span>
-                </span>
-              </div>
-              <span className="text-[#C47A92] font-mono text-[10px]">ನಕ್ಷೆಯಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ</span>
-            </div>
-          </div>
-
-          {/* Active Stop Quick Info Strip */}
-          <div className="mt-4 p-4 rounded-2xl bg-[#FFF9F7] /60 border border-[#F0DDE2] dark:border-[#F0DDE2] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="w-6 h-6 rounded-full bg-[#A25B74] text-white text-xs font-bold flex items-center justify-center">
-                  #{activeStop.id}
-                </span>
-                <h4 className="text-sm font-bold font-kannada text-[#3B2A33] ">
-                  {activeStop.name_kn}
-                </h4>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  activeStop.type === 'high_risk' 
-                    ? 'bg-[#FCF1F1] text-[#B94A58] border border-[#B94A58]/30' 
-                    : 'bg-[#A25B74]/10 text-[#A25B74]'
-                }`}>
-                  {activeStop.distance}
-                </span>
-              </div>
-              <p className="text-xs text-[#7A6670]  mt-1">
-                {activeStop.address}
-              </p>
-            </div>
-
-            {activeStop.beneficiaryId && (
-              <button
-                onClick={() => onStartVoiceVisit(activeStop.beneficiaryId)}
-                className="inline-flex items-center justify-center space-x-2 bg-[#A25B74] hover:bg-[#84455C] text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-touch active:scale-95 transition-all"
-              >
-                <Mic className="w-4 h-4" />
-                <span>ಧ್ವನಿ ಭೇಟಿ ಪ್ರಾರಂಭಿಸಿ</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Right: Detailed Itinerary Stops List (5 cols) */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold font-kannada text-[#3B2A33] ">
-              ಭೇಟಿ ವೇಳಾಪಟ್ಟಿ (Stop Itinerary)
-            </h3>
-            {/* Filter Tabs */}
-            <div className="flex bg-[#FDF6F5]  p-0.5 rounded-xl text-[10px] font-bold">
-              {[
-                { id: 'all', label: 'ಎಲ್ಲಾ' },
-                { id: 'high_risk', label: 'ತುರ್ತು' },
-                { id: 'vaccine', label: 'ಲಸಿಕೆ' },
-                { id: 'anc', label: 'ANC' }
-              ].map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => setFilter(t.id)}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    filter === t.id
-                      ? 'bg-white  text-[#A25B74] dark:text-[#A25B74] shadow-sm'
-                      : 'text-[#7A6670] '
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Stops List */}
           <div className="space-y-3">
-            {filteredStops.map((stop) => {
-              const isSelected = stop.id === selectedStopId;
-              const isHighRisk = stop.type === 'high_risk';
-
+            {waypoints.map((w, idx) => {
+              const isSelected = selectedWaypoint === w.id;
+              const isDone = visitedStops.includes(w.id);
               return (
                 <div
-                  key={stop.id}
-                  onClick={() => setSelectedStopId(stop.id)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                  key={w.id}
+                  onClick={() => setSelectedWaypoint(w.id)}
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-white  border-[#A25B74] border-[#A25B74] ring-2 ring-primary/20 shadow-card'
-                      : 'bg-white/80 /60 border-[#F0DDE2] dark:border-[#F0DDE2] hover:bg-white'
+                      ? 'bg-[#FDF6F5] border-[#A25B74] shadow-xs'
+                      : isDone
+                      ? 'bg-[#E8F7F1]/30 border-[#C8EEDD]'
+                      : 'bg-white border-[#F0DDE2] hover:bg-[#FDF6F5]'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
-                      <div className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 ${
-                        isHighRisk
-                          ? 'bg-[#FCF1F1] text-[#B94A58] border border-emergency-300'
-                          : stop.type === 'vaccine'
-                          ? 'bg-amber-50 text-amber-600 border border-amber-300'
-                          : 'bg-[#A25B74]/10 text-[#A25B74] border border-[#A25B74]/20'
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono shrink-0 ${
+                        isDone
+                          ? 'bg-[#477A60] text-white'
+                          : isSelected
+                          ? 'bg-[#A25B74] text-white'
+                          : 'bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2]'
                       }`}>
-                        #{stop.id}
+                        {isDone ? '✓' : idx}
                       </div>
-
                       <div>
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-xs font-bold font-kannada text-[#3B2A33] ">
-                            {stop.name_kn}
-                          </h4>
-                          {isHighRisk && (
-                            <span className="w-2 h-2 rounded-full bg-[#B94A58] animate-pulse"></span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-[#C47A92] ">
-                          {stop.name_en}
-                        </p>
-                        <p className="text-[11px] text-[#7A6670]  font-medium mt-1">
-                          {stop.clinicalNote || stop.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span className="text-[11px] font-mono font-bold text-[#3B2A33]  block">
-                        {stop.eta}
-                      </span>
-                      <span className="text-[10px] text-[#C47A92] font-mono block">
-                        {stop.distance}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Expanded Actions when selected */}
-                  {isSelected && (
-                    <div className="mt-3 pt-3 border-t border-[#F0DDE2] dark:border-[#F0DDE2] flex items-center justify-between">
-                      <div className="flex items-center space-x-2 text-xs">
-                        {stop.phone && (
-                          <a
-                            href={`tel:${stop.phone}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-[#FDF6F5]  text-[#3B2A33]  hover:text-[#3B2A33] font-medium"
-                          >
-                            <Phone className="w-3 h-3 text-[#A25B74]" />
-                            <span>ಕರೆ ಮಾಡಿ</span>
-                          </a>
-                        )}
-                        <span className="text-[11px] text-[#C47A92]">
-                          {stop.priority}
+                        <span className="text-sm font-bold text-[#3B2A33] block">
+                          {getLocalizedName(w)}
+                        </span>
+                        <span className="text-xs text-[#7A6670] font-medium block mt-0.5">
+                          {getLocalizedAddress(w)}
                         </span>
                       </div>
+                    </div>
 
-                      {stop.beneficiaryId && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStartVoiceVisit(stop.beneficiaryId);
-                          }}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-[#A25B74] text-white text-xs font-bold hover:bg-[#A25B74]-hover shadow-sm"
-                        >
-                          <Mic className="w-3 h-3" />
-                          <span>ಭೇಟಿ ಆರಂಭಿಸಿ</span>
-                        </button>
-                      )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleVisitStatus(w.id);
+                      }}
+                      className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all ${
+                        isDone
+                          ? 'bg-[#477A60] text-white border-[#477A60]'
+                          : 'bg-white text-[#7A6670] border-[#F0DDE2] hover:bg-[#FDF6F5]'
+                      }`}
+                    >
+                      {isDone ? t("common.completed") : t("route.markVisited")}
+                    </button>
+                  </div>
+
+                  {w.clinicalNote_en && (
+                    <div className="mt-2.5 pt-2 border-t border-[#F0DDE2]/60 text-xs text-[#7A6670] font-medium flex items-center justify-between">
+                      <span className="line-clamp-1">{getLocalizedNote(w)}</span>
+                      <span className="font-mono text-[10px] text-[#A25B74] font-bold ml-2 shrink-0">
+                        {w.walkTime}
+                      </span>
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-
-          {/* Quick Summary Card */}
-          <div className="p-4 rounded-2xl bg-[#A25B74]/5 border border-[#F0DDE2] space-y-2">
-            <div className="flex items-center space-x-2 text-xs font-bold text-[#A25B74] dark:text-[#A25B74]">
-              <Sparkles className="w-4 h-4" />
-              <span>AI ಮಾರ್ಗ ಶಿಫಾರಸು (Smart Routing Insight)</span>
-            </div>
-            <p className="text-xs text-[#7A6670]  leading-relaxed font-kannada">
-              ಮೀನಾಕ್ಷಿಯವರಿಗೆ ತೀವ್ರ ರಕ್ತಹೀನತೆ ಮತ್ತು ಅಧಿಕ ರಕ್ತದೊತ್ತಡ ಇರುವುದರಿಂದ, ಅವರ ಮನೆಗೆ ಬೆಳಿಗ್ಗೆ 9:20 ಕ್ಕೆ ಮೊದಲ ಭೇಟಿ ನೀಡಲು ಮಾರ್ಗವನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗಿದೆ. 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಮತ್ತು PHC ಮೆಡಿಕಲ್ ಆಫೀಸರ್ ಸಂಪರ್ಕ ಸಿದ್ಧವಾಗಿದೆ.
-            </p>
-          </div>
         </div>
 
+        {/* Selected Stop Details (Span 5) */}
+        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-5">
+          <div className="border-b border-[#F0DDE2] pb-3">
+            <span className="text-xs font-bold text-[#A25B74] block uppercase tracking-wider font-mono">
+              {t("route.nextStop")}
+            </span>
+            <h3 className="text-xl font-bold text-[#3B2A33] mt-0.5">
+              {getLocalizedName(currentStop)}
+            </h3>
+            <p className="text-xs text-[#7A6670] mt-1">
+              {getLocalizedAddress(currentStop)}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2]">
+              <span className="text-[11px] text-[#7A6670] block">{t("ambulance.distance")}</span>
+              <span className="text-lg font-bold font-mono text-[#3B2A33] mt-0.5 block">{currentStop.distanceFromPrev}</span>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2]">
+              <span className="text-[11px] text-[#7A6670] block">{t("ambulance.eta")}</span>
+              <span className="text-lg font-bold font-mono text-[#477A60] mt-0.5 block">{currentStop.walkTime}</span>
+            </div>
+          </div>
+
+          {currentStop.clinicalNote_en && (
+            <div className="p-4 rounded-2xl bg-[#FFF9F7] border border-[#F0DDE2] space-y-1.5">
+              <span className="text-xs font-bold text-[#A25B74] block">
+                {t("structuredRecord.clinicalObservations")}:
+              </span>
+              <p className="text-xs text-[#3B2A33] leading-relaxed">
+                {getLocalizedNote(currentStop)}
+              </p>
+            </div>
+          )}
+
+          {currentStop.beneficiaryId && (
+            <div className="space-y-2 pt-2">
+              <button
+                onClick={() => onStartVoiceVisit && onStartVoiceVisit(currentStop.beneficiaryId)}
+                className="w-full bg-[#A25B74] hover:bg-[#84455C] text-white font-bold py-3.5 px-4 rounded-2xl shadow-md shadow-[#A25B74]/20 flex items-center justify-center space-x-2 text-sm active:scale-95 transition-all"
+              >
+                <Mic className="w-4 h-4" />
+                <span>{t("common.startVisit")}</span>
+              </button>
+
+              {currentStop.phone && (
+                <button
+                  onClick={() => window.open(`tel:${currentStop.phone}`, '_self')}
+                  className="w-full bg-[#FDF6F5] hover:bg-[#F9ECEC] text-[#3B2A33] font-bold py-2.5 px-4 rounded-xl border border-[#F0DDE2] flex items-center justify-center space-x-2 text-xs transition-all"
+                >
+                  <Phone className="w-3.5 h-3.5 text-[#A25B74]" />
+                  <span>{currentStop.phone}</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

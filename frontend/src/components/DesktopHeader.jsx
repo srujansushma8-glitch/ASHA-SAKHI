@@ -1,31 +1,24 @@
-import { getLanguageByCode } from '../services/languages';
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Bell, 
-  Calendar, 
-  MapPin, 
   Search, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Wifi, 
-  Sparkles,
-  HeartPulse,
-  User,
-  Globe,
-  Command,
-  Moon,
+  Calendar, 
+  Globe, 
+  ShieldAlert, 
+  Sparkles, 
+  Moon, 
   Sun,
-  ExternalLink
+  MapPin
 } from 'lucide-react';
+import { getLanguageByCode } from '../services/languages';
+import { useLanguage } from '../context/LanguageContext';
 
-export default function DesktopHeader({ 
-  activeScreen, 
-  emergencyCount = 0, 
+export default function DesktopHeader({
+  activeScreen,
+  emergencyCount = 0,
   onEmergencyClick,
-  onSearchChange,
   searchValue = '',
-  currentLanguage = 'kn',
-  onLanguageChange,
+  onSearchChange,
   onOpenLanguageSelector,
   onOpenCommandPalette,
   onViewLanding,
@@ -34,94 +27,83 @@ export default function DesktopHeader({
   userRole = 'asha',
   onOpenAuth
 }) {
+  const { t, currentLanguage, onLanguageChange, formatDate } = useLanguage();
+
   const getScreenDetails = () => {
     switch (activeScreen) {
       case 'home':
         return {
-          title_kn: 'ಆಶಾ ಮುಖ್ಯ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
-          title_en: 'Field Assistant Dashboard',
-          subtitle: 'ಮಂಡ್ಯ ತಾಲೂಕು PHC (ಶಿವಳ್ಳಿ & ಕೆರೆಗೋಡು ವಲಯ - Sector 4)'
+          title: t('nav.dashboard'),
+          subtitle: t('common.mandyaSector')
         };
       case 'route':
         return {
-          title_kn: 'ಗ್ರಾಮ ಮನೆ ಭೇಟಿ ನಕ್ಷೆ',
-          title_en: 'Village Household Route Planner',
-          subtitle: 'ದಿನನಿತ್ಯದ ಕ್ಷೇತ್ರ ಭೇಟಿ ಮತ್ತು ಆಪ್ಟಿಮೈಸ್ಡ್ ಜಿಪಿಎಸ್ ನಕ್ಷೆ (Mandya Sector 4)'
+          title: t('route.title'),
+          subtitle: t('route.subtitle')
         };
       case 'incentives':
         return {
-          title_kn: 'ಆಶಾ ಪ್ರೋತ್ಸಾಹಧನ ಲೆಕ್ಕಪತ್ರ',
-          title_en: 'Incentives & NHM Ledger',
-          subtitle: 'JSY, ಲಸಿಕಾ ಪ್ರೋತ್ಸಾಹಧನ, ಮಾಸಿಕ ಗಳಿಕೆ ಮತ್ತು ಮೇಲ್ವಿಚಾರಕರ ಅನುಮೋದನೆ'
+          title: t('incentives.title'),
+          subtitle: t('incentives.subtitle')
         };
       case 'record':
         return {
-          title_kn: 'ಧ್ವನಿ ಕ್ಷೇತ್ರ ದಿನಚರಿ',
-          title_en: 'AI Voice Assistant',
-          subtitle: 'AI4Bharat Indic-Transcribe ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆ & ಸ್ವಯಂಚಾಲಿತ ದಾಖಲೀಕರಣ'
+          title: t('voice.title'),
+          subtitle: t('voice.subtitle')
         };
       case 'maternal':
         return {
-          title_kn: 'ತಾಯಿ ಮತ್ತು ಗರ್ಭಿಣಿ ಆರೋಗ್ಯ ವಿಶ್ಲೇಷಣೆ',
-          title_en: 'Maternal Healthcare Module',
-          subtitle: 'ಗರ್ಭಾವಸ್ಥೆ ಟ್ರ್ಯಾಕರ್, ತಪಾಸಣೆ, ಪೌಷ್ಟಿಕಾಂಶ & ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳ ಪರಿಶೀಲನೆ'
+          title: t('maternal.title'),
+          subtitle: t('maternal.subtitle')
         };
       case 'structured_record':
         return {
-          title_kn: 'ರಚನಾತ್ಮಕ ಭೇಟಿ ದಾಖಲೆ',
-          title_en: 'Structured Clinical Visit Record',
-          subtitle: 'ತಾಯಿ-ಮಗು ಆರೈಕೆ, ಲಸಿಕೆ ಮತ್ತು ಪರೀಕ್ಷಾ ವಿವರಗಳು'
+          title: t('structuredRecord.title'),
+          subtitle: t('structuredRecord.subtitle')
         };
       case 'emergency':
         return {
-          title_kn: 'ತುರ್ತು ಅಪಾಯಕಾರಿ ಎಚ್ಚರಿಕೆ',
-          title_en: 'Emergency Danger Sign & Referral',
-          subtitle: 'MoHFW ಧೃಢೀಕೃತ ತುರ್ತು ರೆಫರಲ್ ಮತ್ತು 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ನಿರ್ವಹಣೆ'
+          title: t('emergency.title'),
+          subtitle: t('emergency.subtitle')
         };
       case 'ambulance':
         return {
-          title_kn: '108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಲೈವ್ ಟ್ರ್ಯಾಕರ್',
-          title_en: '108 Ambulance Dispatch Simulator',
-          subtitle: 'ನೈಜ ಸಮಯದ ಜಿಪಿಎಸ್ ನಕ್ಷೆ ಮತ್ತು ಚಾಲಕರ ಸಂಪರ್ಕ'
+          title: t('ambulance.title'),
+          subtitle: t('ambulance.subtitle')
+        };
+      case 'ambulance_driver':
+        return {
+          title: t('ambulanceDriver.title'),
+          subtitle: t('ambulanceDriver.subtitle')
         };
       case 'followups':
         return {
-          title_kn: 'ಫಾಲೋ-ಅಪ್ ಮತ್ತು ವರದಿಗಳು',
-          title_en: 'Follow-ups & Clinical Schedule',
-          subtitle: 'ಮುಂಬರುವ ಗರ್ಭಿಣಿ ಮತ್ತು ನವಜಾತ ಶಿಶು ಮನೆ ಭೇಟಿಗಳು'
+          title: t('nav.followups'),
+          subtitle: t('dashboard.maternalSubtext')
         };
       case 'beneficiaries':
         return {
-          title_kn: 'ಫಲಾನುಭವಿಗಳ ಸಮುದಾಯ ರಿಜಿಸ್ಟರ್',
-          title_en: 'Beneficiary Community Directory',
-          subtitle: 'ಶಿವಳ್ಳಿ ಮತ್ತು ಕೆರೆಗೋಡು ಉಪಕೇಂದ್ರ ವ್ಯಾಪ್ತಿಯ ನಿವಾಸಿಗಳು'
+          title: t('beneficiaries.title'),
+          subtitle: t('beneficiaries.subtitle')
         };
       default:
         return {
-          title_kn: 'ಆಶಾ ಸಖಿ ದಿನಚರಿ',
-          title_en: 'ASHA Sakhi Health Register',
-          subtitle: 'ಕರ್ನಾಟಕ ಆರೋಗ್ಯ ಇಲಾಖೆ'
+          title: t('common.appName'),
+          subtitle: t('common.department')
         };
     }
   };
 
   const details = getScreenDetails();
-  const todayFormatted = new Intl.DateTimeFormat('kn-IN', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(new Date());
-
-  const todayEnglish = new Intl.DateTimeFormat('en-IN', {
+  const todayFormatted = formatDate(new Date(), {
     weekday: 'short',
-    day: 'numeric',
     month: 'short',
+    day: 'numeric',
     year: 'numeric'
-  }).format(new Date());
+  });
 
-  const roleName = userRole === 'mo' ? 'ಡಾ. ರಾಜೇಶ್' : userRole === 'anm' ? 'ಪುಷ್ಪಲತಾ' : 'ಶಾರದಾ ಬಾಯಿ';
-  const roleTitle = userRole === 'mo' ? 'Medical Officer' : userRole === 'anm' ? 'ANM Supervisor' : 'ASHA Field Leader';
+  const roleName = userRole === 'mo' ? 'Dr. Rajesh MO' : userRole === 'anm' ? 'Pushpalatha ANM' : 'Sharada Bai';
+  const roleTitle = userRole === 'mo' ? t('auth.roleMo') : userRole === 'anm' ? t('auth.roleAnm') : t('auth.roleAsha');
 
   return (
     <header className="hidden lg:flex items-center justify-between px-8 py-3.5 bg-[#FFF9F7]/95 backdrop-blur-md border-b border-[#F0DDE2] shadow-subtle sticky top-0 z-30 transition-colors">
@@ -130,11 +112,8 @@ export default function DesktopHeader({
         <div>
           <div className="flex items-center space-x-2.5">
             <h1 className="text-xl font-cormorant font-bold text-[#3B2A33] tracking-tight leading-tight">
-              {details.title_kn}
+              {details.title}
             </h1>
-            <span className="text-[10px] font-mono font-bold text-[#A25B74] bg-[#FDF6F5] px-2.5 py-0.5 rounded-full border border-[#F0DDE2]">
-              {details.title_en}
-            </span>
           </div>
           <p className="text-xs text-[#7A6670] font-medium mt-0.5 flex items-center">
             <MapPin className="w-3.5 h-3.5 mr-1 text-[#A25B74] shrink-0" />
@@ -151,8 +130,8 @@ export default function DesktopHeader({
           value={searchValue}
           onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
           onClick={() => onOpenCommandPalette && onOpenCommandPalette()}
-          placeholder="ಹುಡುಕಿ ಅಥವಾ ಕಮಾಂಡ್ (Search)..."
-          className="w-full text-xs font-medium pl-10 pr-20 py-2.5 bg-white border border-[#F0DDE2] text-[#3B2A33] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#A25B74] font-kannada cursor-pointer transition-all shadow-xs"
+          placeholder={t("common.search")}
+          className="w-full text-xs font-medium pl-10 pr-20 py-2.5 bg-white border border-[#F0DDE2] text-[#3B2A33] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#A25B74] cursor-pointer transition-all shadow-xs"
         />
         <button
           onClick={onOpenCommandPalette}
@@ -175,21 +154,16 @@ export default function DesktopHeader({
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#FDF6F5] hover:bg-[#F9ECEC] border border-[#F0DDE2] text-[#A25B74] text-xs font-bold transition-all shadow-xs"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#A25B74]" />
-            <span className="font-cormorant font-bold text-sm">Public Portal</span>
+            <span className="font-cormorant font-bold text-sm">{t("nav.publicPortal")}</span>
           </button>
         )}
 
         {/* Date Indicator */}
         <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-[#FDF6F5] border border-[#F0DDE2] text-xs">
           <Calendar className="w-4 h-4 text-[#A25B74]" />
-          <div className="text-right">
-            <span className="block font-bold text-[#3B2A33] font-kannada text-[11px] leading-tight">
-              {todayFormatted}
-            </span>
-            <span className="block text-[10px] text-[#7A6670] font-mono font-medium">
-              {todayEnglish}
-            </span>
-          </div>
+          <span className="font-bold text-[#3B2A33] text-[11px] leading-tight">
+            {todayFormatted}
+          </span>
         </div>
 
         {/* Language Selector */}
@@ -198,7 +172,7 @@ export default function DesktopHeader({
             <button
               onClick={onOpenLanguageSelector}
               className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-white text-[#A25B74] hover:text-[#84455C] font-bold border border-[#F0DDE2] shadow-xs transition-all"
-              title="All 22 Scheduled Indic Languages"
+              title="All 22 Scheduled Indic Languages + English"
             >
               <Globe className="w-3.5 h-3.5 text-[#A25B74]" />
               <span>{getLanguageByCode(currentLanguage).name_native}</span>
@@ -218,44 +192,44 @@ export default function DesktopHeader({
                     : 'text-[#7A6670] hover:text-[#3B2A33]'
                 }`}
               >
-                {code === 'en' ? 'EN' : l.name_native}
+                {l.code.toUpperCase()}
               </button>
             );
           })}
         </div>
 
-        {/* Emergency Alert Button with Badge */}
+        {/* Emergency Alert Indicator Icon */}
         <button
           onClick={onEmergencyClick}
-          className={`relative p-2 rounded-xl border transition-all active:scale-[0.98] ${
+          className={`relative p-2 rounded-xl transition-all ${
             emergencyCount > 0
-              ? 'bg-[#FCF1F1] border-[#B94A58]/40 text-[#B94A58] animate-pulse hover:bg-[#F8DADA] shadow-md shadow-[#B94A58]/20'
-              : 'bg-white border-[#F0DDE2] text-[#7A6670] hover:bg-[#FDF6F5]'
+              ? 'bg-[#B94A58] text-white animate-pulse shadow-md shadow-[#B94A58]/25'
+              : 'bg-[#FDF6F5] hover:bg-[#F9ECEC] text-[#7A6670] border border-[#F0DDE2]'
           }`}
-          title="ತುರ್ತು ಎಚ್ಚರಿಕೆಗಳು (Emergency Alerts)"
+          title={t("emergency.title")}
         >
           <Bell className="w-4 h-4" />
           {emergencyCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-[#B94A58] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-xs">
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#B94A58] text-white text-[9px] font-mono font-bold flex items-center justify-center border-2 border-white">
               {emergencyCount}
             </span>
           )}
         </button>
 
-        {/* Profile Pill */}
+        {/* User Role Mini Chip */}
         <div 
           onClick={onOpenAuth}
-          className="flex items-center space-x-2.5 pl-2 border-l border-[#F0DDE2] cursor-pointer group"
-          title="Click to Switch Role or Log In"
+          className="flex items-center space-x-2.5 pl-2.5 pr-3 py-1.5 rounded-xl bg-white border border-[#F0DDE2] shadow-xs cursor-pointer hover:border-[#A25B74] transition-all"
+          title={t("nav.switchRole")}
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#A25B74] to-[#C47A92] text-white flex items-center justify-center font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#A25B74] to-[#C47A92] text-white flex items-center justify-center text-xs font-bold shadow-xs">
             {userRole === 'mo' ? '👨‍⚕️' : userRole === 'anm' ? '👩‍🏫' : '👩‍⚕️'}
           </div>
-          <div className="text-left hidden xl:block">
-            <span className="block text-xs font-bold text-[#3B2A33] font-kannada leading-tight group-hover:text-[#A25B74]">
+          <div className="text-left">
+            <span className="block text-xs font-bold text-[#3B2A33] leading-none">
               {roleName}
             </span>
-            <span className="block text-[10px] text-[#A25B74] font-medium">
+            <span className="block text-[9px] text-[#A25B74] font-medium leading-tight mt-0.5">
               {roleTitle}
             </span>
           </div>

@@ -24,14 +24,15 @@ import {
   FileText
 } from 'lucide-react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function BeneficiaryManagementScreen({
-  currentLanguage = 'kn', 
   onStartVoiceVisit, 
   onBack,
   selectedBeneficiaryId = null,
   initialSearchQuery = ''
 }) {
+  const { language, t, dir, isRtl, langInfo } = useLanguage();
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -42,7 +43,7 @@ export default function BeneficiaryManagementScreen({
     name_en: '',
     age: '',
     phone: '',
-    village: 'Shivalli, Mandya PHC',
+    village: 'Shivalli, Mandya Sector 4',
     category: 'ANC',
     subCategory: '1st Trimester',
     bloodGroup: 'B+',
@@ -75,6 +76,8 @@ export default function BeneficiaryManagementScreen({
 
     const created = await api.addBeneficiary({
       ...newBeneficiary,
+      name_en: newBeneficiary.name_en || newBeneficiary.name_kn,
+      name_kn: newBeneficiary.name_kn || newBeneficiary.name_en,
       age: parseInt(newBeneficiary.age) || 24,
       weight: parseFloat(newBeneficiary.weight) || 50.0,
       highRisk: false,
@@ -86,7 +89,7 @@ export default function BeneficiaryManagementScreen({
 
     setIsAddModalOpen(false);
     loadBeneficiaries();
-    setToastMessage(`ಹೊಸ ಫಲಾನುಭವಿ ${created.name_kn || created.name_en} ನೋಂದಾಯಿಸಲಾಗಿದೆ.`);
+    setToastMessage(t('beneficiaries.registerSuccess', { name: created.name_en || created.name_kn }));
     setTimeout(() => setToastMessage(''), 3000);
   };
 
@@ -107,7 +110,7 @@ export default function BeneficiaryManagementScreen({
   });
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
+    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12" dir={dir}>
       {/* 1. Header with Add Button */}
       <div className="bg-white rounded-3xl p-5 lg:p-6 border border-[#F0DDE2] shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
@@ -116,15 +119,15 @@ export default function BeneficiaryManagementScreen({
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg lg:text-xl font-bold font-kannada text-[#3B2A33] leading-tight">
-                ಫಲಾನುಭವಿಗಳ ಸಮುದಾಯ ರಿಜಿಸ್ಟರ್ (Beneficiary Directory)
+              <h1 className="text-lg lg:text-xl font-bold text-[#3B2A33] leading-tight font-serif">
+                {t('beneficiaries.title')}
               </h1>
               <span className="text-xs font-mono font-bold bg-[#FDF6F5] text-[#A25B74] px-2.5 py-0.5 rounded-full border border-[#F0DDE2]">
-                ಒಟ್ಟು: {beneficiaries.length}
+                {t('beneficiaries.totalCount', { count: beneficiaries.length })}
               </span>
             </div>
             <p className="text-xs text-[#7A6670] font-medium mt-0.5">
-              ಶಿವಳ್ಳಿ ಮತ್ತು ಕೆರೆಗೋಡು ಉಪಕೇಂದ್ರ (Mandya PHC Sector 4)
+              {t('beneficiaries.sectorInfo')}
             </p>
           </div>
         </div>
@@ -134,7 +137,7 @@ export default function BeneficiaryManagementScreen({
           className="flex items-center justify-center space-x-2 bg-[#A25B74] hover:bg-[#84455C] text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-touch active:scale-95 transition-decelerate touch-manipulation self-start sm:self-auto"
         >
           <UserPlus className="w-4 h-4" />
-          <span className="font-kannada text-sm">ಹೊಸ ಫಲಾನುಭವಿ ನೋಂದಣಿ</span>
+          <span className="text-sm">{t('beneficiaries.registerNew')}</span>
         </button>
       </div>
 
@@ -153,19 +156,19 @@ export default function BeneficiaryManagementScreen({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ಹೆಸರು, ID ಅಥವಾ ಗ್ರಾಮ ಹುಡುಕಿ (Search by Name, ID, Village)..."
-            className="w-full text-xs font-medium pl-10 pr-4 py-3 bg-[#FDF6F5] border border-[#F0DDE2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#A25B74] focus:bg-white font-kannada transition-decelerate"
+            placeholder={t('beneficiaries.searchPlaceholder')}
+            className="w-full text-xs font-medium pl-10 pr-4 py-3 bg-[#FDF6F5] border border-[#F0DDE2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#A25B74] focus:bg-white transition-decelerate"
           />
         </div>
 
         {/* Category Filters */}
         <div className="flex space-x-2 overflow-x-auto scrollbar-none pb-0.5">
           {[
-            { id: 'ALL', label: 'ಎಲ್ಲಾ (All)' },
-            { id: 'ANC', label: '🤰 ANC ಗರ್ಭಿಣಿ' },
-            { id: 'CHILD', label: '👶 ಮಕ್ಕಳ ಲಸಿಕೆ' },
-            { id: 'PNC', label: '🤱 ಬಾಣಂತಿ (PNC)' },
-            { id: 'HIGH_RISK', label: '⚠️ High Risk' }
+            { id: 'ALL', label: t('beneficiaries.tabAll', { count: beneficiaries.length }) },
+            { id: 'ANC', label: t('beneficiaries.tabAnc') },
+            { id: 'CHILD', label: t('beneficiaries.tabChild') },
+            { id: 'PNC', label: t('beneficiaries.tabPnc') },
+            { id: 'HIGH_RISK', label: t('beneficiaries.tabHighRisk') }
           ].map((cat) => (
             <button
               key={cat.id}
@@ -173,7 +176,7 @@ export default function BeneficiaryManagementScreen({
               className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap active:scale-95 transition-decelerate ${
                 categoryFilter === cat.id
                   ? cat.id === 'HIGH_RISK'
-                    ? 'bg-emergency text-white shadow-emergency'
+                    ? 'bg-[#B94A58] text-white shadow-md'
                     : 'bg-[#A25B74] text-white shadow-touch'
                   : 'bg-[#FDF6F5] text-[#3B2A33] hover:bg-[#FDF6F5] border border-[#F0DDE2]'
               }`}
@@ -190,7 +193,7 @@ export default function BeneficiaryManagementScreen({
           <div
             key={b.id}
             onClick={() => setSelectedProfile(b)}
-            className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card hover:border-primary hover:shadow-card-hover transition-decelerate cursor-pointer active:scale-[0.98] flex flex-col justify-between space-y-4 group"
+            className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card hover:border-[#A25B74] hover:shadow-card-hover transition-decelerate cursor-pointer active:scale-[0.98] flex flex-col justify-between space-y-4 group"
           >
             <div className="space-y-3">
               <div className="flex items-start justify-between">
@@ -198,94 +201,78 @@ export default function BeneficiaryManagementScreen({
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-base group-hover:scale-105 transition-decelerate ${
                     b.category === 'ANC'
                       ? 'bg-[#F9ECEC] text-[#A25B74] border border-[#F0DDE2]'
-                      : 'bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2]'
+                      : b.category === 'PNC'
+                      ? 'bg-[#FFF9F7] text-[#C47A92] border border-[#F0DDE2]'
+                      : 'bg-[#FEF9EF] text-[#B88745] border border-amber-200'
                   }`}>
-                    {b.name_kn?.slice(0, 1) || b.name_en?.slice(0, 1) || 'A'}
+                    {b.category === 'ANC' ? '🤰' : b.category === 'PNC' ? '🤱' : '👶'}
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-[#3B2A33] font-kannada leading-tight">
-                      {b.name_kn || b.name_en}
+                    <h3 className="text-base font-bold text-[#3B2A33] leading-tight font-serif group-hover:text-[#A25B74] transition-colors">
+                      {language === 'kn' ? (b.name_kn || b.name_en) : b.name_en}
                     </h3>
-                    <span className="text-[11px] font-mono font-bold text-[#C47A92]">
-                      ID: {b.id}
-                    </span>
+                    <p className="text-xs text-[#7A6670] mt-0.5">{b.subCategory || b.category} • {b.age} yrs</p>
                   </div>
                 </div>
 
                 {b.highRisk && (
-                  <span className="text-[10px] bg-emergency text-white font-bold px-2.5 py-0.5 rounded-full animate-pulse shadow-emergency">
-                    High Risk
+                  <span className="p-1.5 rounded-xl bg-[#FCF1F1] text-[#B94A58] border border-[#B94A58]/20 animate-pulse" title="High Risk">
+                    <AlertTriangle className="w-4 h-4" />
                   </span>
                 )}
               </div>
 
-              {/* Tag Badges */}
-              <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                <span className={`px-2.5 py-0.5 rounded-full font-bold text-[11px] border ${
-                  b.category === 'ANC'
-                    ? 'bg-[#FDF6F5] text-[#A25B74] border-[#F0DDE2]'
-                    : 'bg-[#FDF6F5] text-[#A25B74] border-[#F0DDE2]'
-                }`}>
-                  {b.category}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#FDF6F5] text-[#3B2A33] font-semibold text-[11px] border border-[#F0DDE2]">
-                  ವಯಸ್ಸು: {b.age || 25}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#FDF6F5] text-[#3B2A33] font-semibold text-[11px] border border-[#F0DDE2] font-mono">
-                  ರಕ್ತ: {b.bloodGroup || 'O+'}
-                </span>
-              </div>
-
-              <p className="text-xs text-[#7A6670] flex items-center font-medium pt-1">
-                <MapPin className="w-3.5 h-3.5 mr-1.5 text-[#A25B74] shrink-0" />
-                {b.village}
-              </p>
-
-              {/* SubCategory or Clinical Note */}
-              {b.subCategory && (
-                <p className="text-[11px] text-[#7A6670] bg-[#FDF6F5] px-3 py-1.5 rounded-xl border border-[#F0DDE2] font-medium">
-                  {b.subCategory}
+              <div className="space-y-1.5 text-xs text-[#7A6670] pt-1">
+                <p className="flex items-center">
+                  <Phone className="w-3.5 h-3.5 mr-2 text-[#A25B74]" />
+                  <span>{b.phone}</span>
                 </p>
-              )}
+                <p className="flex items-center">
+                  <MapPin className="w-3.5 h-3.5 mr-2 text-[#A25B74]" />
+                  <span>{b.village}</span>
+                </p>
+                <p className="flex items-center">
+                  <Calendar className="w-3.5 h-3.5 mr-2 text-[#A25B74]" />
+                  <span>{t('structuredRecord.nextVisit')}: {b.nextVisitDate || b.lastVisitDate}</span>
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-[#F0DDE2] text-xs">
-              <span className="text-[#C47A92] font-medium">ತೂಕ: {b.weight || 52} kg</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStartVoiceVisit(b.id);
-                }}
-                className="text-[#A25B74] font-bold hover:text-[#A25B74] flex items-center space-x-1"
-              >
-                <Mic className="w-3.5 h-3.5" />
-                <span>ಭೇಟಿ ಪ್ರಾರಂಭಿಸಿ</span>
-              </button>
+              <span className="font-mono text-[#C47A92] font-semibold">ID: {b.id}</span>
+              <span className="text-[#A25B74] font-bold flex items-center group-hover:translate-x-1 transition-transform">
+                {t('common.viewDetails')}
+                <ChevronRight className="w-4 h-4 ml-0.5" />
+              </span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 4. Beneficiary Profile Modal / Drawer with History */}
+      {/* 4. Beneficiary Details Slide-Over or Modal */}
       {selectedProfile && (
         <div className="fixed inset-0 z-50 bg-[#3B2A33]/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-lg rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-5 max-h-[88vh] overflow-y-auto">
-            <div className="flex items-start justify-between border-b border-[#F0DDE2] pb-3">
-              <div>
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                  selectedProfile.category === 'ANC'
-                    ? 'bg-[#FDF6F5] text-[#A25B74] border-[#F0DDE2]'
-                    : 'bg-[#FDF6F5] text-[#A25B74] border-[#F0DDE2]'
-                }`}>
-                  {selectedProfile.category}
-                </span>
-                <h3 className="text-xl font-bold font-kannada text-[#3B2A33] mt-1.5">
-                  {selectedProfile.name_kn || selectedProfile.name_en}
-                </h3>
-                <p className="text-xs text-[#7A6670] font-mono font-bold">
-                  {selectedProfile.id}
-                </p>
+          <div className="bg-white w-full max-w-xl rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between border-b border-[#F0DDE2] pb-4">
+              <div className="flex items-center space-x-3.5">
+                <div className="w-14 h-14 rounded-2xl bg-[#F9ECEC] text-[#A25B74] flex items-center justify-center text-2xl font-bold border border-[#F0DDE2]">
+                  {selectedProfile.category === 'ANC' ? '🤰' : selectedProfile.category === 'PNC' ? '🤱' : '👶'}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-[#3B2A33] font-serif">
+                    {language === 'kn' ? (selectedProfile.name_kn || selectedProfile.name_en) : selectedProfile.name_en}
+                  </h3>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className="text-xs font-mono font-bold bg-[#FDF6F5] text-[#3B2A33] px-2.5 py-0.5 rounded-lg border border-[#F0DDE2]">
+                      ID: {selectedProfile.id}
+                    </span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#FDF6F5] text-[#A25B74] font-bold border border-[#F0DDE2]">
+                      {selectedProfile.category}
+                    </span>
+                  </div>
+                </div>
               </div>
+
               <button
                 onClick={() => setSelectedProfile(null)}
                 className="p-2 rounded-xl hover:bg-[#FDF6F5] text-[#C47A92]"
@@ -294,56 +281,42 @@ export default function BeneficiaryManagementScreen({
               </button>
             </div>
 
-            {/* Vitals Summary Grid */}
-            <div className="grid grid-cols-3 gap-3 text-center text-xs">
-              <div className="p-3 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2]">
-                <span className="text-[10px] text-[#C47A92] block font-medium">ವಯಸ್ಸು (Age)</span>
-                <span className="font-bold text-[#3B2A33] text-base font-mono">{selectedProfile.age || 24}</span>
+            {/* Quick Vitals Profile */}
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-[#FDF6F5] p-3 rounded-2xl border border-[#F0DDE2]">
+                <span className="text-[10px] text-[#C47A92] uppercase font-bold block">{t('common.age')}</span>
+                <span className="text-lg font-bold text-[#3B2A33]">{selectedProfile.age} yrs</span>
               </div>
-              <div className="p-3 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2]">
-                <span className="text-[10px] text-[#C47A92] block font-medium">ತೂಕ (Weight)</span>
-                <span className="font-bold text-[#3B2A33] text-base font-mono">{selectedProfile.weight || 52} kg</span>
+              <div className="bg-[#FDF6F5] p-3 rounded-2xl border border-[#F0DDE2]">
+                <span className="text-[10px] text-[#C47A92] uppercase font-bold block">{t('common.weight')}</span>
+                <span className="text-lg font-bold text-[#3B2A33]">{selectedProfile.weight || 52} kg</span>
               </div>
-              <div className="p-3 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2]">
-                <span className="text-[10px] text-[#C47A92] block font-medium">ರಕ್ತ ಗುಂಪು</span>
-                <span className="font-bold text-[#3B2A33] text-base font-mono">{selectedProfile.bloodGroup || 'B+'}</span>
-              </div>
-            </div>
-
-            {/* Location & Contact */}
-            <div className="p-4 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-xs space-y-2 font-medium">
-              <div className="flex items-center text-[#3B2A33]">
-                <MapPin className="w-4 h-4 mr-2 text-[#A25B74] shrink-0" />
-                <span>{selectedProfile.village}</span>
-              </div>
-              <div className="flex items-center text-[#3B2A33]">
-                <Phone className="w-4 h-4 mr-2 text-[#A25B74] shrink-0" />
-                <span>{selectedProfile.phone || '+91 94480 12345'}</span>
+              <div className="bg-[#FDF6F5] p-3 rounded-2xl border border-[#F0DDE2]">
+                <span className="text-[10px] text-[#C47A92] uppercase font-bold block">{t('beneficiaries.bloodGroupLabel')}</span>
+                <span className="text-lg font-bold text-[#A25B74]">{selectedProfile.bloodGroup || 'B+'}</span>
               </div>
             </div>
 
-            {/* Visit History Section */}
-            {selectedProfile.visitHistory && selectedProfile.visitHistory.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[#3B2A33] font-kannada flex items-center space-x-1.5">
-                  <History className="w-3.5 h-3.5 text-[#A25B74]" />
-                  <span>ಹಿಂದಿನ ಭೇಟಿ ಇತಿಹಾಸ (Visit History)</span>
-                </h4>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {selectedProfile.visitHistory.map((vh, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-[#FDF6F5]/60 border border-[#F0DDE2] text-xs space-y-1">
-                      <div className="flex justify-between font-bold text-[#3B2A33]">
-                        <span>{vh.type}</span>
-                        <span className="font-mono text-[10px] text-[#7A6670]">{vh.date}</span>
-                      </div>
-                      <p className="text-[11px] text-[#7A6670]">{vh.notes}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Details */}
+            <div className="space-y-2 text-xs text-[#7A6670] bg-[#FDF6F5] p-4 rounded-2xl border border-[#F0DDE2]">
+              <p className="flex items-center">
+                <MapPin className="w-4 h-4 mr-2 text-[#A25B74]" />
+                <span className="font-semibold text-[#3B2A33] mr-1">{t('beneficiaries.villageLabel')}:</span>
+                {selectedProfile.village}
+              </p>
+              <p className="flex items-center">
+                <Phone className="w-4 h-4 mr-2 text-[#A25B74]" />
+                <span className="font-semibold text-[#3B2A33] mr-1">{t('beneficiaries.phoneLabel')}:</span>
+                {selectedProfile.phone}
+              </p>
+              <p className="flex items-center">
+                <Calendar className="w-4 h-4 mr-2 text-[#A25B74]" />
+                <span className="font-semibold text-[#3B2A33] mr-1">{t('structuredRecord.nextVisit')}:</span>
+                {selectedProfile.nextVisitDate || selectedProfile.lastVisitDate}
+              </p>
+            </div>
 
-            {/* Start Voice Visit CTA */}
+            {/* Action CTA */}
             <button
               onClick={() => {
                 const id = selectedProfile.id;
@@ -353,7 +326,7 @@ export default function BeneficiaryManagementScreen({
               className="w-full bg-[#A25B74] hover:bg-[#84455C] text-white text-sm font-bold py-4 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 active:scale-95 transition-decelerate touch-manipulation"
             >
               <Mic className="w-5 h-5" />
-              <span className="font-kannada">ಈ ಫಲಾನುಭವಿಗೆ ಧ್ವನಿ ಭೇಟಿ ಪ್ರಾರಂಭಿಸಿ (Start Voice Visit)</span>
+              <span>{t('followup.voiceVisitBtn')}</span>
             </button>
           </div>
         </div>
@@ -367,8 +340,8 @@ export default function BeneficiaryManagementScreen({
             className="bg-white w-full max-w-lg rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-3">
-              <h3 className="text-base font-bold font-kannada text-[#3B2A33]">
-                ಹೊಸ ಫಲಾನುಭವಿ ನೋಂದಣಿ (New Beneficiary Registration)
+              <h3 className="text-base font-bold text-[#3B2A33] font-serif">
+                {t('beneficiaries.registerNew')}
               </h3>
               <button
                 type="button"
@@ -381,35 +354,22 @@ export default function BeneficiaryManagementScreen({
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-[#3B2A33] font-bold mb-1 font-kannada">
-                  ಹೆಸರು (ಕನ್ನಡದಲ್ಲಿ):
+                <label className="block text-[#3B2A33] font-bold mb-1">
+                  {t('beneficiaries.nameLabel')}:
                 </label>
                 <input
                   type="text"
                   required
-                  value={newBeneficiary.name_kn}
-                  onChange={(e) => setNewBeneficiary({ ...newBeneficiary, name_kn: e.target.value })}
-                  placeholder="ಉದಾ: ಸುಶೀಲಾ ಎಂ."
-                  className="w-full border border-[#F0DDE2] rounded-2xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-[#A25B74] focus:outline-none bg-[#FDF6F5] font-kannada"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#3B2A33] font-bold mb-1">
-                  Name (English):
-                </label>
-                <input
-                  type="text"
                   value={newBeneficiary.name_en}
                   onChange={(e) => setNewBeneficiary({ ...newBeneficiary, name_en: e.target.value })}
-                  placeholder="e.g. Susheela M."
+                  placeholder="e.g. Meenakshi Bai"
                   className="w-full border border-[#F0DDE2] rounded-2xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-[#A25B74] focus:outline-none bg-[#FDF6F5]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[#3B2A33] font-bold mb-1">ವಯಸ್ಸು (Age):</label>
+                  <label className="block text-[#3B2A33] font-bold mb-1">{t('beneficiaries.ageLabel')}:</label>
                   <input
                     type="number"
                     value={newBeneficiary.age}
@@ -419,21 +379,32 @@ export default function BeneficiaryManagementScreen({
                   />
                 </div>
                 <div>
-                  <label className="block text-[#3B2A33] font-bold mb-1">ವರ್ಗ (Category):</label>
+                  <label className="block text-[#3B2A33] font-bold mb-1">{t('beneficiaries.categoryLabel')}:</label>
                   <select
                     value={newBeneficiary.category}
                     onChange={(e) => setNewBeneficiary({ ...newBeneficiary, category: e.target.value })}
                     className="w-full border border-[#F0DDE2] rounded-2xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-[#A25B74] focus:outline-none bg-[#FDF6F5]"
                   >
-                    <option value="ANC">ANC (ಗರ್ಭಿಣಿ)</option>
-                    <option value="Child Immunization">ಮಕ್ಕಳ ಲಸಿಕೆ</option>
-                    <option value="PNC">PNC (ಬಾಣಂತಿ)</option>
+                    <option value="ANC">ANC</option>
+                    <option value="Child Immunization">Child Immunization</option>
+                    <option value="PNC">PNC</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-[#3B2A33] font-bold mb-1">ಗ್ರಾಮ (Village):</label>
+                <label className="block text-[#3B2A33] font-bold mb-1">{t('beneficiaries.phoneLabel')}:</label>
+                <input
+                  type="text"
+                  value={newBeneficiary.phone}
+                  onChange={(e) => setNewBeneficiary({ ...newBeneficiary, phone: e.target.value })}
+                  placeholder="+91 98765 43210"
+                  className="w-full border border-[#F0DDE2] rounded-2xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-[#A25B74] focus:outline-none bg-[#FDF6F5]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#3B2A33] font-bold mb-1">{t('beneficiaries.villageLabel')}:</label>
                 <input
                   type="text"
                   value={newBeneficiary.village}
@@ -450,13 +421,13 @@ export default function BeneficiaryManagementScreen({
                 onClick={() => setIsAddModalOpen(false)}
                 className="flex-1 py-3 text-xs font-semibold rounded-2xl border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95"
               >
-                ರದ್ದುಮಾಡಿ
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
-                className="flex-1 py-3 text-xs font-bold rounded-2xl bg-[#A25B74] text-white hover:bg-[#A25B74]-hover active:scale-95 shadow-touch"
+                className="flex-1 py-3 text-xs font-bold rounded-2xl bg-[#A25B74] text-white hover:bg-[#84455C] active:scale-95 shadow-touch"
               >
-                ನೋಂದಾಯಿಸಿ
+                {t('beneficiaries.registerBtn')}
               </button>
             </div>
           </form>

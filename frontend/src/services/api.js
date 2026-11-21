@@ -155,12 +155,23 @@ export const setDemoMode = (enabled) => {
   window.dispatchEvent(new CustomEvent('asha_demo_mode_changed', { detail: { enabled } }));
 };
 
+let currentApiLanguage = typeof window !== 'undefined' ? localStorage.getItem('asha_language') || 'en' : 'en';
+
+export const setApiLanguage = (lang) => {
+  currentApiLanguage = lang;
+};
+
 // Helper for fetch with timeout
 const fetchWithTimeout = async (url, options = {}, timeoutMs = 4000) => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    const headers = {
+      'Accept-Language': currentApiLanguage,
+      'X-Language': currentApiLanguage,
+      ...(options.headers || {})
+    };
+    const response = await fetch(url, { ...options, headers, signal: controller.signal });
     clearTimeout(id);
     return response;
   } catch (err) {
@@ -170,6 +181,13 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 4000) => {
 };
 
 export const api = {
+  setLanguage(lang) {
+    setApiLanguage(lang);
+  },
+
+  getLanguage() {
+    return currentApiLanguage;
+  },
   /**
    * Health Check
    * GET /api/health

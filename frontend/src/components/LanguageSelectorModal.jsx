@@ -12,11 +12,13 @@ import {
 import { INDIC_LANGUAGES, getLanguageByCode } from '../services/languages';
 
 export default function LanguageSelectorModal({
+
   isOpen,
   onClose,
   currentLanguage = 'kn',
   onSelectLanguage
 }) {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'south', 'north', 'east', 'west', 'rtl'
 
@@ -62,7 +64,7 @@ export default function LanguageSelectorModal({
               </div>
               <div>
                 <h2 className="text-2xl font-cormorant font-bold text-[#3B2A33] flex items-center gap-2">
-                  <span>ಭಾರತೀಯ ಭಾಷೆಗಳ ಆಯ್ಕೆ</span>
+                  <span>{t('modals.langModalTitle')}</span>
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#A25B74]/10 text-[#A25B74] font-mono font-bold border border-[#F0DDE2]">
                     22 Scheduled Indic Languages
                   </span>
@@ -87,7 +89,7 @@ export default function LanguageSelectorModal({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by language, script, or state (e.g., Kannada, हिन्दी, اردو, Tamil, Assam)..."
+              placeholder={t('modals.langSearch')}
               className="w-full text-sm pl-10 pr-4 py-2.5 bg-white border border-[#F0DDE2] rounded-2xl text-[#3B2A33] placeholder-[#7A6670] focus:outline-none focus:ring-2 focus:ring-[#A25B74] shadow-xs"
               autoFocus
             />

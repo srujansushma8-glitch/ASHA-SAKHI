@@ -165,8 +165,9 @@ class VoiceWebSocketClient {
   /**
    * Frontend Event: start_session
    */
-  startSession({ language = 'kn', audioConfig = {}, demoScenarioId = 'anc_routine' } = {}) {
+  startSession({ language = 'en', audioConfig = {}, demoScenarioId = 'anc_routine' } = {}) {
     this.sessionId = `SES-${Date.now().toString().slice(-6)}`;
+    this.sessionLanguage = language || 'en';
 
     // Set demo scenario if in demo mode
     this.currentDemoScenario = DEMO_SCENARIOS.find(s => s.id === demoScenarioId) || DEMO_SCENARIOS[0];
@@ -221,7 +222,11 @@ class VoiceWebSocketClient {
       // Indic-Transcribe processes completed audio windows rather than true streaming
       // Simulate window processing every 2 chunks
       if (chunkIndex % 2 === 0 && this.currentDemoScenario) {
-        const fullText = this.currentDemoScenario.audio_transcript_kn;
+        const fullText = this.sessionLanguage === 'kn'
+          ? (this.currentDemoScenario.audio_transcript_kn || this.currentDemoScenario.audio_transcript_en_translation)
+          : this.sessionLanguage === 'hi'
+          ? (this.currentDemoScenario.audio_transcript_hi || this.currentDemoScenario.audio_transcript_en_translation)
+          : (this.currentDemoScenario.audio_transcript_en_translation || this.currentDemoScenario.audio_transcript_kn);
         // Divide into windows
         const words = fullText.split(' ');
         const partialCount = Math.min(words.length, Math.floor((chunkIndex / 4) * words.length));
@@ -258,12 +263,18 @@ class VoiceWebSocketClient {
 
       // Step 1: Indic-Transcribe final audio window processing
       this.mockTimer = setTimeout(() => {
+        const finalTxt = this.sessionLanguage === 'kn'
+          ? (scenario.audio_transcript_kn || scenario.audio_transcript_en_translation)
+          : this.sessionLanguage === 'hi'
+          ? (scenario.audio_transcript_hi || scenario.audio_transcript_en_translation)
+          : (scenario.audio_transcript_en_translation || scenario.audio_transcript_kn);
+
         this.emit('transcript_final', {
           session_id: this.sessionId,
-          text: scenario.audio_transcript_kn,
+          text: finalTxt,
           text_translation_en: scenario.audio_transcript_en_translation,
           confidence: 0.94,
-          model: 'AI4Bharat Indic-Transcribe'
+          model: `AI4Bharat Indic-Transcribe (${this.sessionLanguage.toUpperCase()})`
         });
 
         // Step 2: Information Extraction into Structured Clinical Visit Record
@@ -285,10 +296,17 @@ class VoiceWebSocketClient {
 
           // Step 4: Spoken readback confirmation (AI4Bharat Indic-Speak)
           setTimeout(() => {
+            const spokenTxt = this.sessionLanguage === 'kn'
+              ? (scenario.spoken_confirmation_kn || scenario.spoken_confirmation_en)
+              : this.sessionLanguage === 'hi'
+              ? (scenario.spoken_confirmation_hi || scenario.spoken_confirmation_en)
+              : (scenario.spoken_confirmation_en || scenario.spoken_confirmation_kn);
+
             this.emit('confirmation_audio', {
               session_id: this.sessionId,
-              transcript_kannada: scenario.spoken_confirmation_kn,
-              audio_url: null, // Frontend will use SpeechSynthesis or Web Audio chime
+              transcript_kannada: spokenTxt,
+              transcript: spokenTxt,
+              audio_url: null,
               duration_sec: 5.2
             });
           }, 800);
@@ -345,7 +363,11 @@ class VoiceWebSocketClient {
           session_id: this.sessionId,
           updated_field: fieldName,
           new_value: newValue,
-          message: `ಕ್ಷೇತ್ರ '${fieldName}' ಅನ್ನು ಯಶಸ್ವಿಯಾಗಿ ತಿದ್ದಲಾಗಿದೆ.`
+          message: this.sessionLanguage === 'kn'
+            ? `ಕ್ಷೇತ್ರ '${fieldName}' ಅನ್ನು ಯಶಸ್ವಿಯಾಗಿ ತಿದ್ದಲಾಗಿದೆ.`
+            : this.sessionLanguage === 'hi'
+            ? `फ़ील्ड '${fieldName}' को सफलतापूर्वक संशोधित किया गया।`
+            : `Field '${fieldName}' updated successfully.`
         });
       }, 350);
       return;

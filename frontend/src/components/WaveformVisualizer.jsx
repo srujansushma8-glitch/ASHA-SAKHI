@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { audioRecorder } from '../services/audioRecorder';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function WaveformVisualizer({ isRecording, isProcessing, isPlayingTTS }) {
+  const { t } = useLanguage();
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
   const phaseRef = useRef(0);
@@ -160,14 +162,14 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
               ? 'bg-[#A25B74] animate-bounce' 
               : 'bg-navy-300'
           }`}></span>
-          <span className="font-kannada font-semibold text-navy-800">
+          <span className="font-semibold text-[#3B2A33]">
             {isRecording 
-              ? 'ಧ್ವನಿ ತರಂಗ (Live Voice Stream)' 
+              ? t('modals.waveformStream') 
               : isPlayingTTS 
-              ? 'ಧ್ವನಿ ದೃಢೀಕರಣ (Indic-Speak Readback)' 
+              ? t('modals.waveformReadback') 
               : isProcessing 
-              ? 'Indic-Transcribe ವಿಶ್ಲೇಷಣೆ' 
-              : 'ಧ್ವನಿ ಮಾದರಿ ಸಿದ್ಧವಾಗಿದೆ (Audio Engine Ready)'}
+              ? t('modals.waveformProcessing') 
+              : t('modals.waveformReady')}
           </span>
         </span>
         <span className="font-mono text-[10px] text-cyan-700 font-bold bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">

@@ -15,9 +15,14 @@ import {
   HeartPulse
 } from 'lucide-react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function EmergencyAlertScreen({
-  currentLanguage = 'kn', onBack, alertData, onTrackAmbulance }) {
+  onBack, 
+  alertData, 
+  onTrackAmbulance 
+}) {
+  const { language, t, dir, isRtl, langInfo } = useLanguage();
   const [alerts, setAlerts] = useState([]);
   const [selectedAlert, setSelectedAlert] = useState(alertData || null);
   const [actionStatusToast, setActionStatusToast] = useState('');
@@ -52,18 +57,18 @@ export default function EmergencyAlertScreen({
     setSelectedAlert(updated);
     await api.updateEmergencyAlert(updated);
     loadAlertsAndAmbulance();
-    setActionStatusToast(`ರೆಫರಲ್ ಸ್ಥಿತಿ ನವೀಕರಿಸಲಾಗಿದೆ: ${newStatus}`);
+    setActionStatusToast(t('emergency.statusUpdatedToast', { status: newStatus }));
     setTimeout(() => setActionStatusToast(''), 3500);
   };
 
   const handleCallAmbulance = async () => {
     window.open('tel:108', '_self');
-    handleUpdateStatus('108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಸಂಪರ್ಕಿಸಲಾಗಿದೆ (108 Ambulance Called)');
+    handleUpdateStatus(t('emergency.ambulanceCalled'));
   };
 
   const handleCallMedicalOfficer = () => {
     window.open('tel:94498XXXXX', '_self');
-    handleUpdateStatus('PHC ವೈದ್ಯಾಧಿಕಾರಿಗೆ ಮಾಹಿತಿ ನೀಡಲಾಗಿದೆ (MO Informed)');
+    handleUpdateStatus(t('emergency.moInformed'));
   };
 
   const handleAdvanceSimulationStep = async () => {
@@ -72,7 +77,7 @@ export default function EmergencyAlertScreen({
       const updated = await api.simulateNextAmbulanceStep();
       if (updated) {
         setAmbulanceRequest(updated);
-        setActionStatusToast(`ಆಂಬ್ಯುಲೆನ್ಸ್ ಸ್ಥಿತಿ: ${updated.status}`);
+        setActionStatusToast(`${t('common.status')}: ${updated.status}`);
         setTimeout(() => setActionStatusToast(''), 3000);
       }
     } catch (e) {
@@ -83,29 +88,29 @@ export default function EmergencyAlertScreen({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
+    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12" dir={dir}>
       {/* 1. Header with Back Button */}
       <div className="bg-white rounded-3xl p-5 lg:p-6 border border-[#F0DDE2] shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
             className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95 transition-decelerate"
-            title="ಹಿಂದೆ / Back"
+            title={t('common.back')}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg lg:text-xl font-bold font-kannada text-[#B94A58] leading-tight flex items-center space-x-2">
+              <h1 className="text-lg lg:text-xl font-bold text-[#B94A58] leading-tight flex items-center space-x-2 font-serif">
                 <AlertTriangle className="w-5 h-5 text-[#B94A58] animate-pulse" />
-                <span>ತುರ್ತು ಅಪಾಯಕಾರಿ ಎಚ್ಚರಿಕೆ (Emergency Danger Sign & Referral)</span>
+                <span>{t('emergency.title')}</span>
               </h1>
-              <span className="text-xs font-mono font-bold bg-[#B94A58]-100 text-[#B94A58] px-2.5 py-0.5 rounded-full border border-[#B94A58]/30">
+              <span className="text-xs font-mono font-bold bg-[#FCF1F1] text-[#B94A58] px-2.5 py-0.5 rounded-full border border-[#B94A58]/30">
                 MoHFW Verified
               </span>
             </div>
             <p className="text-xs text-[#7A6670] font-medium mt-0.5">
-              ತುರ್ತು ರೆಫರಲ್ ನಿರ್ದೇಶನ ಮತ್ತು 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ನಿರ್ವಹಣಾ ಕೇಂದ್ರ
+              {t('emergency.subtitle')}
             </p>
           </div>
         </div>
@@ -120,16 +125,14 @@ export default function EmergencyAlertScreen({
 
       {/* 2-Column Responsive Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* ======================================================== */}
-        {/* LEFT COLUMN: HERO EMERGENCY CARD & PROTOCOL (Span 7)     */}
-        {/* ======================================================== */}
+        {/* LEFT COLUMN: HERO EMERGENCY CARD & PROTOCOL */}
         <div className="lg:col-span-7 space-y-6">
           {selectedAlert ? (
-            <div className="bg-[#B94A58] text-white rounded-3xl p-6 lg:p-8 shadow-emergency border-2 border-emergency-700 relative overflow-hidden space-y-5">
+            <div className="bg-[#B94A58] text-white rounded-3xl p-6 lg:p-8 shadow-md border-2 border-[#A33D4A] relative overflow-hidden space-y-5">
               {/* Header Tag & ID */}
               <div className="flex items-center justify-between">
                 <span className="bg-white/20 text-white text-xs font-bold px-3.5 py-1 rounded-full uppercase tracking-wider border border-white/30">
-                  ತುರ್ತು ರೆಫರಲ್ (Emergency Referral)
+                  {t('emergency.referralDirective')}
                 </span>
                 <span className="text-xs font-mono font-bold bg-[#3B2A33]/30 px-3 py-1 rounded-xl">
                   ID: {selectedAlert.beneficiary_id}
@@ -138,34 +141,33 @@ export default function EmergencyAlertScreen({
 
               {/* Beneficiary Name & Location */}
               <div>
-                <h3 className="text-2xl lg:text-3xl font-bold font-kannada leading-tight text-white">
-                  {selectedAlert.beneficiary_name_kn || selectedAlert.beneficiary_name}
+                <h3 className="text-2xl lg:text-3xl font-bold leading-tight text-white font-serif">
+                  {language === 'kn' ? (selectedAlert.beneficiary_name_kn || selectedAlert.beneficiary_name) : selectedAlert.beneficiary_name}
                 </h3>
-                <p className="text-xs text-[#B94A58]-50 mt-1 flex items-center font-medium">
-                  <MapPin className="w-4 h-4 mr-1 text-[#B94A58]-100" />
-                  {selectedAlert.village || 'ಮಂಡ್ಯ PHC ವ್ಯಾಪ್ತಿ (Mandya Sector 4)'}
+                <p className="text-xs text-white/90 mt-1 flex items-center font-medium">
+                  <MapPin className="w-4 h-4 mr-1 text-white/80" />
+                  {selectedAlert.village || 'Mandya Sector 4'}
                 </p>
               </div>
 
               {/* Detected Danger Sign Description */}
               <div className="bg-white/10 rounded-2xl p-4 lg:p-5 border border-white/20 space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#B94A58]-100 block">
-                  ಪತ್ತೆಯಾದ ಅಪಾಯಕಾರಿ ಲಕ್ಷಣ (MoHFW Verified Danger Sign):
+                <span className="text-xs font-bold uppercase tracking-wider text-white/90 block">
+                  {t('emergency.dangerSignsDetected')}:
                 </span>
                 <div className="space-y-2 mt-1">
                   {Array.isArray(selectedAlert.danger_signs) ? (
                     selectedAlert.danger_signs.map((sign, idx) => (
                       <div key={idx} className="flex items-start space-x-2.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-white mt-1.5 shrink-0"></span>
-                        <div className="text-sm leading-relaxed font-kannada font-bold">
-                          <span>{typeof sign === 'string' ? sign : sign.kn}</span>
-                          {sign.en && <span className="block text-xs font-normal text-[#B94A58]-50">{sign.en}</span>}
+                        <div className="text-sm leading-relaxed font-bold">
+                          <span>{typeof sign === 'string' ? sign : (sign[language] || sign.en || sign.kn)}</span>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-base font-bold font-kannada">
-                      {selectedAlert.danger_sign_description || 'ಗರ್ಭಾವಸ್ಥೆಯಲ್ಲಿ ರಕ್ತಸ್ರಾವ / ತೀವ್ರ ಜ್ವರ ಕಂಡುಬಂದಿದೆ.'}
+                    <p className="text-base font-bold">
+                      {selectedAlert.danger_sign_description || t('maternal.highRiskAlert')}
                     </p>
                   )}
                 </div>
@@ -174,33 +176,33 @@ export default function EmergencyAlertScreen({
               {/* Mandatory Public Health Referral Directive */}
               <div className="bg-white text-[#3B2A33] rounded-2xl p-5 shadow-card border border-white space-y-1.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#B94A58] block">
-                  ಮುಖ್ಯ ಶಿಫಾರಸು ನಿರ್ದೇಶನ (Referral Directive):
+                  {t('emergency.referralDirective')}:
                 </span>
-                <div className="text-2xl font-bold font-kannada text-[#B94A58] leading-tight">
-                  Refer to PHC now
+                <div className="text-2xl font-bold text-[#B94A58] leading-tight font-serif">
+                  Refer to PHC immediately
                 </div>
-                <p className="text-xs font-bold text-[#3B2A33] font-kannada">
-                  ತಕ್ಷಣವೇ ಸಮೀಪದ ಪ್ರಾಥಮಿಕ ಆರೋಗ್ಯ ಕೇಂದ್ರಕ್ಕೆ (PHC) ಕರೆದೊಯ್ಯಿರಿ
+                <p className="text-xs font-bold text-[#3B2A33]">
+                  {t('emergency.referToPhcNow')}
                 </p>
                 <div className="text-[11px] text-[#7A6670] mt-2 pt-2 border-t border-[#F0DDE2] font-medium">
-                  *ಗಮನಿಸಿ: NHM ಮಾರ್ಗಸೂಚಿ ಪ್ರಕಾರ ಆಶಾ ಕಾರ್ಯಕರ್ತರು ಚಿಕಿತ್ಸೆ ಅಥವಾ ರೋಗನಿರ್ಣಯ ನೀಡಬಾರದು. ತುರ್ತು ರೆಫರಲ್ ಮಾತ್ರ ಕಡ್ಡಾಯ.
+                  {t('emergency.nhmGuidelines')}
                 </div>
               </div>
 
               {/* Referral Status Bar */}
               <div className="bg-[#3B2A33]/30 rounded-2xl p-4 border border-white/20 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Clock className="w-5 h-5 text-[#B94A58]-100" />
+                  <Clock className="w-5 h-5 text-white/80" />
                   <div>
-                    <span className="text-[10px] text-[#B94A58]-100 block uppercase font-bold">
-                      ರೆಫರಲ್ ಸ್ಥಿತಿ (Referral Status):
+                    <span className="text-[10px] text-white/80 block uppercase font-bold">
+                      {t('emergency.referralStatus')}:
                     </span>
-                    <span className="text-sm font-bold text-white font-kannada">
-                      {selectedAlert.referral_status || 'ಕ್ರಿಯೆ ಬಾಕಿ ಇದೆ (Pending Action)'}
+                    <span className="text-sm font-bold text-white">
+                      {selectedAlert.referral_status || t('emergency.statusPending')}
                     </span>
                   </div>
                 </div>
-                <span className="w-3.5 h-3.5 rounded-full bg-warning animate-ping"></span>
+                <span className="w-3.5 h-3.5 rounded-full bg-amber-400 animate-ping"></span>
               </div>
 
               {/* Emergency Call Actions */}
@@ -210,34 +212,32 @@ export default function EmergencyAlertScreen({
                   className="w-full bg-white hover:bg-[#FDF6F5] text-[#B94A58] font-bold py-4 px-4 rounded-2xl shadow-card flex items-center justify-center space-x-2 text-sm active:scale-95 transition-decelerate touch-manipulation"
                 >
                   <Ambulance className="w-5 h-5 text-[#B94A58]" />
-                  <span>108 ಆಂಬ್ಯುಲೆನ್ಸ್‌ಗೆ ಕರೆ (Call 108)</span>
+                  <span>{t('emergency.call108')}</span>
                 </button>
 
                 <button
                   onClick={handleCallMedicalOfficer}
-                  className="w-full bg-[#B94A58]-800 hover:bg-[#B94A58]-900 text-white font-bold py-4 px-4 rounded-2xl border border-emergency-400 flex items-center justify-center space-x-2 text-sm active:scale-95 transition-decelerate touch-manipulation"
+                  className="w-full bg-[#8A3742] hover:bg-[#722D37] text-white font-bold py-4 px-4 rounded-2xl border border-white/30 flex items-center justify-center space-x-2 text-sm active:scale-95 transition-decelerate touch-manipulation"
                 >
-                  <PhoneCall className="w-5 h-5 text-[#B94A58]-100" />
-                  <span>ವೈದ್ಯಾಧಿಕಾರಿಗೆ ಕರೆ (MO)</span>
+                  <PhoneCall className="w-5 h-5 text-white/90" />
+                  <span>{t('emergency.callMo')}</span>
                 </button>
               </div>
             </div>
           ) : (
             <div className="bg-white rounded-3xl p-10 text-center border border-[#F0DDE2] shadow-card">
               <CheckCircle className="w-12 h-12 text-[#477A60] mx-auto mb-2" />
-              <h3 className="text-lg font-bold text-[#3B2A33] font-kannada">
-                ಯಾವುದೇ ಸಕ್ರಿಯ ತುರ್ತು ಎಚ್ಚರಿಕೆಗಳಿಲ್ಲ
+              <h3 className="text-lg font-bold text-[#3B2A33] font-serif">
+                {t('emergency.noActiveAlerts')}
               </h3>
               <p className="text-xs text-[#7A6670] mt-1">
-                No active danger sign alerts at this moment.
+                {t('emergency.noActiveAlertsSub')}
               </p>
             </div>
           )}
         </div>
 
-        {/* ======================================================== */}
-        {/* RIGHT COLUMN: AMBULANCE TRACKING & ALERT HISTORY (Span 5) */}
-        {/* ======================================================== */}
+        {/* RIGHT COLUMN: AMBULANCE TRACKING & ALERT HISTORY */}
         <div className="lg:col-span-5 space-y-6">
           {/* Ambulance Dispatch & Map Tracker Card */}
           <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
@@ -247,8 +247,8 @@ export default function EmergencyAlertScreen({
                   <Ambulance className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold font-kannada text-[#3B2A33] flex items-center space-x-2">
-                    <span>108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಸಿಮ್ಯುಲೇಶನ್</span>
+                  <h3 className="text-sm font-bold text-[#3B2A33] flex items-center space-x-2 font-serif">
+                    <span>{t('emergency.ambulanceSimulation')}</span>
                     <span className="text-[10px] bg-[#FDF6F5] text-[#A25B74] px-2 py-0.5 rounded-full font-mono font-bold">
                       LIVE
                     </span>
@@ -263,7 +263,7 @@ export default function EmergencyAlertScreen({
                 className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-[#A25B74] hover:bg-[#84455C] text-white text-xs font-bold active:scale-95 transition-decelerate"
               >
                 <RotateCw className={`w-3.5 h-3.5 ${isAdvancingAmbulance ? 'animate-spin' : ''}`} />
-                <span>ಹಂತ ಮುನ್ನಡೆಸಿ</span>
+                <span>{t('emergency.advanceStage')}</span>
               </button>
             </div>
 
@@ -279,17 +279,17 @@ export default function EmergencyAlertScreen({
                   <div key={st} className="flex flex-col items-center">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center font-mono text-[10px] mb-1 transition-decelerate ${
                       isCurrent 
-                        ? 'bg-[#A25B74] text-white ring-2 ring-primary-100 shadow-subtle' 
+                        ? 'bg-[#A25B74] text-white ring-2 ring-[#A25B74]/20' 
                         : isPastOrCurrent 
                         ? 'bg-[#477A60] text-white' 
                         : 'bg-[#FDF6F5] text-[#C47A92]'
                     }`}>
                       {i + 1}
                     </div>
-                    <span className={`leading-tight truncate max-w-full font-kannada ${
+                    <span className={`leading-tight truncate max-w-full text-[10px] ${
                       isCurrent ? 'text-[#A25B74] font-bold' : isPastOrCurrent ? 'text-[#3B2A33]' : 'text-[#C47A92]'
                     }`}>
-                      {st === 'REQUESTED' ? 'ಕೋರಿಕೆ' : st === 'DISPATCHED' ? 'ಹೊರಟಿದೆ' : st === 'ON_THE_WAY' ? 'ದಾರಿ ಮಧ್ಯೆ' : st === 'ARRIVED' ? 'ತಲುಪಿದೆ' : 'ಮುಗಿದಿದೆ'}
+                      {st}
                     </span>
                   </div>
                 );
@@ -299,15 +299,15 @@ export default function EmergencyAlertScreen({
             {/* Telemetry Summary */}
             <div className="p-4 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] space-y-2 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[#7A6670] font-medium">ಅಂದಾಜು ಸಮಯ (ETA):</span>
+                <span className="text-[#7A6670] font-medium">{t('emergency.eta')}:</span>
                 <span className="font-bold text-[#477A60] font-mono text-sm">
-                  {ambulanceRequest?.eta_minutes ?? 8} ನಿಮಿಷಗಳು (mins)
+                  {ambulanceRequest?.eta_minutes ?? 8} {t('emergency.minutes')}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[#7A6670] font-medium">ವಾಹನ & ಚಾಲಕ:</span>
+                <span className="text-[#7A6670] font-medium">{t('emergency.vehicleAndDriver')}</span>
                 <span className="font-bold font-mono text-[#A25B74]">
-                  {ambulanceRequest?.vehicle_number || 'KA-11-G-1081'} • {ambulanceRequest?.driver_name || 'ರಮೇಶ್ ಗೌಡ'}
+                  {ambulanceRequest?.vehicle_number || 'KA-11-G-1081'}
                 </span>
               </div>
             </div>
@@ -315,18 +315,18 @@ export default function EmergencyAlertScreen({
             {/* Open Full Map Tracking CTA */}
             <button
               onClick={() => onTrackAmbulance && onTrackAmbulance(selectedAlert?.id)}
-              className="w-full bg-[#FDF6F5] hover:bg-[#FDF6F5] text-[#A25B74] font-bold py-3.5 px-4 rounded-2xl shadow-subtle border border-[#F0DDE2] text-xs flex items-center justify-center space-x-2 active:scale-95 transition-decelerate"
+              className="w-full bg-[#FDF6F5] hover:bg-[#F9ECEC] text-[#A25B74] font-bold py-3.5 px-4 rounded-2xl border border-[#F0DDE2] text-xs flex items-center justify-center space-x-2 active:scale-95 transition-decelerate"
             >
               <Navigation className="w-4 h-4 text-[#A25B74]" />
-              <span className="font-kannada">ಪೂರ್ಣ ಜಿಪಿಎಸ್ ನಕ್ಷೆ ವೀಕ್ಷಿಸಿ (Open Live Map)</span>
+              <span>{t('emergency.openMap')}</span>
             </button>
           </div>
 
           {/* Past Alerts in Village */}
           {alerts.length > 1 && (
             <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-3">
-              <h4 className="text-xs font-bold text-[#3B2A33] font-kannada">
-                ಹಿಂದಿನ ತುರ್ತು ದಾಖಲೆಗಳು (Emergency Referral History)
+              <h4 className="text-xs font-bold text-[#3B2A33]">
+                {t('emergency.referralHistory')}
               </h4>
               <div className="space-y-2">
                 {alerts.map((al) => (
@@ -340,11 +340,11 @@ export default function EmergencyAlertScreen({
                     }`}
                   >
                     <div>
-                      <div className="text-xs font-bold text-[#3B2A33] font-kannada">
-                        {al.beneficiary_name_kn || al.beneficiary_name} ({al.beneficiary_id})
+                      <div className="text-xs font-bold text-[#3B2A33]">
+                        {language === 'kn' ? (al.beneficiary_name_kn || al.beneficiary_name) : al.beneficiary_name} ({al.beneficiary_id})
                       </div>
                       <div className="text-[11px] text-[#7A6670] mt-0.5 font-medium">
-                        ಸ್ಥಿತಿ: {al.referral_status}
+                        {t('common.status')}: {al.referral_status}
                       </div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-[#C47A92]" />

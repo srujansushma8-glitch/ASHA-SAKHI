@@ -313,7 +313,10 @@ export const DEMO_SCENARIOS = [
     beneficiary_id: "ASHA-KA-2024-0101",
     beneficiary_name: "Lakshmamma K.",
     audio_transcript_kn: "ಲಕ್ಷ್ಮಮ್ಮ ಅವರ ಮನೆಗೆ ಭೇಟಿ ನೀಡಲಾಗಿದೆ. ಗರ್ಭಿಣಿ ತಪಾಸಣೆ. ತೂಕ 58.5 kg ಇದೆ. ಬಿಪಿ 120/80 normal ಆಗಿದೆ. ಟಿಟಿ-2 ಇಂಜೆಕ್ಷನ್ ನೀಡಲಾಗಿದೆ. ಹೊಟ್ಟೆಯಲ್ಲಿ ಮಗುವಿನ ಚಲನೆ ಚೆನ್ನಾಗಿದೆ. ಮುಂದಿನ ಭೇಟಿ 2026-12-05 ಕ್ಕೆ ನಿಗದಿಪಡಿಸಲಾಗಿದೆ. ಐರನ್ ಫೋಲಿಕ್ ಆಸಿಡ್ ಮಾತ್ರೆಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಲು ತಿಳಿಸಲಾಗಿದೆ.",
+    audio_transcript_hi: "लक्ष्माम्मा के घर का दौरा। प्रसवपूर्व जांच। वजन 58.5 किग्रा है। बीपी 120/80 सामान्य है। टीडी-2 इंजेक्शन दिया गया। भ्रूण की हलचल अच्छी है। अगली भेंट 2026-12-05 को निर्धारित की गई है। आईएफए गोलियां लेने की सलाह दी गई।",
     audio_transcript_en_translation: "Visited Lakshmamma's home. ANC checkup. Weight is 58.5 kg. BP 120/80 normal. TT-2 injection given. Baby movement good. Next visit scheduled on 2026-12-05. Advised to take IFA tablets.",
+    spoken_confirmation_en: "Lakshmamma's antenatal checkup recorded. Weight 58.5 kg. TT-2 booster completed. Next visit scheduled for December 5th. Please verify.",
+    spoken_confirmation_hi: "लक्ष्माम्मा की प्रसवपूर्व जांच दर्ज की गई है। वजन 58.5 किग्रा है। टीडी-2 टीका पूर्ण हुआ। अगली भेंट 5 दिसंबर को है। कृपया पुष्टि करें।",
     extracted_record: {
       beneficiary_id: "ASHA-KA-2024-0101",
       beneficiary_name: "Lakshmamma K.",
@@ -336,7 +339,10 @@ export const DEMO_SCENARIOS = [
     beneficiary_id: "ASHA-KA-2024-0102",
     beneficiary_name: "Geetha M.",
     audio_transcript_kn: "ಗೀತಾ ಅವರ ಮನೆಗೆ ಭೇಟಿ ನೀಡಿದೆ. ಅವರಿಗೆ ತೀವ್ರ ತಲೆನೋವು ಮತ್ತು ಕಣ್ಣು ಮಬ್ಬು (severe headache and blurred vision) ಇದೆ. ಮುಖ ಮತ್ತು ಕಾಲುಗಳಲ್ಲಿ ತೀವ್ರ ಊತ ಕಾಣಿಸಿಕೊಂಡಿದೆ. ತೂಕ 65 kg ಇದೆ. ಬಿಪಿ ತುಂಬಾ ಹೆಚ್ಚಾಗಿದೆ. ಹೊಟ್ಟೆಯಲ್ಲಿ ಮಗುವಿನ ಚಲನೆ ಕಡಿಮೆಯಾಗಿದೆ ಎಂದು ಹೇಳುತ್ತಿದ್ದಾರೆ.",
+    audio_transcript_hi: "गीता के घर का दौरा। उन्हें गंभीर सिरदर्द और धुंधला दिखना है। चेहरे और पैरों में सूजन है। वजन 65 किग्रा है। बीपी बहुत अधिक है। गर्भ में शिशु की हलचल कम होने की शिकायत है।",
     audio_transcript_en_translation: "Visited Geetha's home. She has severe headache and blurred vision. Severe facial and pedal edema observed. Weight is 65 kg. BP very high. Complains of reduced fetal movements.",
+    spoken_confirmation_en: "Critical Alert! Geetha exhibits severe persistent headache, blurred vision, and high BP. Refer immediately to Mandya PHC.",
+    spoken_confirmation_hi: "चेतावनी! गीता में गंभीर सिरदर्द और दृष्टि धुंधली होने के खतरे के लक्षण पाए गए हैं। तुरंत नजदीकी प्राथमिक स्वास्थ्य केंद्र में रेफर करें।",
     extracted_record: {
       beneficiary_id: "ASHA-KA-2024-0102",
       beneficiary_name: "Geetha M.",
@@ -383,7 +389,10 @@ export const DEMO_SCENARIOS = [
     beneficiary_id: "ASHA-KA-2024-0103",
     beneficiary_name: "Shruthi Patel",
     audio_transcript_kn: "ಶೃತಿ ಅವರ ಮಗುವಿಗೆ 6 ತಿಂಗಳ ಭೇಟಿ. ಮಗುವಿನ ತೂಕ 7.2 kg ಇದೆ. ಇಂದು OPV-3 ಮತ್ತು ಪೆಂಟಾವಲೆಂಟ್-3 ಲಸಿಕೆ ನೀಡಲಾಗಿದೆ. ಯಾವುದೇ ಜ್ವರ ಅಥವಾ ಅಲರ್ಜಿ ಇಲ್ಲ. ತಾಯಿ ಎದೆಹಾಲು ಮಾತ್ರ ಕುಡಿಸುತ್ತಿದ್ದಾರೆ. ಮುಂದಿನ ಭೇಟಿ 9 ತಿಂಗಳಿಗೆ Vitamin A ಮತ್ತು Measles-Rubella ಲಸಿಕೆಗಾಗಿ 2026-12-20.",
+    audio_transcript_hi: "श्रुति के शिशु का 6 माह का दौरा। शिशु का वजन 7.2 किग्रा है। आज ओपीवी-3 और पेंटावेलेंट-3 टीका लगाया गया। कोई बुखार नहीं है। अगली भेंट 9 माह पर एमआर और विटामिन ए के लिए 2026-12-20 को होगी।",
     audio_transcript_en_translation: "6-month checkup for Shruthi's child. Baby weight is 7.2 kg. OPV-3 and Pentavalent-3 vaccines administered today. No fever. Next visit at 9 months for MR and Vit A on 2026-12-20.",
+    spoken_confirmation_en: "Shruthi's infant 6-month immunization recorded. Weight 7.2 kg. OPV-3 and Pentavalent-3 doses completed.",
+    spoken_confirmation_hi: "श्रुति के शिशु का 6 माह का टीकाकरण दर्ज किया गया है। वजन 7.2 किग्रा है। ओपीवी-3 और पेंटा-3 टीके पूरे हुए।",
     extracted_record: {
       beneficiary_id: "ASHA-KA-2024-0103",
       beneficiary_name: "Shruthi Patel",

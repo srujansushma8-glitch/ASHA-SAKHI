@@ -15,9 +15,13 @@ import {
   FileText
 } from 'lucide-react';
 import { api } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function FollowUpDashboard({
-  currentLanguage = 'kn', onStartVoiceVisit, onSelectBeneficiary }) {
+  onStartVoiceVisit, 
+  onSelectBeneficiary 
+}) {
+  const { language, t, dir, isRtl, langInfo } = useLanguage();
   const [followups, setFollowups] = useState([]);
   const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'upcoming', 'missed', 'completed'
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,7 +51,7 @@ export default function FollowUpDashboard({
         completed_at: new Date().toISOString()
       });
       loadFollowups();
-      setToastMessage(`${item.beneficiary_name} ಅವರ ಭೇಟಿ ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ.`);
+      setToastMessage(t('followup.completedToast', { name: item.beneficiary_name }));
       setTimeout(() => setToastMessage(''), 3000);
     } catch (err) {
       console.error(err);
@@ -64,17 +68,18 @@ export default function FollowUpDashboard({
       status: 'upcoming'
     });
     loadFollowups();
-    setToastMessage(`ಭೇಟಿಯನ್ನು ${dateStr} ಕ್ಕೆ ಮರುನಿಗದಿಪಡಿಸಲಾಗಿದೆ.`);
+    setToastMessage(t('followup.rescheduledToast', { date: dateStr }));
     setTimeout(() => setToastMessage(''), 3000);
   };
 
   const filteredItems = followups.filter(item => {
     const matchesTab = item.status === activeTab;
+    const q = searchQuery.toLowerCase();
     const matchesSearch = 
-      item.beneficiary_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.beneficiary_name.toLowerCase().includes(q) ||
       (item.beneficiary_name_kn && item.beneficiary_name_kn.includes(searchQuery)) ||
-      item.village.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase());
+      item.village.toLowerCase().includes(q) ||
+      item.category.toLowerCase().includes(q);
     return matchesTab && matchesSearch;
   });
 
@@ -85,7 +90,7 @@ export default function FollowUpDashboard({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
+    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12" dir={dir}>
       {/* 1. Header */}
       <div className="bg-white rounded-3xl p-5 lg:p-6 border border-[#F0DDE2] shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
@@ -94,24 +99,24 @@ export default function FollowUpDashboard({
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg lg:text-xl font-bold font-kannada text-[#3B2A33] leading-tight">
-                ಫಾಲೋ-ಅಪ್ ಮತ್ತು ಭೇಟಿ ವೇಳಾಪಟ್ಟಿ (Follow-ups & Reports)
+              <h1 className="text-lg lg:text-xl font-bold text-[#3B2A33] leading-tight font-serif">
+                {t('followup.title')}
               </h1>
               <span className="text-xs font-mono font-bold bg-[#FDF6F5] text-[#A25B74] px-2.5 py-0.5 rounded-full border border-[#F0DDE2]">
-                ಒಟ್ಟು: {followups.length}
+                {t('common.all')}: {followups.length}
               </span>
             </div>
             <p className="text-xs text-[#7A6670] font-medium mt-0.5">
-              ಮುಂಬರುವ ಗರ್ಭಿಣಿ ಮತ್ತು ನವಜಾತ ಶಿಶು ಮನೆ ಭೇಟಿಗಳು • ವರದಿಗಳು
+              {t('followup.subtitle')}
             </p>
           </div>
         </div>
 
         {/* Statistical Summary Pills */}
         <div className="flex items-center space-x-2 text-xs">
-          <span className="px-3 py-1.5 rounded-xl bg-[#477A60]-50 text-[#477A60] font-bold border border-[#C8EEDD] flex items-center space-x-1">
+          <span className="px-3 py-1.5 rounded-xl bg-[#E8F7F1] text-[#477A60] font-bold border border-[#C8EEDD] flex items-center space-x-1">
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>94% ಪೂರ್ಣಗೊಂಡ ದರ</span>
+            <span>{t('followup.completionRate')}</span>
           </span>
         </div>
       </div>
@@ -131,42 +136,42 @@ export default function FollowUpDashboard({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ಹೆಸರು, ಗ್ರಾಮ ಅಥವಾ ವರ್ಗ ಹುಡುಕಿ (Search by Name, Village, Category)..."
-            className="w-full text-xs font-medium pl-10 pr-4 py-3 bg-[#FDF6F5] border border-[#F0DDE2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#A25B74] focus:bg-white font-kannada transition-decelerate"
+            placeholder={t('followup.searchPlaceholder')}
+            className="w-full text-xs font-medium pl-10 pr-4 py-3 bg-[#FDF6F5] border border-[#F0DDE2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#A25B74] focus:bg-white transition-decelerate"
           />
         </div>
 
         {/* Tab Selectors */}
-        <div className="flex bg-[#FDF6F5] p-1 rounded-2xl border border-[#F0DDE2]">
+        <div className="flex bg-[#FDF6F5] p-1 rounded-2xl border border-[#F0DDE2] overflow-x-auto">
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 ${
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 whitespace-nowrap ${
               activeTab === 'pending'
                 ? 'bg-[#A25B74] text-white shadow-touch'
                 : 'text-[#7A6670] hover:text-[#3B2A33]'
             }`}
           >
-            ಬಾಕಿ ಇರುವ ಭೇಟಿ ({counts.pending})
+            {t('followup.pendingTab', { count: counts.pending })}
           </button>
           <button
             onClick={() => setActiveTab('upcoming')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 ${
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 whitespace-nowrap ${
               activeTab === 'upcoming'
                 ? 'bg-[#A25B74] text-white shadow-touch'
                 : 'text-[#7A6670] hover:text-[#3B2A33]'
             }`}
           >
-            ಮುಂಬರುವ ({counts.upcoming})
+            {t('followup.upcomingTab', { count: counts.upcoming })}
           </button>
           <button
             onClick={() => setActiveTab('missed')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 ${
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 whitespace-nowrap ${
               activeTab === 'missed'
-                ? 'bg-emergency text-white shadow-emergency'
+                ? 'bg-[#B94A58] text-white shadow-md'
                 : 'text-[#7A6670] hover:text-[#3B2A33]'
             }`}
           >
-            ತಪ್ಪಿದ ಭೇಟಿ ({counts.missed})
+            {t('followup.missedTab', { count: counts.missed })}
           </button>
         </div>
       </div>
@@ -177,17 +182,17 @@ export default function FollowUpDashboard({
           filteredItems.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card hover:border-primary hover:shadow-card-hover transition-decelerate flex flex-col justify-between space-y-4"
+              className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card hover:border-[#A25B74] hover:shadow-card-hover transition-decelerate flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2.5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-[#3B2A33] font-kannada leading-tight">
-                      {item.beneficiary_name_kn || item.beneficiary_name}
+                    <h3 className="text-base font-bold text-[#3B2A33] leading-tight font-serif">
+                      {language === 'kn' ? (item.beneficiary_name_kn || item.beneficiary_name) : item.beneficiary_name}
                     </h3>
-                    <p className="text-xs font-semibold text-[#3B2A33] mt-0.5">{item.type}</p>
+                    <p className="text-xs font-semibold text-[#A25B74] mt-0.5">{item.type}</p>
                   </div>
-                  <span className="text-xs font-mono font-bold text-[#B88745] bg-[#FEF9EF] px-2.5 py-1 rounded-xl border border-warning-200">
+                  <span className="text-xs font-mono font-bold text-[#B88745] bg-[#FEF9EF] px-2.5 py-1 rounded-xl border border-amber-200">
                     {item.due_date}
                   </span>
                 </div>
@@ -214,17 +219,17 @@ export default function FollowUpDashboard({
               {/* Action Buttons */}
               <div className="flex items-center space-x-2 pt-3 border-t border-[#F0DDE2]">
                 <button
-                  onClick={() => onStartVoiceVisit(item.beneficiary_id)}
+                  onClick={() => onStartVoiceVisit && onStartVoiceVisit(item.beneficiary_id)}
                   className="flex-1 bg-[#A25B74] hover:bg-[#84455C] text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-touch flex items-center justify-center space-x-1.5 active:scale-95 transition-decelerate"
                 >
                   <Mic className="w-3.5 h-3.5" />
-                  <span className="font-kannada">ಧ್ವನಿ ಭೇಟಿ</span>
+                  <span>{t('followup.voiceVisitBtn')}</span>
                 </button>
 
                 <button
                   onClick={() => handleMarkCompleted(item)}
-                  className="p-2.5 rounded-xl border border-[#C8EEDD] text-[#477A60] hover:bg-[#477A60]-50 active:scale-95 transition-decelerate"
-                  title="ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ"
+                  className="p-2.5 rounded-xl border border-[#C8EEDD] text-[#477A60] hover:bg-[#E8F7F1] active:scale-95 transition-decelerate"
+                  title={t('followup.markCompleted')}
                 >
                   <Check className="w-4 h-4" />
                 </button>
@@ -232,7 +237,7 @@ export default function FollowUpDashboard({
                 <button
                   onClick={() => handleReschedule(item)}
                   className="p-2.5 rounded-xl border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95 transition-decelerate"
-                  title="ಮುಂದಿನ ವಾರಕ್ಕೆ ಮುಂದೂಡಿ"
+                  title={t('followup.reschedule')}
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
@@ -242,8 +247,8 @@ export default function FollowUpDashboard({
         ) : (
           <div className="col-span-full bg-white rounded-3xl p-10 text-center border border-[#F0DDE2] shadow-card">
             <CheckCircle2 className="w-12 h-12 text-[#477A60] mx-auto mb-2" />
-            <h4 className="text-base font-bold text-[#3B2A33] font-kannada">
-              ಈ ವರ್ಗದಲ್ಲಿ ಯಾವುದೇ ಬಾಕಿ ಭೇಟಿಗಳಿಲ್ಲ
+            <h4 className="text-base font-bold text-[#3B2A33] font-serif">
+              {t('followup.noItems')}
             </h4>
             <p className="text-xs text-[#C47A92] mt-1">All visits in this category are up to date.</p>
           </div>

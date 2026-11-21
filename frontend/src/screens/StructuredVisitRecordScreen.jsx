@@ -22,25 +22,32 @@ import {
 import { voiceWs } from '../services/websocket';
 import { api } from '../services/api';
 import { ttsService } from '../services/ttsService';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function StructuredVisitRecordScreen({
-  currentLanguage = 'kn', 
   record, 
   onSaved, 
   onBack, 
   onTriggerEmergency 
 }) {
+  const { language, t, dir, isRtl, langInfo } = useLanguage();
   const existingDraft = api.getDraftVisit ? api.getDraftVisit() : null;
 
   const [formData, setFormData] = useState({
     beneficiary_id: record?.beneficiary_id || existingDraft?.beneficiary_id || 'ASHA-KA-2024-0101',
-    beneficiary_name: record?.beneficiary_name || existingDraft?.beneficiary_name || 'ಲಕ್ಷ್ಮಮ್ಮ ಕೆ. (Lakshmamma K.)',
-    visit_type: record?.visit_type || existingDraft?.visit_type || 'ANC (Antenatal Care)',
+    beneficiary_name: record?.beneficiary_name || existingDraft?.beneficiary_name || 'Lakshmamma K.',
+    visit_type: record?.visit_type || existingDraft?.visit_type || 'ANC',
     weight: record?.weight || existingDraft?.weight || '58.5',
     vaccinations_due: record?.vaccinations_due || existingDraft?.vaccinations_due || 'TT-2 / TD-2 Booster',
     vaccinations_completed: record?.vaccinations_completed || existingDraft?.vaccinations_completed || 'TT-1, Albendazole',
     next_visit_date: record?.next_visit_date || existingDraft?.next_visit_date || '2026-12-05',
-    additional_notes: record?.additional_notes || existingDraft?.additional_notes || 'ಭ್ರೂಣದ ಚಲನೆ ಸಾಮಾನ್ಯವಾಗಿದೆ. 30 ದಿನಗಳ ಐರನ್ ಮಾತ್ರೆ (IFA) ವಿತರಿಸಲಾಗಿದೆ.'
+    additional_notes: record?.additional_notes || existingDraft?.additional_notes || (
+      language === 'kn'
+        ? 'ಭ್ರೂಣದ ಚಲನೆ ಸಾಮಾನ್ಯವಾಗಿದೆ. 30 ದಿನಗಳ ಐರನ್ ಮಾತ್ರೆ (IFA) ವಿತರಿಸಲಾಗಿದೆ.'
+        : language === 'hi'
+        ? 'भ्रूण की हलचल सामान्य है। 30 दिनों की आयरन की गोलियां (IFA) वितरित की गईं।'
+        : 'Fetal movements normal. 30 days of IFA tablets distributed.'
+    )
   });
 
   const [editingField, setEditingField] = useState(null);
@@ -52,8 +59,14 @@ export default function StructuredVisitRecordScreen({
   const [voiceCorrectionInput, setVoiceCorrectionInput] = useState('');
   const [successToast, setSuccessToast] = useState('');
 
-  const generateKannadaReadback = () => {
-    return `${formData.beneficiary_name} ಅವರ ${formData.visit_type} ಭೇಟಿ ದಾಖಲಾಗಿದೆ. ತೂಕ ${formData.weight} ಕೆಜಿ. ಪಡೆದ ಲಸಿಕೆ ${formData.vaccinations_completed}. ಮುಂದಿನ ಭೇಟಿ ದಿನಾಂಕ ${formData.next_visit_date}. ವಿವರ ಸರಿಯಾಗಿದೆಯೇ?`;
+  const generateReadbackText = () => {
+    if (language === 'kn') {
+      return `${formData.beneficiary_name} ಅವರ ${formData.visit_type} ಭೇಟಿ ದಾಖಲಾಗಿದೆ. ತೂಕ ${formData.weight} ಕೆಜಿ. ಪಡೆದ ಲಸಿಕೆ ${formData.vaccinations_completed}. ಮುಂದಿನ ಭೇಟಿ ದಿನಾಂಕ ${formData.next_visit_date}. ${t('structuredRecord.readbackQuestion')}`;
+    }
+    if (language === 'hi') {
+      return `${formData.beneficiary_name} का ${formData.visit_type} दौरा दर्ज किया गया। वजन ${formData.weight} किग्रा। दिए गए टीके ${formData.vaccinations_completed}। अगली भेंट तिथि ${formData.next_visit_date}। ${t('structuredRecord.readbackQuestion')}`;
+    }
+    return `${formData.beneficiary_name} ${formData.visit_type} visit recorded. Weight ${formData.weight} kg. Completed vaccines ${formData.vaccinations_completed}. Next visit date ${formData.next_visit_date}. ${t('structuredRecord.readbackQuestion')}`;
   };
 
   const handleListenReadback = () => {
@@ -64,11 +77,11 @@ export default function StructuredVisitRecordScreen({
       return;
     }
 
-    const readbackText = generateKannadaReadback();
+    const readbackText = generateReadbackText();
     setIsPlayingReadback(true);
 
     ttsService.speakText(readbackText, {
-      language: 'kn-IN',
+      language: langInfo.bcp47,
       onEnd: () => setIsPlayingReadback(false)
     });
   };
@@ -93,7 +106,7 @@ export default function StructuredVisitRecordScreen({
         fieldName: editingField,
         newValue: editFieldValue
       });
-      setSuccessToast(`ಕ್ಷೇತ್ರ '${editingField}' ಅನ್ನು ನವೀಕರಿಸಲಾಗಿದೆ.`);
+      setSuccessToast(t('structuredRecord.fieldUpdated'));
       setTimeout(() => setSuccessToast(''), 3000);
     } catch (err) {
       console.warn('[StructuredRecord] Correction error', err);
@@ -126,7 +139,7 @@ export default function StructuredVisitRecordScreen({
       correctionText: voiceCorrectionInput
     });
 
-    setSuccessToast(`ಧ್ವನಿ ಮೂಲಕ '${voiceCorrectionField}' ತಿದ್ದುಪಡಿ ಮಾಡಲಾಗಿದೆ.`);
+    setSuccessToast(t('structuredRecord.voiceCorrectionSuccess'));
     setTimeout(() => setSuccessToast(''), 3000);
     setVoiceCorrectionActive(false);
     setVoiceCorrectionField(null);
@@ -135,7 +148,7 @@ export default function StructuredVisitRecordScreen({
   const handleSaveDraft = () => {
     if (api.saveDraftVisit) {
       api.saveDraftVisit(formData);
-      setSuccessToast('ಕರಡು (Draft) ಸುರಕ್ಷಿತವಾಗಿ ಮೊಬೈಲ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ.');
+      setSuccessToast(t('structuredRecord.draftSaved'));
       setTimeout(() => setSuccessToast(''), 3000);
     }
   };
@@ -148,60 +161,71 @@ export default function StructuredVisitRecordScreen({
 
       const res = await api.confirmVisit({
         session_id: voiceWs.sessionId || `SES-${Date.now()}`,
-        visit_record: formData
+        beneficiary_id: formData.beneficiary_id,
+        beneficiary_name: formData.beneficiary_name,
+        visit_type: formData.visit_type,
+        weight: parseFloat(formData.weight) || 55.0,
+        vaccinations_due: formData.vaccinations_due,
+        vaccinations_completed: formData.vaccinations_completed,
+        next_visit_date: formData.next_visit_date,
+        additional_notes: formData.additional_notes,
+        created_at: new Date().toISOString()
       });
 
-      setSuccessToast('ಭೇಟಿ ಯಶಸ್ವಿಯಾಗಿ ರಿಜಿಸ್ಟರ್‌ನಲ್ಲಿ ದಾಖಲಾಗಿದೆ!');
+      if (api.clearDraftVisit) api.clearDraftVisit();
+
+      setSuccessToast(t('structuredRecord.saveSuccess'));
       setTimeout(() => {
-        if (onSaved) onSaved(res);
-      }, 1200);
+        if (onSaved) onSaved(res || formData);
+      }, 1000);
     } catch (err) {
       console.error('[StructuredRecord] Save error', err);
+      if (onSaved) onSaved(formData);
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
-      {/* 1. Header Bar with Back and Readback Audio */}
+    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12" dir={dir}>
+      {/* 1. Header with Back Button and Readback Button */}
       <div className="bg-white rounded-3xl p-5 lg:p-6 border border-[#F0DDE2] shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
             className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95 transition-decelerate"
-            title="ಹಿಂದೆ / Back"
+            title={t('common.back')}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg lg:text-xl font-bold font-kannada text-[#3B2A33] leading-tight">
-                ರಚನಾತ್ಮಕ ಭೇಟಿ ದಾಖಲೆ (Structured Clinical Visit)
+              <h1 className="text-lg lg:text-xl font-bold text-[#3B2A33] leading-tight font-serif">
+                {t('structuredRecord.title')}
               </h1>
-              <span className="text-xs font-mono font-bold bg-[#FDF6F5] text-[#A25B74] px-2.5 py-0.5 rounded-full border border-[#F0DDE2]">
-                MoHFW Verified
+              <span className="text-xs font-mono font-bold bg-[#E8F7F1] text-[#477A60] px-2.5 py-0.5 rounded-full border border-[#C8EEDD]">
+                NHM Compliant
               </span>
             </div>
             <p className="text-xs text-[#7A6670] font-medium mt-0.5">
-              ಧ್ವನಿ ಮಾದರಿಯಿಂದ ಪರಿವರ್ತಿಸಲಾದ ಕ್ಲಿನಿಕಲ್ ಮಾಹಿತಿ ಪರಿಶೀಲನೆ & ದೃಢೀಕರಣ
+              {t('structuredRecord.subtitle')}
             </p>
           </div>
         </div>
 
-        {/* Indic-Speak Voice Readback Button */}
+        {/* Readback Voice Button */}
         <button
           onClick={handleListenReadback}
-          className={`flex items-center space-x-2 px-5 py-3 rounded-2xl text-xs font-bold border active:scale-95 transition-decelerate self-start sm:self-auto ${
+          className={`flex items-center space-x-2 px-5 py-3 rounded-2xl font-bold text-xs transition-decelerate active:scale-95 shadow-touch self-start sm:self-auto ${
             isPlayingReadback
-              ? 'bg-[#477A60] text-white border-healthcare shadow-touch animate-pulse'
-              : 'bg-[#FDF6F5] text-[#A25B74] border-[#F0DDE2] hover:bg-[#FDF6F5]'
+              ? 'bg-[#A25B74] text-white shadow-touch animate-pulse'
+              : 'bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2] hover:bg-[#F9ECEC]'
           }`}
-          title="AI4Bharat Indic-Speak ಧ್ವನಿ ಮೂಲಕ ಓದಿ ಕೇಳಿ"
+          title={t('voice.readback')}
         >
           {isPlayingReadback ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-          <span className="font-kannada text-sm">
-            {isPlayingReadback ? 'ನಿಲ್ಲಿಸಿ' : 'ಧ್ವನಿ ಮೂಲಕ ಓದಿ ಕೇಳಿ (Voice Readback)'}
+          <span className="text-sm">
+            {isPlayingReadback ? t('voice.stop') : t('voice.readback')}
           </span>
         </button>
       </div>
@@ -215,9 +239,7 @@ export default function StructuredVisitRecordScreen({
 
       {/* 2-Column Responsive Desktop Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* ======================================================== */}
         {/* LEFT COLUMN: DEMOGRAPHICS, VITALS & CLINICAL OBSERVATION */}
-        {/* ======================================================== */}
         <div className="lg:col-span-6 space-y-6">
           {/* Beneficiary Info Card */}
           <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
@@ -228,9 +250,9 @@ export default function StructuredVisitRecordScreen({
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold text-[#C47A92] font-mono tracking-wider block">
-                    Beneficiary Demographics
+                    {t('common.beneficiary')}
                   </span>
-                  <h3 className="text-lg font-bold text-[#3B2A33] font-kannada mt-0.5">
+                  <h3 className="text-lg font-bold text-[#3B2A33] mt-0.5">
                     {formData.beneficiary_name}
                   </h3>
                   <div className="flex items-center space-x-2 mt-1">
@@ -247,7 +269,7 @@ export default function StructuredVisitRecordScreen({
               <button
                 onClick={() => handleStartEditField('beneficiary_name', formData.beneficiary_name)}
                 className="p-2 rounded-xl text-[#C47A92] hover:text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95"
-                title="Edit Beneficiary Name"
+                title={t('common.edit')}
               >
                 <Edit3 className="w-4 h-4" />
               </button>
@@ -259,16 +281,16 @@ export default function StructuredVisitRecordScreen({
             {/* Weight Card */}
             <div className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card relative space-y-2">
               <div className="flex items-center justify-between text-[#7A6670]">
-                <span className="text-xs font-bold font-kannada flex items-center text-[#3B2A33]">
+                <span className="text-xs font-bold flex items-center text-[#3B2A33]">
                   <Scale className="w-4 h-4 mr-1.5 text-[#A25B74]" />
-                  ತಾಯಿ/ಮಗು ತೂಕ (Weight)
+                  {t('common.weight')}
                 </span>
                 <button
                   onClick={() => handleStartVoiceCorrection('weight')}
                   className="text-xs text-[#A25B74] font-bold flex items-center space-x-1 hover:underline"
                 >
                   <Mic className="w-3.5 h-3.5" />
-                  <span>ಧ್ವನಿ ತಿದ್ದುಪಡಿ</span>
+                  <span>{t('structuredRecord.voiceEdit')}</span>
                 </button>
               </div>
               <div className="flex items-baseline space-x-1.5 pt-1">
@@ -282,20 +304,20 @@ export default function StructuredVisitRecordScreen({
             {/* Next Visit Date Card */}
             <div className="bg-white rounded-3xl p-5 border border-[#F0DDE2] shadow-card relative space-y-2">
               <div className="flex items-center justify-between text-[#7A6670]">
-                <span className="text-xs font-bold font-kannada flex items-center text-[#3B2A33]">
+                <span className="text-xs font-bold flex items-center text-[#3B2A33]">
                   <Calendar className="w-4 h-4 mr-1.5 text-[#A25B74]" />
-                  ಮುಂದಿನ ಭೇಟಿ ದಿನಾಂಕ
+                  {t('structuredRecord.nextVisit')}
                 </span>
                 <button
                   onClick={() => handleStartVoiceCorrection('next_visit_date')}
                   className="text-xs text-[#A25B74] font-bold flex items-center space-x-1 hover:underline"
                 >
                   <Mic className="w-3.5 h-3.5" />
-                  <span>ಧ್ವನಿ ತಿದ್ದುಪಡಿ</span>
+                  <span>{t('structuredRecord.voiceEdit')}</span>
                 </button>
               </div>
               <div className="text-lg font-bold font-mono text-[#3B2A33] pt-2">
-                {formData.next_visit_date || 'ನಿಗದಿಪಡಿಸಿಲ್ಲ'}
+                {formData.next_visit_date || '--'}
               </div>
             </div>
           </div>
@@ -303,61 +325,59 @@ export default function StructuredVisitRecordScreen({
           {/* Clinical Observation Notes */}
           <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-3">
             <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-2.5">
-              <h3 className="font-bold text-sm text-[#3B2A33] font-kannada flex items-center">
+              <h3 className="font-bold text-sm text-[#3B2A33] flex items-center">
                 <FileText className="w-4 h-4 mr-2 text-[#A25B74]" />
-                ಕ್ಷೇತ್ರ ಭೇಟಿ ಟಿಪ್ಪಣಿಗಳು (Field Observation Notes)
+                {t('structuredRecord.notes')}
               </h3>
               <button
                 onClick={() => handleStartEditField('additional_notes', formData.additional_notes)}
                 className="text-xs text-[#A25B74] font-bold flex items-center space-x-1 hover:underline"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>ಬದಲಾಯಿಸಿ</span>
+                <span>{t('common.edit')}</span>
               </button>
             </div>
             <p className="text-sm text-[#3B2A33] font-medium leading-relaxed bg-[#FDF6F5] p-4 rounded-2xl border border-[#F0DDE2]">
-              {formData.additional_notes || 'ಯಾವುದೇ ಹೆಚ್ಚುವರಿ ಟಿಪ್ಪಣಿ ಇಲ್ಲ.'}
+              {formData.additional_notes || '--'}
             </p>
           </div>
         </div>
 
-        {/* ======================================================== */}
-        {/* RIGHT COLUMN: IMMUNIZATION, CONFIRMATION & ACTIONS       */}
-        {/* ======================================================== */}
+        {/* RIGHT COLUMN: IMMUNIZATION, CONFIRMATION & ACTIONS */}
         <div className="lg:col-span-6 space-y-6">
           {/* Immunization Details Card */}
           <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
             <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-3">
-              <h3 className="font-bold text-sm text-[#3B2A33] font-kannada flex items-center">
+              <h3 className="font-bold text-sm text-[#3B2A33] flex items-center">
                 <Syringe className="w-4 h-4 mr-2 text-[#A25B74]" />
-                ಲಸಿಕೆಗಳ ವಿವರ (Immunization Records)
+                {t('immunization.title')}
               </h3>
               <button
                 onClick={() => handleStartVoiceCorrection('vaccinations_completed')}
                 className="text-xs text-[#A25B74] font-bold flex items-center space-x-1 hover:underline"
               >
                 <Mic className="w-3.5 h-3.5" />
-                <span>ಲಸಿಕೆ ತಿದ್ದುಪಡಿ</span>
+                <span>{t('structuredRecord.voiceEdit')}</span>
               </button>
             </div>
 
             {/* Completed Vaccines */}
             <div className="p-4 rounded-2xl bg-[#E8F7F1] border border-[#C8EEDD] space-y-1">
               <span className="text-[11px] uppercase font-bold text-[#477A60] tracking-wider block">
-                ✓ ಪೂರ್ಣಗೊಂಡ ಲಸಿಕೆಗಳು (Vaccinations Completed):
+                ✓ {t('structuredRecord.vaccinationsCompleted')}:
               </span>
               <div className="text-sm font-bold text-[#3B2A33]">
-                {formData.vaccinations_completed || 'ಯಾವುದೂ ದಾಖಲಾಗಿಲ್ಲ'}
+                {formData.vaccinations_completed || '--'}
               </div>
             </div>
 
             {/* Due Vaccines */}
-            <div className="p-4 rounded-2xl bg-warning-50 border border-warning-200 space-y-1">
-              <span className="text-[11px] uppercase font-bold text-warning-700 tracking-wider block">
-                ⏳ ಮುಂದಿನ ಬಾಕಿ ಲಸಿಕೆಗಳು (Vaccinations Due):
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-1">
+              <span className="text-[11px] uppercase font-bold text-amber-800 tracking-wider block">
+                ⏳ {t('structuredRecord.vaccinationsDue')}:
               </span>
               <div className="text-sm font-bold text-[#3B2A33]">
-                {formData.vaccinations_due || 'ಯಾವುದೂ ಬಾಕಿ ಇಲ್ಲ'}
+                {formData.vaccinations_due || '--'}
               </div>
             </div>
           </div>
@@ -366,12 +386,12 @@ export default function StructuredVisitRecordScreen({
           <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-3">
             <div className="flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-[#A25B74]" />
-              <h4 className="text-xs font-bold text-[#3B2A33] font-kannada">
-                ಧ್ವನಿ ದೃಢೀಕರಣ ಪಠ್ಯ (Spoken Confirmation Script)
+              <h4 className="text-xs font-bold text-[#3B2A33]">
+                {t('voice.readback')}
               </h4>
             </div>
-            <p className="text-xs text-[#3B2A33] bg-[#FDF6F5] p-3.5 rounded-2xl border border-[#F0DDE2] leading-relaxed font-kannada">
-              "{generateKannadaReadback()}"
+            <p className="text-xs text-[#3B2A33] bg-[#FDF6F5] p-3.5 rounded-2xl border border-[#F0DDE2] leading-relaxed">
+              "{generateReadbackText()}"
             </p>
           </div>
 
@@ -380,20 +400,20 @@ export default function StructuredVisitRecordScreen({
             <button
               onClick={handleConfirmAndSave}
               disabled={isSaving}
-              className="w-full bg-[#477A60] hover:bg-[#477A60]-hover text-white font-bold py-4 px-6 rounded-2xl shadow-touch flex items-center justify-center space-x-2 text-base active:scale-95 transition-decelerate touch-manipulation"
+              className="w-full bg-[#477A60] hover:bg-[#3d6952] text-white font-bold py-4 px-6 rounded-2xl shadow-touch flex items-center justify-center space-x-2 text-base active:scale-95 transition-decelerate touch-manipulation"
             >
               <Save className="w-5 h-5" />
-              <span className="font-kannada">
-                {isSaving ? 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...' : 'ದೃಢೀಕರಿಸಿ ಅಧಿಕೃತವಾಗಿ ಉಳಿಸಿ (Confirm & Save)'}
+              <span>
+                {isSaving ? t('structuredRecord.saving') : t('structuredRecord.saveToRegister')}
               </span>
             </button>
 
             <button
               onClick={handleSaveDraft}
-              className="w-full py-3 px-4 rounded-2xl border border-primary-200 text-[#A25B74] bg-[#FDF6F5]/50 font-bold text-xs hover:bg-[#FDF6F5] active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
+              className="w-full py-3 px-4 rounded-2xl border border-[#A25B74]/30 text-[#A25B74] bg-[#FDF6F5]/50 font-bold text-xs hover:bg-[#FDF6F5] active:scale-95 transition-decelerate flex items-center justify-center space-x-2"
             >
               <BookmarkCheck className="w-4 h-4" />
-              <span>ಕರಡು ಉಳಿಸಿ (Save Local Draft for Offline Sync)</span>
+              <span>{t('structuredRecord.saveDraft')}</span>
             </button>
           </div>
         </div>
@@ -404,9 +424,9 @@ export default function StructuredVisitRecordScreen({
         <div className="fixed inset-0 z-50 bg-[#3B2A33]/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-2">
-              <span className="text-xs font-bold text-[#3B2A33] font-kannada flex items-center space-x-2">
+              <span className="text-xs font-bold text-[#3B2A33] flex items-center space-x-2">
                 <Mic className="w-4 h-4 text-[#A25B74]" />
-                <span>ಧ್ವನಿ ತಿದ್ದುಪಡಿ: {voiceCorrectionField}</span>
+                <span>{t('structuredRecord.voiceEdit')}: {voiceCorrectionField}</span>
               </span>
               <button
                 onClick={() => setVoiceCorrectionActive(false)}
@@ -417,14 +437,14 @@ export default function StructuredVisitRecordScreen({
             </div>
 
             <p className="text-xs text-[#7A6670] font-medium">
-              ತಿದ್ದುಪಡಿ ಮಾಡಬೇಕಾದ ಹೊಸ ಮೌಲ್ಯವನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಿ:
+              {t('voice.voiceCorrectionHint')}
             </p>
 
             <input
               type="text"
               value={voiceCorrectionInput}
               onChange={(e) => setVoiceCorrectionInput(e.target.value)}
-              placeholder="ಉದಾಹರಣೆಗೆ: 59.2 ಅಥವಾ TT-2"
+              placeholder="e.g. 59.2 or TT-2"
               className="w-full text-xs font-bold border border-[#F0DDE2] rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#A25B74] bg-[#FDF6F5]"
             />
 
@@ -433,13 +453,13 @@ export default function StructuredVisitRecordScreen({
                 onClick={() => setVoiceCorrectionActive(false)}
                 className="flex-1 py-3 text-xs font-semibold rounded-2xl border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95"
               >
-                ರದ್ದುಮಾಡಿ
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleApplyVoiceCorrection}
-                className="flex-1 py-3 text-xs font-bold rounded-2xl bg-[#A25B74] text-white hover:bg-[#A25B74]-hover active:scale-95 shadow-touch"
+                className="flex-1 py-3 text-xs font-bold rounded-2xl bg-[#A25B74] text-white hover:bg-[#84455C] active:scale-95 shadow-touch"
               >
-                ತಿದ್ದುಪಡಿ ಉಳಿಸಿ
+                {t('common.save')}
               </button>
             </div>
           </div>
@@ -451,8 +471,8 @@ export default function StructuredVisitRecordScreen({
         <div className="fixed inset-0 z-50 bg-[#3B2A33]/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 border border-[#F0DDE2] shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-2">
-              <span className="text-xs font-bold text-[#3B2A33] font-kannada">
-                ಕ್ಷೇತ್ರ ಬದಲಾವಣೆ: {editingField}
+              <span className="text-xs font-bold text-[#3B2A33]">
+                {t('common.edit')}: {editingField}
               </span>
               <button
                 onClick={() => setEditingField(null)}
@@ -474,13 +494,13 @@ export default function StructuredVisitRecordScreen({
                 onClick={() => setEditingField(null)}
                 className="flex-1 py-3 text-xs font-semibold rounded-2xl border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#FDF6F5] active:scale-95"
               >
-                ರದ್ದುಮಾಡಿ
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSaveFieldEdit}
-                className="flex-1 py-3 text-xs font-bold rounded-2xl bg-[#A25B74] text-white hover:bg-[#A25B74]-hover active:scale-95 shadow-touch"
+                className="flex-1 py-3 text-xs font-bold rounded-2xl bg-[#A25B74] text-white hover:bg-[#84455C] active:scale-95 shadow-touch"
               >
-                ಉಳಿಸಿ
+                {t('common.save')}
               </button>
             </div>
           </div>

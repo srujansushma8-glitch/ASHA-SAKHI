@@ -19,15 +19,16 @@ import AuthModal from './components/auth/AuthModal';
 import CommandPalette from './components/CommandPalette';
 import LanguageSelectorModal from './components/LanguageSelectorModal';
 import { isRtlLanguage } from './services/languages';
+import { useLanguage } from './context/LanguageContext';
 import { api } from './services/api';
 import { voiceWs } from './services/websocket';
 
 export default function App() {
+  const { language: currentLanguage, setLanguage: setCurrentLanguage, isRtl, dir } = useLanguage();
   const [viewMode, setViewMode] = useState(() => {
     return localStorage.getItem('asha_view_mode') || 'landing';
   }); // 'landing' or 'app'
   const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'maternal', 'route', 'incentives', 'structured_record', 'emergency', 'ambulance', 'followups', 'beneficiaries'
-  const [currentLanguage, setCurrentLanguage] = useState('kn'); // 'kn', 'hi', 'en'
   const [userRole, setUserRole] = useState('asha'); // 'asha', 'anm', 'mo'
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);

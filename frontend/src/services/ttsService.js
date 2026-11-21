@@ -62,7 +62,7 @@ class TTSService {
   /**
    * Speak text in any of the 22 Indian languages using SpeechSynthesis (fallback or browser engine)
    */
-  speakText(text, { language = 'kn-IN', onStart, onEnd } = {}) {
+  speakText(text, { language, onStart, onEnd } = {}) {
     this.stop();
 
     if (!this.synth) {
@@ -72,8 +72,18 @@ class TTSService {
     }
 
     try {
+      const activeLang = language || (typeof window !== 'undefined' ? localStorage.getItem('asha_language') : 'en') || 'en';
+      const bcpMap = {
+        en: 'en-IN', kn: 'kn-IN', hi: 'hi-IN', te: 'te-IN', ta: 'ta-IN',
+        mr: 'mr-IN', bn: 'bn-IN', gu: 'gu-IN', ml: 'ml-IN', pa: 'pa-IN',
+        or: 'or-IN', as: 'as-IN', ur: 'ur-IN', sa: 'sa-IN', ks: 'ks-IN',
+        kok: 'kok-IN', mai: 'mai-IN', mni: 'mni-IN', ne: 'ne-NP',
+        sat: 'sat-IN', sd: 'sd-IN', doi: 'doi-IN', brx: 'brx-IN'
+      };
+      const targetLang = bcpMap[activeLang.split('-')[0].toLowerCase()] || (activeLang.includes('-') ? activeLang : 'en-IN');
+
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = language;
+      utterance.lang = targetLang;
       utterance.rate = 0.95; // Slightly slower for clarity in rural healthcare contexts
       utterance.pitch = 1.0;
 

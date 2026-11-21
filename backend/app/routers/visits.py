@@ -28,7 +28,7 @@ async def list_visits(limit: int = 50):
 
 
 @router.post("/confirm")
-async def confirm_visit(req: VisitConfirmRequest):
+async def confirm_visit(req: VisitConfirmRequest, request: Request):
     """
     Explicitly confirms and saves a structured visit record into SQLite.
     Generates follow-up tasks and logs danger sign alerts.
@@ -70,9 +70,20 @@ async def confirm_visit(req: VisitConfirmRequest):
         saved_fu = FollowupRepository.create(fu)
         saved_followups.append(saved_fu)
 
-    # 3. Generate spoken confirmation audio
-    confirm_text = "ದಾಖಲೆ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ."
-    spoken_ack = await tts_adapter.synthesize(confirm_text, language="kn")
+    # 3. Generate spoken confirmation audio in requested language
+    req_lang = (request.headers.get("x-language") or request.headers.get("accept-language") or "en").lower().split("-")[0].strip()
+    if req_lang == "kn":
+        confirm_text = "ದಾಖಲೆ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ."
+    elif req_lang == "hi":
+        confirm_text = "रिकॉर्ड सफलतापूर्वक सहेजा गया।"
+    elif req_lang == "te":
+        confirm_text = "రికార్డు విజయవంతంగా భద్రపరచబడింది."
+    elif req_lang == "ta":
+        confirm_text = "பதிவு வெற்றிகரமாக சேமிக்கப்பட்டது."
+    else:
+        confirm_text = "Record saved and registered successfully."
+
+    spoken_ack = await tts_adapter.synthesize(confirm_text, language=req_lang)
 
     return {
         "status": "success",
@@ -85,7 +96,7 @@ async def confirm_visit(req: VisitConfirmRequest):
 
 
 @router.post("/correct")
-async def correct_visit(req: VisitCorrectRequest):
+async def correct_visit(req: VisitCorrectRequest, request: Request):
     """
     Applies a field correction to an existing visit or active draft.
     Validates updated values and returns natural Kannada voice acknowledgment.
@@ -104,16 +115,40 @@ async def correct_visit(req: VisitCorrectRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    field_labels_kn = {
-        "weight": "ತೂಕವನ್ನು",
-        "beneficiary_name": "ಹೆಸರನ್ನು",
-        "beneficiary_id": "ಐಡಿಯನ್ನು",
-        "visit_type": "ಭೇಟಿ ಪ್ರಕಾರವನ್ನು",
-        "next_visit_date": "ಮುಂದಿನ ದಿನಾಂಕವನ್ನು",
-    }
-    label = field_labels_kn.get(req.field_name, req.field_name)
-    ack_text = f"{label} {req.new_value} ಎಂದು ಬದಲಾಯಿಸಲಾಗಿದೆ. ಈಗ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?"
-    spoken_ack = await tts_adapter.synthesize(ack_text, language="kn")
+    req_lang = (request.headers.get("x-language") or request.headers.get("accept-language") or "en").lower().split("-")[0].strip()
+    
+    if req_lang == "kn":
+        field_labels_kn = {
+            "weight": "ತೂಕವನ್ನು",
+            "beneficiary_name": "ಹೆಸರನ್ನು",
+            "beneficiary_id": "ಐಡಿಯನ್ನು",
+            "visit_type": "ಭೇಟಿ ಪ್ರಕಾರವನ್ನು",
+            "next_visit_date": "ಮುಂದಿನ ದಿನಾಂಕವನ್ನು",
+        }
+        label = field_labels_kn.get(req.field_name, req.field_name)
+        ack_text = f"{label} {req.new_value} ಎಂದು ಬದಲಾಯಿಸಲಾಗಿದೆ. ಈಗ ವಿವರಗಳು ಸರಿಯಾಗಿವೆಯೇ?"
+    elif req_lang == "hi":
+        field_labels_hi = {
+            "weight": "वजन",
+            "beneficiary_name": "नाम",
+            "beneficiary_id": "आईडी",
+            "visit_type": "दौरे का प्रकार",
+            "next_visit_date": "अगली तिथि",
+        }
+        label = field_labels_hi.get(req.field_name, req.field_name)
+        ack_text = f"{label} बदलकर {req.new_value} कर दिया गया है। क्या अब विवरण सही है?"
+    else:
+        field_labels_en = {
+            "weight": "Weight",
+            "beneficiary_name": "Name",
+            "beneficiary_id": "ID",
+            "visit_type": "Visit type",
+            "next_visit_date": "Next visit date",
+        }
+        label = field_labels_en.get(req.field_name, req.field_name)
+        ack_text = f"{label} updated to {req.new_value}. Are the details correct now?"
+
+    spoken_ack = await tts_adapter.synthesize(ack_text, language=req_lang)
 
     return {
         "status": "success",

@@ -1,81 +1,73 @@
-import { getLanguageByCode } from '../services/languages';
 import React, { useState, useEffect } from 'react';
 import { 
   Home, 
-  Users, 
   Mic, 
+  Baby, 
+  Users, 
+  MapPin, 
+  IndianRupee, 
   CalendarCheck, 
   AlertTriangle, 
   Ambulance, 
-  HeartPulse, 
+  Globe, 
+  RefreshCw, 
   Wifi, 
   WifiOff, 
-  RefreshCw, 
-  ChevronRight,
-  Globe,
-  Settings,
-  Baby,
-  Activity,
-  Sparkles,
-  MapPin,
-  IndianRupee,
-  ExternalLink,
-  Moon,
+  Moon, 
   Sun,
-  UserCheck,
+  Sparkles,
+  ExternalLink,
   Smartphone
 } from 'lucide-react';
-import { isDemoMode, setDemoMode, api } from '../services/api';
+import { api, isDemoMode, setDemoMode } from '../services/api';
+import { getLanguageByCode } from '../services/languages';
+import { useLanguage } from '../context/LanguageContext';
 
-export default function Sidebar({ 
-  activeScreen, 
-  setActiveScreen, 
-  emergencyCount = 0, 
+export default function Sidebar({
+  activeScreen,
+  setActiveScreen,
+  emergencyCount = 0,
   isRecording = false,
-  currentLanguage,
-  onLanguageChange,
   onOpenLanguageSelector,
   onViewLanding,
   isDarkMode = false,
   onToggleDarkMode,
   userRole = 'asha',
-  onOpenAuth
+  onOpenAuth,
 }) {
+  const { t, currentLanguage, onLanguageChange } = useLanguage();
   const [demo, setDemo] = useState(isDemoMode());
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
   useEffect(() => {
-    const updateQueue = () => {
-      const queue = api.getPendingSyncQueue ? api.getPendingSyncQueue() : [];
-      setPendingSyncCount(queue.length);
-    };
-    updateQueue();
-
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    const handleDemoChange = (e) => setDemo(e.detail.enabled);
-    window.addEventListener('asha_demo_mode_changed', handleDemoChange);
+    const updateSyncCount = () => {
+      setPendingSyncCount(api.getPendingSyncCount ? api.getPendingSyncCount() : 0);
+    };
 
-    const handleSyncUpdate = (e) => setPendingSyncCount(e.detail.count);
-    window.addEventListener('asha_sync_updated', handleSyncUpdate);
+    updateSyncCount();
+    window.addEventListener('asha_sync_completed', updateSyncCount);
+    window.addEventListener('storage', updateSyncCount);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('asha_demo_mode_changed', handleDemoChange);
-      window.removeEventListener('asha_sync_updated', handleSyncUpdate);
+      window.removeEventListener('asha_sync_completed', updateSyncCount);
+      window.removeEventListener('storage', updateSyncCount);
     };
   }, []);
 
   const toggleDemoMode = () => {
-    const next = !demo;
-    setDemo(next);
-    setDemoMode(next);
+    const nextMode = !demo;
+    setDemo(nextMode);
+    setDemoMode(nextMode);
   };
 
   const triggerSync = async () => {
@@ -93,66 +85,56 @@ export default function Sidebar({
   const navItems = [
     {
       id: 'home',
-      label_kn: 'ಮುಖಪುಟ',
-      label_en: 'Dashboard',
+      i18nKey: 'nav.dashboard',
       icon: Home,
     },
     {
       id: 'record',
-      label_kn: 'ಧ್ವನಿ ಭೇಟಿ',
-      label_en: 'AI Voice Assistant',
+      i18nKey: 'nav.voiceVisit',
       icon: Mic,
       isSpecial: true,
     },
     {
       id: 'maternal',
-      label_kn: 'ತಾಯಿ ಆರೋಗ್ಯ',
-      label_en: 'Maternal Health',
+      i18nKey: 'nav.maternalHealth',
       icon: Baby,
       isMaternal: true,
     },
     {
       id: 'beneficiaries',
-      label_kn: 'ಫಲಾನುಭವಿಗಳ ರಿಜಿಸ್ಟರ್',
-      label_en: 'Beneficiary Directory',
+      i18nKey: 'nav.beneficiaries',
       icon: Users,
     },
     {
       id: 'route',
-      label_kn: 'ಗ್ರಾಮ ಮಾರ್ಗ ನಕ್ಷೆ',
-      label_en: 'Household Route',
+      i18nKey: 'nav.route',
       icon: MapPin,
     },
     {
       id: 'incentives',
-      label_kn: 'ಪ್ರೋತ್ಸಾಹಧನ ಲೆಕ್ಕ',
-      label_en: 'Incentives & NHM',
+      i18nKey: 'nav.incentives',
       icon: IndianRupee,
     },
     {
       id: 'followups',
-      label_kn: 'ಫಾಲೋ-ಅಪ್ ಪಟ್ಟಿ',
-      label_en: 'Follow-ups & Reports',
+      i18nKey: 'nav.followups',
       icon: CalendarCheck,
     },
     {
       id: 'emergency',
-      label_kn: 'ತುರ್ತು ಎಚ್ಚರಿಕೆ',
-      label_en: 'Emergency Alerts',
+      i18nKey: 'nav.emergency',
       icon: AlertTriangle,
       badge: emergencyCount,
       isEmergency: true,
     },
     {
       id: 'ambulance',
-      label_kn: '108 ಆಂಬ್ಯುಲೆನ್ಸ್',
-      label_en: 'Ambulance Map',
+      i18nKey: 'nav.ambulance',
       icon: Ambulance,
     },
     {
       id: 'ambulance_driver',
-      label_kn: 'ಚಾಲಕ ಜಿಪಿಎಸ್',
-      label_en: 'Driver GPS Portal',
+      i18nKey: 'nav.driverPortal',
       icon: Smartphone,
     },
   ];
@@ -160,11 +142,11 @@ export default function Sidebar({
   const getRoleDetails = () => {
     switch (userRole) {
       case 'anm':
-        return { name: 'ಪುಷ್ಪಲತಾ (Pushpalatha)', role: 'ANM Supervisor', tag: 'Supervisor' };
+        return { name: 'Pushpalatha ANM', role: t('auth.roleAnm'), tag: 'Supervisor' };
       case 'mo':
-        return { name: 'ಡಾ. ರಾಜೇಶ್ (Dr. Rajesh)', role: 'Medical Officer', tag: 'PHC Doctor' };
+        return { name: 'Dr. Rajesh MO', role: t('auth.roleMo'), tag: 'PHC Doctor' };
       default:
-        return { name: 'ಶಾರದಾ ಬಾಯಿ (Sharada)', role: 'ASHA Field Leader', tag: 'ASHA Worker' };
+        return { name: 'Sharada Bai', role: t('auth.roleAsha'), tag: 'Field Leader' };
     }
   };
 
@@ -178,7 +160,6 @@ export default function Sidebar({
           onClick={() => setActiveScreen('home')}
           className="flex items-center space-x-3 cursor-pointer group select-none"
         >
-          {/* Stylized Lotus Icon Container */}
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#A25B74] to-[#C47A92] text-white flex items-center justify-center shadow-md shadow-[#A25B74]/20 group-hover:scale-105 transition-transform relative">
             <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 3c-1.5 3-3.5 5.5-6 7 2.5 1.5 4.5 4 6 7 1.5-3 3.5-5.5 6-7-2.5-1.5-4.5-4-6-7z"/>
@@ -194,11 +175,11 @@ export default function Sidebar({
                 ASHA <span className="italic font-normal text-[#A25B74]">Sakhi</span>
               </span>
             </div>
-            <p className="text-[11px] font-bold text-[#A25B74] font-kannada">
-              ಆಶಾ ಸಖಿ • ಡಿಜಿಟಲ್ ರಿಜಿಸ್ಟರ್
+            <p className="text-[11px] font-bold text-[#A25B74]">
+              {t("common.appName")}
             </p>
-            <p className="text-[9px] uppercase tracking-wider text-[#7A6670] font-medium">
-              NHM ಕರ್ನಾಟಕ • Mandya PHC
+            <p className="text-[9px] uppercase tracking-wider text-[#7A6670] font-medium truncate max-w-[150px]">
+              {t("common.department")}
             </p>
           </div>
         </div>
@@ -211,7 +192,7 @@ export default function Sidebar({
           >
             <span className="flex items-center space-x-2">
               <Sparkles className="w-3.5 h-3.5 text-[#A25B74]" />
-              <span className="font-cormorant text-sm font-bold">Public Portal & 3D Site</span>
+              <span className="font-cormorant text-sm font-bold">{t("nav.publicPortal")}</span>
             </span>
             <ExternalLink className="w-3.5 h-3.5 text-[#C47A92] group-hover:translate-x-0.5 transition-transform" />
           </button>
@@ -221,7 +202,7 @@ export default function Sidebar({
       {/* Main Navigation Links */}
       <div className="flex-1 px-3 py-4 space-y-1.5">
         <div className="px-3 pb-1.5 text-[10px] font-bold text-[#C47A92] uppercase tracking-[0.2em] font-mono">
-          ಮುಖ್ಯ ಮೆನು (Navigation)
+          {t("cmdPalette.navigation")}
         </div>
 
         {navItems.map((item) => {
@@ -248,13 +229,8 @@ export default function Sidebar({
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="text-left">
-                    <span className="block font-kannada text-xs font-bold leading-tight">
-                      {isRecording ? 'ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ...' : item.label_kn}
-                    </span>
-                    <span className={`text-[10px] block font-mono font-medium ${
-                      isActive || isRecording ? 'text-white/80' : 'text-[#A25B74]'
-                    }`}>
-                      {item.label_en}
+                    <span className="block text-xs font-bold leading-tight">
+                      {isRecording ? t("voice.recordingInProgress") : t(item.i18nKey)}
                     </span>
                   </div>
                 </div>
@@ -285,11 +261,8 @@ export default function Sidebar({
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="text-left">
-                    <span className="block font-kannada leading-tight text-xs font-bold">
-                      {item.label_kn}
-                    </span>
-                    <span className={`text-[10px] block font-medium ${isActive ? 'text-[#A25B74]' : 'text-[#7A6670]'}`}>
-                      {item.label_en}
+                    <span className="block leading-tight text-xs font-bold">
+                      {t(item.i18nKey)}
                     </span>
                   </div>
                 </div>
@@ -323,11 +296,8 @@ export default function Sidebar({
                     : 'text-[#C47A92] stroke-[1.8px]'
                 }`} />
                 <div className="text-left">
-                  <span className="block font-kannada leading-tight text-xs font-bold">
-                    {item.label_kn}
-                  </span>
-                  <span className={`text-[10px] block font-medium ${isActive ? 'text-[#A25B74]' : 'text-[#7A6670]'}`}>
-                    {item.label_en}
+                  <span className="block leading-tight text-xs font-bold">
+                    {t(item.i18nKey)}
                   </span>
                 </div>
               </div>
@@ -349,12 +319,12 @@ export default function Sidebar({
         <div className="flex items-center justify-between text-xs">
           <span className="text-[#7A6670] font-medium flex items-center space-x-1.5">
             <Globe className="w-3.5 h-3.5 text-[#A25B74]" />
-            <span className="text-[11px] font-bold">ಭಾಷೆ (Language)</span>
+            <span className="text-[11px] font-bold">{t("nav.languages")}</span>
           </span>
           <button
             onClick={onOpenLanguageSelector || (() => onLanguageChange && onLanguageChange(currentLanguage === 'kn' ? 'hi' : currentLanguage === 'hi' ? 'en' : 'kn'))}
             className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-[#FDF6F5] border border-[#F0DDE2] text-xs font-bold text-[#3B2A33] hover:bg-[#F9ECEC] active:scale-[0.98] shadow-xs"
-            title="All 22 Scheduled Indian Languages"
+            title="All 22 Scheduled Indian Languages + English"
           >
             <span>{getLanguageByCode(currentLanguage).name_native}</span>
             <span className="text-[10px] bg-[#A25B74]/10 text-[#A25B74] px-1 rounded font-mono font-bold">22</span>
@@ -364,7 +334,7 @@ export default function Sidebar({
         <div className="flex items-center justify-between text-xs pt-1.5 border-t border-[#F0DDE2]">
           <span className="text-[#7A6670] font-medium flex items-center space-x-1.5">
             <span className={`w-2 h-2 rounded-full ${demo ? 'bg-[#A25B74]' : 'bg-[#477A60]'}`}></span>
-            <span className="text-[11px]">ಇಂಜಿನ್ (Engine)</span>
+            <span className="text-[11px]">{demo ? t("common.demoMode") : t("common.liveMode")}</span>
           </span>
           <button
             onClick={toggleDemoMode}
@@ -374,7 +344,7 @@ export default function Sidebar({
                 : 'bg-[#E8F7F1] text-[#477A60] border-[#C8EEDD]'
             }`}
           >
-            {demo ? 'AI4Bharat Engine' : 'Live Backend'}
+            {demo ? 'AI4Bharat' : 'Live'}
           </button>
         </div>
 
@@ -386,7 +356,7 @@ export default function Sidebar({
             className="w-full mt-1 bg-[#FEF9EF] hover:bg-[#FDF1D7] text-[#B88745] border border-[#F2B84B]/40 text-xs font-bold py-1.5 px-2 rounded-xl flex items-center justify-center space-x-1.5 active:scale-[0.98]"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{pendingSyncCount} ದಾಖಲೆ ಸಿಂಕ್ ಮಾಡಿ</span>
+            <span>{pendingSyncCount} {t("common.syncNow")}</span>
           </button>
         )}
       </div>
@@ -405,7 +375,7 @@ export default function Sidebar({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-bold text-[#3B2A33] truncate font-kannada">
+              <div className="text-xs font-bold text-[#3B2A33] truncate">
                 {roleInfo.name}
               </div>
               {onOpenAuth && (
@@ -413,7 +383,7 @@ export default function Sidebar({
                   onClick={onOpenAuth}
                   className="text-[10px] text-[#A25B74] font-bold hover:underline"
                 >
-                  ಬದಲಿಸಿ
+                  {t("nav.switchRole")}
                 </button>
               )}
             </div>
@@ -424,12 +394,12 @@ export default function Sidebar({
               {isOnline ? (
                 <>
                   <Wifi className="w-3 h-3" />
-                  <span>ಆನ್‌ಲೈನ್ ಸಿಂಕ್ (Active)</span>
+                  <span>{t("common.syncOnline")}</span>
                 </>
               ) : (
                 <>
                   <WifiOff className="w-3 h-3 text-[#B88745]" />
-                  <span className="text-[#B88745]">ಆಫ್‌ಲೈನ್ ಕ್ಯೂ</span>
+                  <span className="text-[#B88745]">{t("common.syncOffline")}</span>
                 </>
               )}
             </div>
@@ -444,7 +414,7 @@ export default function Sidebar({
           >
             <span className="flex items-center space-x-2">
               {isDarkMode ? <Sun className="w-3.5 h-3.5 text-[#B88745]" /> : <Moon className="w-3.5 h-3.5 text-[#A25B74]" />}
-              <span>{isDarkMode ? 'ಲೈಟ್ ಮೋಡ್ (Light)' : 'ಡಾರ್ಕ್ ಮೋಡ್ (Dark)'}</span>
+              <span>{isDarkMode ? t("common.lightMode") : t("common.darkMode")}</span>
             </span>
             <span className="text-[10px] font-mono text-[#C47A92]">Theme</span>
           </button>

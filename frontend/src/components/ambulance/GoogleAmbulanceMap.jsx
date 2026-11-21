@@ -542,7 +542,7 @@ export default function GoogleAmbulanceMap({
             title="Detect Device GPS Location via Geolocation API"
           >
             <LocateFixed className="w-3.5 h-3.5 text-[#A25B74]" />
-            <span className="hidden sm:inline">GPS ಪಿಕ್-ಅಪ್</span>
+            <span className="hidden sm:inline">GPS Pick-up</span>
           </button>
 
           <button

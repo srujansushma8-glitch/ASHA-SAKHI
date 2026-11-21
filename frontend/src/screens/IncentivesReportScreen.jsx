@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import { 
   IndianRupee, 
+  TrendingUp, 
   CheckCircle2, 
   Clock, 
+  ArrowLeft, 
   Download, 
-  Filter, 
   Send, 
-  FileText, 
-  Sparkles, 
-  TrendingUp, 
+  ShieldCheck, 
   Calendar, 
-  UserCheck, 
-  Baby, 
-  ShieldCheck,
-  ChevronRight,
-  AlertCircle
+  FileText, 
+  Filter,
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -23,423 +21,280 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  Legend 
+  ResponsiveContainer 
 } from 'recharts';
+import { useLanguage } from '../context/LanguageContext';
 
-export default function IncentivesReportScreen({
-  currentLanguage = 'kn', onBack }) {
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'approved', 'under_review', 'pending'
-  const [submittedToANM, setSubmittedToANM] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
+export default function IncentivesReportScreen({ onBack }) {
+  const { t, currentLanguage, formatCurrency } = useLanguage();
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [submittedToAnm, setSubmittedToAnm] = useState(false);
 
-  // Realistic National Health Mission (NHM) Monthly Earnings Data
+  const monthNames = {
+    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun (Current)'],
+    kn: ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್ (ಪ್ರಸ್ತುತ)'],
+    hi: ['जनवरी', 'फरवरी', 'मार्च', 'अप्रैल', 'मई', 'जून (वर्तमान)']
+  };
+  const activeMonths = monthNames[currentLanguage] || monthNames.en;
+
   const monthlyData = [
-    { month: 'ಜನವರಿ', earned: 5200, potential: 6500 },
-    { month: 'ಫೆಬ್ರವರಿ', earned: 5800, potential: 7000 },
-    { month: 'ಮಾರ್ಚ್', earned: 6400, potential: 7500 },
-    { month: 'ಏಪ್ರಿಲ್', earned: 6100, potential: 7200 },
-    { month: 'ಮೇ', earned: 7100, potential: 8000 },
-    { month: 'ಜೂನ್ (ಪ್ರಸ್ತುತ)', earned: 6850, potential: 8200 },
+    { month: activeMonths[0], earned: 5200, potential: 6500 },
+    { month: activeMonths[1], earned: 5800, potential: 7000 },
+    { month: activeMonths[2], earned: 6400, potential: 7500 },
+    { month: activeMonths[3], earned: 6100, potential: 7200 },
+    { month: activeMonths[4], earned: 7100, potential: 8000 },
+    { month: activeMonths[5], earned: 6850, potential: 8200 },
   ];
 
-  // Itemized claims ledger
-  const initialClaims = [
+  const activities = [
     {
-      id: 'CLM-2024-0891',
+      id: 'CLM-2026-0601',
+      task_en: 'Janani Suraksha Yojana (JSY) Institutional Delivery Support',
       task_kn: 'ಜನನಿ ಸುರಕ್ಷಾ ಯೋಜನೆ (JSY) ಆಸ್ಪತ್ರೆ ಹೆರಿಗೆ ಬೆಂಬಲ',
-      task_en: 'JSY Institutional Delivery Accompaniment',
-      beneficiary: 'ಲಕ್ಷ್ಮಿ ದೇವಿ (Lakshmi Devi)',
-      date: '2024-06-18',
+      task_hi: 'जननी सुरक्षा योजना (JSY) संस्थागत प्रसव सहायता',
+      beneficiary: 'Lakshmi Devi',
+      date: '2026-06-02',
       amount: 600,
-      scheme: 'NHM Maternal Health',
       status: 'approved',
-      approvedBy: 'ಪುಷ್ಪಲತಾ (ANM Supervisor)',
-      verificationCode: 'VER-KA-8812'
+      approvedBy: 'Pushpalatha ANM'
     },
     {
-      id: 'CLM-2024-0892',
+      id: 'CLM-2026-0602',
+      task_en: 'Complete 1-Year Child Immunization Certification',
       task_kn: 'ಸಂಪೂರ್ಣ 1 ವರ್ಷದ ಮಕ್ಕಳ ಲಸಿಕಾ ಪ್ರಮಾಣೀಕರಣ',
-      task_en: 'Full Infant Immunization (1 Year Milestone)',
-      beneficiary: 'ಪೂಜಾ ಅವರ ಮಗು (Pooja Infant)',
-      date: '2024-06-15',
-      amount: 150,
-      scheme: 'Universal Immunization Programme',
+      task_hi: 'पूर्ण 1 वर्षीय बाल टीकाकरण प्रमाणीकरण',
+      beneficiary: 'Pooja Suresh Infant',
+      date: '2026-06-05',
+      amount: 400,
       status: 'approved',
-      approvedBy: 'ಪುಷ್ಪಲತಾ (ANM Supervisor)',
-      verificationCode: 'VER-KA-8809'
+      approvedBy: 'Pushpalatha ANM'
     },
     {
-      id: 'CLM-2024-0893',
+      id: 'CLM-2026-0603',
+      task_en: '4 Mandatory ANC Checkups & IFA Tablet Distribution',
       task_kn: '4 ಕಡ್ಡಾಯ ANC ತಪಾಸಣೆ ಮತ್ತು IFA ಮಾತ್ರೆ ವಿತರಣೆ',
-      task_en: 'Complete 4 ANC Checkups Tracking + IFA',
-      beneficiary: 'ಮೀನಾಕ್ಷಿ (Meenakshi)',
-      date: '2024-06-12',
+      task_hi: '4 अनिवार्य प्रसवपूर्व जांच एवं आईएफए वितरण',
+      beneficiary: 'Meenakshi',
+      date: '2026-06-08',
       amount: 300,
-      scheme: 'Pradhan Mantri Surakshit Matritva',
-      status: 'under_review',
-      approvedBy: 'ಡಾ. ರಾಜೇಶ್ (Medical Officer)',
-      verificationCode: 'VER-KA-8794'
+      status: 'approved',
+      approvedBy: 'Dr. Rajesh MO'
     },
     {
-      id: 'CLM-2024-0894',
+      id: 'CLM-2026-0604',
+      task_en: 'Home-Based Newborn Care (HBNC - 6 visits completed)',
       task_kn: 'ಗೃಹಾಧಾರಿತ ನವಜಾತ ಶಿಶು ಆರೈಕೆ (HBNC - 6 ಭೇಟಿಗಳು)',
-      task_en: 'HBNC Home Visits Protocol (6 Rounds)',
-      beneficiary: 'ಸೌಂದರ್ಯ ಕುಮಾರ್ (Soundarya Kumar)',
-      date: '2024-06-10',
+      task_hi: 'गृह-आधारित नवजात शिशु देखभाल (HBNC - 6 दौरे)',
+      beneficiary: 'Soundarya Kumar',
+      date: '2026-06-11',
       amount: 250,
-      scheme: 'NHM Child Health',
       status: 'approved',
-      approvedBy: 'ಪುಷ್ಪಲತಾ (ANM Supervisor)',
-      verificationCode: 'VER-KA-8780'
+      approvedBy: 'Pushpalatha ANM'
     },
     {
-      id: 'CLM-2024-0895',
+      id: 'CLM-2026-0605',
+      task_en: 'High-Risk Pregnancy Early Detection & 108 Emergency Referral',
       task_kn: 'ತೀವ್ರ ರಕ್ತಹೀನತೆ ಆರಂಭಿಕ ಪತ್ತೆ & 108 ತುರ್ತು ರೆಫರಲ್',
-      task_en: 'High-Risk Pregnancy Detection & Referral',
-      beneficiary: 'ಮೀನಾಕ್ಷಿ (Meenakshi)',
-      date: '2024-06-08',
-      amount: 200,
-      scheme: 'High-Risk Referral Incentive',
+      task_hi: 'उच्च जोखिम गर्भावस्था पहचान एवं 108 रेफरल',
+      beneficiary: 'Meenakshi',
+      date: '2026-06-14',
+      amount: 300,
       status: 'under_review',
-      approvedBy: 'ಡಾ. ರಾಜೇಶ್ (Medical Officer)',
-      verificationCode: 'VER-KA-8772'
+      approvedBy: 'Dr. Rajesh MO'
     },
     {
-      id: 'CLM-2024-0896',
+      id: 'CLM-2026-0606',
+      task_en: 'Village Health Sanitation & Nutrition Day (VHSND) Mobilization',
       task_kn: 'ಗ್ರಾಮ ನೈರ್ಮಲ್ಯ ಮತ್ತು ಪೌಷ್ಟಿಕಾಂಶ ದಿನ (VHSND)',
-      task_en: 'Monthly VHSND Village Health Day Organization',
-      beneficiary: 'ಶಿವಳ್ಳಿ ಉಪಕೇಂದ್ರ ಸಮುದಾಯ',
-      date: '2024-06-05',
+      task_hi: 'ग्राम स्वास्थ्य स्वच्छता एवं पोषण दिवस (VHSND)',
+      beneficiary: 'Shivalli Sub-Centre Community',
+      date: '2026-06-17',
       amount: 200,
-      scheme: 'Community Mobilization',
       status: 'approved',
-      approvedBy: 'ಪುಷ್ಪಲತಾ (ANM Supervisor)',
-      verificationCode: 'VER-KA-8761'
+      approvedBy: 'Pushpalatha ANM'
     },
     {
-      id: 'CLM-2024-0897',
+      id: 'CLM-2026-0607',
+      task_en: 'Postpartum Family Planning Counseling Visit',
       task_kn: 'ಕುಟುಂಬ ಯೋಜನೆ ಸಲಹಾ ಭೇಟಿ ಮತ್ತು ಆಪ್ತಸಮಾಲೋಚನೆ',
-      task_en: 'Family Planning Counseling & Antara Injection',
-      beneficiary: 'ರೇಣುಕಾ ಬಾಯಿ (Renuka Bai)',
-      date: '2024-06-02',
+      task_hi: 'प्रसवोत्तर परिवार नियोजन परामर्श',
+      beneficiary: 'Renuka Bai',
+      date: '2026-06-19',
       amount: 150,
-      scheme: 'Family Welfare Programme',
       status: 'pending',
-      approvedBy: 'ಬಾಕಿ ಇದೆ (Pending Submission)',
-      verificationCode: 'Draft'
+      approvedBy: t('common.pending')
     }
   ];
 
-  const filteredClaims = initialClaims.filter(c => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'approved') return c.status === 'approved';
-    if (activeFilter === 'under_review') return c.status === 'under_review';
-    if (activeFilter === 'pending') return c.status === 'pending';
-    return true;
+  const getTaskName = (act) => {
+    if (currentLanguage === 'kn') return act.task_kn || act.task_en;
+    if (currentLanguage === 'hi') return act.task_hi || act.task_en;
+    return act.task_en;
+  };
+
+  const filtered = activities.filter(act => {
+    if (selectedFilter === 'all') return true;
+    return act.status === selectedFilter;
   });
 
-  const totalEarned = 6850;
-  const approvedTotal = 5400;
-  const underReviewTotal = 1450;
-  const potentialTotal = 8200;
-
-  const handleSubmitBatch = () => {
-    setSubmittedToANM(true);
-    setTimeout(() => setSubmittedToANM(false), 5000);
-  };
-
-  const handleExportCSV = () => {
-    const headers = ['Claim ID', 'Task (Kannada)', 'Task (English)', 'Beneficiary', 'Date', 'Amount (INR)', 'Status'];
-    const rows = filteredClaims.map(c => [
-      c.id,
-      `"${c.task_kn}"`,
-      `"${c.task_en}"`,
-      `"${c.beneficiary}"`,
-      c.date,
-      c.amount,
-      c.status
-    ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ASHA_Sakhi_Incentive_Ledger_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const totalEarned = activities.filter(a => a.status === 'approved').reduce((acc, c) => acc + c.amount, 0);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-7 animate-fade-in pb-24 lg:pb-12">
-      {/* 1. Header Banner */}
-      <div className="bg-white  rounded-3xl p-6 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#FEF9EF] text-saffron-800 dark:text-saffron text-xs font-bold border border-[#B88745]/30 mb-2">
-            <IndianRupee className="w-3.5 h-3.5" />
-            <span>ರಾಷ್ಟ್ರೀಯ ಆರೋಗ್ಯ ಅಭಿಯಾನ (NHM) • ಆಶಾ ಪ್ರೋತ್ಸಾಹಧನ ಲೆಕ್ಕಪತ್ರ</span>
+    <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
+      {/* 1. Header */}
+      <div className="bg-white rounded-3xl p-5 lg:p-6 border border-[#F0DDE2] shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3.5">
+          <button
+            onClick={onBack}
+            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-[#F9ECEC] active:scale-[0.98] transition-decelerate"
+            title={t("common.back")}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <IndianRupee className="w-4 h-4" />
+              </div>
+              <h1 className="text-lg lg:text-xl font-bold text-[#3B2A33] leading-tight">
+                {t("incentives.title")}
+              </h1>
+            </div>
+            <p className="text-xs text-[#7A6670] font-medium mt-0.5">
+              {t("incentives.subtitle")}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold font-kannada text-[#3B2A33]  leading-tight">
-            ಪ್ರೋತ್ಸಾಹಧನ ಮತ್ತು ವರದಿಗಳ ದಿನಚರಿ (Incentive Ledger)
-          </h1>
-          <p className="text-xs text-[#7A6670]  mt-1">
-            ಆಶಾ ಕಾರ್ಯಕರ್ತೆ: ಶಾರದಾ ಬಾಯಿ • ಶಿವಳ್ಳಿ ಉಪಕೇಂದ್ರ • ಮಂಡ್ಯ ತಾಲೂಕು PHC
-          </p>
         </div>
 
-        {/* Action Buttons: Export & Submit to Supervisor */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center space-x-2">
           <button
-            onClick={handleExportCSV}
-            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white  border border-[#F0DDE2] dark:border-[#F0DDE2] text-[#3B2A33]  text-xs font-bold hover:bg-[#FDF6F5] transition-all shadow-sm active:scale-95"
+            onClick={() => setSubmittedToAnm(true)}
+            className={`px-4 py-2.5 rounded-2xl font-bold text-xs flex items-center space-x-2 active:scale-95 transition-all ${
+              submittedToAnm
+                ? 'bg-[#E8F7F1] text-[#477A60] border border-[#C8EEDD]'
+                : 'bg-[#A25B74] hover:bg-[#84455C] text-white shadow-md shadow-[#A25B74]/20'
+            }`}
           >
-            <Download className="w-4 h-4 text-[#A25B74]" />
-            <span>CSV ಡೌನ್‌ಲೋಡ್</span>
-          </button>
-
-          <button
-            onClick={handleSubmitBatch}
-            disabled={submittedToANM}
-            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-[#A25B74] hover:bg-[#84455C] text-white text-xs font-bold shadow-card hover:opacity-95 active:scale-95 transition-all"
-          >
-            {submittedToANM ? (
+            {submittedToAnm ? (
               <>
-                <CheckCircle2 className="w-4 h-4 text-white" />
-                <span>ANM ಗೆ ಯಶಸ್ವಿಯಾಗಿ ಸಲ್ಲಿಸಲಾಗಿದೆ!</span>
+                <CheckCircle2 className="w-4 h-4 text-[#477A60]" />
+                <span>{t("common.verified")}</span>
               </>
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                <span>ANM ಮೇಲ್ವಿಚಾರಕರಿಗೆ ಸಲ್ಲಿಸಿ (Submit to ANM)</span>
+                <span>{t("incentives.submitClaim")}</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* 2. Key Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Earned This Month */}
-        <div className="bg-white  p-5 rounded-3xl border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#7A6670] ">
-              ಈ ತಿಂಗಳ ಒಟ್ಟು ಗಳಿಕೆ
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center font-bold">
-              ₹
-            </div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-[#3B2A33]  mt-2">
-            ₹{totalEarned.toLocaleString('en-IN')}
-          </div>
-          <div className="flex items-center space-x-1.5 text-[11px] font-semibold text-[#477A60] mt-2">
-            <TrendingUp className="w-3.5 h-3.5" />
-            <span>ಕಳೆದ ತಿಂಗಳಿಗಿಂತ +12% ಹೆಚ್ಚಳ</span>
-          </div>
+      {/* 2. KPI Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card">
+          <span className="text-xs font-bold text-[#7A6670] block">{t("incentives.totalEarned")}</span>
+          <span className="text-3xl font-bold font-mono text-[#A25B74] mt-2 block">{formatCurrency(6850)}</span>
+          <span className="text-[11px] text-[#477A60] font-semibold mt-1 block">+12%</span>
         </div>
 
-        {/* Approved by ANM */}
-        <div className="bg-white  p-5 rounded-3xl border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#7A6670] ">
-              ANM ಅನುಮೋದಿತ
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-[#E8F7F1] text-[#477A60] flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-[#477A60] mt-2">
-            ₹{approvedTotal.toLocaleString('en-IN')}
-          </div>
-          <p className="text-[11px] text-[#C47A92] mt-2">
-            ಖಾತೆಗೆ ಜಮೆ ಆಗಲು ಸಿದ್ಧ (DBT Bank Payout)
-          </p>
+        <div className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card">
+          <span className="text-xs font-bold text-[#7A6670] block">{t("incentives.approvedByMo")}</span>
+          <span className="text-3xl font-bold font-mono text-[#477A60] mt-2 block">{formatCurrency(totalEarned)}</span>
+          <span className="text-[11px] text-[#7A6670] font-medium mt-1 block">DBT Payout</span>
         </div>
 
-        {/* Under Review by MO */}
-        <div className="bg-white  p-5 rounded-3xl border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#7A6670] ">
-              MO ಪರಿಶೀಲನೆಯಲ್ಲಿದೆ
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-[#FEF9EF] text-[#B88745] flex items-center justify-center">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-[#B88745] mt-2">
-            ₹{underReviewTotal.toLocaleString('en-IN')}
-          </div>
-          <p className="text-[11px] text-[#C47A92] mt-2">
-            ವೈದ್ಯಾಧಿಕಾರಿಗಳ ಸಹಿ ಬಾಕಿ ಇದೆ (2 claims)
-          </p>
+        <div className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card">
+          <span className="text-xs font-bold text-[#7A6670] block">{t("incentives.pendingVerification")}</span>
+          <span className="text-3xl font-bold font-mono text-amber-600 mt-2 block">{formatCurrency(450)}</span>
+          <span className="text-[11px] text-amber-700 font-medium mt-1 block">2 Claims</span>
         </div>
 
-        {/* Projected Monthly Target */}
-        <div className="bg-white  p-5 rounded-3xl border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#7A6670] ">
-              ಗುರಿ ಸಂಭಾವನೆ (Target)
-            </span>
-            <div className="w-9 h-9 rounded-xl bg-[#FEF9EF] text-[#B88745] flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-[#B88745] mt-2">
-            ₹{potentialTotal.toLocaleString('en-IN')}
-          </div>
-          <div className="w-full bg-[#FDF6F5]  h-2 rounded-full mt-3 overflow-hidden">
-            <div 
-              className="bg-gradient-to-r from-saffron to-healthcare h-full rounded-full transition-all"
-              style={{ width: `${(totalEarned / potentialTotal) * 100}%` }}
-            ></div>
-          </div>
+        <div className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card">
+          <span className="text-xs font-bold text-[#7A6670] block">{t("incentives.potentialEarnings")}</span>
+          <span className="text-3xl font-bold font-mono text-[#3B2A33] mt-2 block">{formatCurrency(8200)}</span>
+          <span className="text-[11px] text-[#7A6670] font-medium mt-1 block">Monthly Target</span>
         </div>
       </div>
 
-      {/* 3. Recharts Visual Analytics Section */}
-      <div className="bg-white  rounded-3xl p-6 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h3 className="text-base font-bold font-kannada text-[#3B2A33] ">
-              ಮಾಸಿಕ ಪ್ರೋತ್ಸಾಹಧನ ಪ್ರಗತಿ (Monthly Earnings Trend)
+      {/* 3. Monthly Chart and Itemized Ledger */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Monthly Trend Chart (Span 5) */}
+        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
+          <h3 className="font-bold text-base text-[#3B2A33]">
+            {t("incentives.totalEarned")} Trend
+          </h3>
+          <div className="h-64 w-full pt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0DDE2" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#7A6670' }} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#7A6670' }} tickLine={false} />
+                <Tooltip formatter={(val) => [`₹${val}`, 'Amount']} />
+                <Bar dataKey="earned" fill="#A25B74" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Ledger Table (Span 7) */}
+        <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
+          <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-3">
+            <h3 className="font-bold text-base text-[#3B2A33]">
+              {t("incentives.activityLedger")}
             </h3>
-            <p className="text-xs text-[#7A6670] ">
-              ಕಳೆದ 6 ತಿಂಗಳ ಸರಾಸರಿ NHM ಪ್ರೋತ್ಸಾಹಧನ ಹೋಲಿಕೆ
-            </p>
-          </div>
-          <div className="flex items-center space-x-3 text-xs font-semibold">
-            <span className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 rounded bg-[#A25B74]"></span>
-              <span className="text-[#7A6670] ">ಗಳಿಸಿದ ಮೊತ್ತ (₹)</span>
-            </span>
-            <span className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 rounded bg-saffron/40 border border-[#B88745]"></span>
-              <span className="text-[#7A6670] ">ಗರಿಷ್ಠ ಗುರಿ (Target ₹)</span>
-            </span>
-          </div>
-        </div>
-
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0DDE2" vertical={false} />
-              <XAxis dataKey="month" stroke="#7A6670" fontSize={11} tickLine={false} />
-              <YAxis stroke="#7A6670" fontSize={11} tickLine={false} />
-              <Tooltip 
-                formatter={(val) => [`₹${val.toLocaleString('en-IN')}`, 'ಮೊತ್ತ']}
-                contentStyle={{ 
-                  backgroundColor: '#3B2A33', 
-                  borderColor: '#A25B74', 
-                  borderRadius: '16px',
-                  color: '#fff',
-                  fontSize: '12px'
-                }} 
-              />
-              <Bar dataKey="earned" name="ಗಳಿಸಿದ ಮೊತ್ತ" fill="#A25B74" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="potential" name="ಗರಿಷ್ಠ ಗುರಿ" fill="#E8B4C4" opacity={0.35} radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* 4. Itemized Claims Ledger Table */}
-      <div className="bg-white  rounded-3xl p-6 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-base font-bold font-kannada text-[#3B2A33] ">
-              ಕ್ಲೈಮ್ ವಿವರಗಳ ಪಟ್ಟಿ (Itemized NHM Claims Ledger)
-            </h3>
-            <p className="text-xs text-[#7A6670] ">
-              ಪ್ರತಿಯೊಂದು ಕಾರ್ಯಕ್ಕೆ ಸರ್ಕಾರದ ದರ ಮತ್ತು ಅನುಮೋದನೆ ಸ್ಥಿತಿ
-            </p>
-          </div>
-
-          {/* Filter Pills */}
-          <div className="flex bg-[#FDF6F5]  p-1 rounded-2xl text-xs font-bold">
-            {[
-              { id: 'all', label: 'ಎಲ್ಲಾ (All)' },
-              { id: 'approved', label: 'ಅನುಮೋದಿತ (Approved)' },
-              { id: 'under_review', label: 'ಪರಿಶೀಲನೆಯಲ್ಲಿ (Review)' },
-              { id: 'pending', label: 'ಬಾಕಿ (Pending)' }
-            ].map(f => (
-              <button
-                key={f.id}
-                onClick={() => setActiveFilter(f.id)}
-                className={`px-3 py-1.5 rounded-xl transition-all ${
-                  activeFilter === f.id
-                    ? 'bg-white text-[#A25B74] shadow-sm'
-                    : 'text-[#7A6670]  hover:text-[#3B2A33]'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Ledger Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-[#F0DDE2] dark:border-[#F0DDE2] text-[11px] font-mono uppercase tracking-wider text-[#C47A92]">
-                <th className="py-3 px-4">ಕ್ಲೈಮ್ ಐಡಿ</th>
-                <th className="py-3 px-4">ಕಾರ್ಯ / ಯೋಜನೆ (Task Description)</th>
-                <th className="py-3 px-4">ಫಲಾನುಭವಿ</th>
-                <th className="py-3 px-4">ದಿನಾಂಕ</th>
-                <th className="py-3 px-4 text-right">ಸರ್ಕಾರಿ ಮೊತ್ತ</th>
-                <th className="py-3 px-4 text-center">ಸ್ಥಿತಿ (Status)</th>
-                <th className="py-3 px-4">ಪರಿಶೀಲಕರು</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F0DDE2] text-xs">
-              {filteredClaims.map((claim) => (
-                <tr key={claim.id} className="hover:bg-[#FFF9F7] transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-[#7A6670] ">
-                    {claim.id}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <div className="font-bold font-kannada text-[#3B2A33] ">
-                      {claim.task_kn}
-                    </div>
-                    <div className="text-[11px] text-[#C47A92]">
-                      {claim.task_en} • <span className="text-[#A25B74] font-medium">{claim.scheme}</span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 font-medium text-[#3B2A33]  font-kannada">
-                    {claim.beneficiary}
-                  </td>
-                  <td className="py-3.5 px-4 font-mono text-[#7A6670]">
-                    {claim.date}
-                  </td>
-                  <td className="py-3.5 px-4 text-right font-mono font-bold text-sm text-[#3B2A33] ">
-                    ₹{claim.amount}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    {claim.status === 'approved' && (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#477A60]-50 dark:bg-[#E8F7F1] text-[#477A60] text-[10px] font-bold border border-[#C8EEDD] dark:border-healthcare/30">
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>ಅನುಮೋದಿತ</span>
-                      </span>
-                    )}
-                    {claim.status === 'under_review' && (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#FEF9EF] dark:bg-[#FEF9EF]0/10 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-500/30">
-                        <Clock className="w-3 h-3" />
-                        <span>MO ಪರಿಶೀಲನೆ</span>
-                      </span>
-                    )}
-                    {claim.status === 'pending' && (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#FDF6F5]  text-[#7A6670]  text-[10px] font-bold">
-                        <span>ಡ್ರಾಫ್ಟ್</span>
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3.5 px-4 text-[11px] text-[#7A6670] ">
-                    {claim.approvedBy}
-                  </td>
-                </tr>
+            <div className="flex items-center space-x-1">
+              {['all', 'approved', 'pending'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setSelectedFilter(f)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                    selectedFilter === f
+                      ? 'bg-[#A25B74] text-white'
+                      : 'bg-[#FDF6F5] text-[#7A6670] hover:bg-[#F9ECEC]'
+                  }`}
+                >
+                  {t(`common.${f === 'under_review' ? 'pending' : f}`)}
+                </button>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-[#F0DDE2] text-[11px] font-bold text-[#C47A92] uppercase tracking-wider font-mono">
+                  <th className="pb-3">{t("common.actions")}</th>
+                  <th className="pb-3">{t("common.beneficiary")}</th>
+                  <th className="pb-3">{t("common.date")}</th>
+                  <th className="pb-3 text-right">Amount</th>
+                  <th className="pb-3 text-center">{t("common.status")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#F0DDE2]">
+                {filtered.map(act => (
+                  <tr key={act.id} className="hover:bg-[#FDF6F5] transition-colors">
+                    <td className="py-3 pr-2">
+                      <span className="font-bold text-[#3B2A33] block">{getTaskName(act)}</span>
+                      <span className="font-mono text-[10px] text-[#7A6670]">{act.id}</span>
+                    </td>
+                    <td className="py-3 pr-2 font-medium text-[#3B2A33]">{act.beneficiary}</td>
+                    <td className="py-3 pr-2 font-mono text-[#7A6670]">{act.date}</td>
+                    <td className="py-3 pr-2 font-mono font-bold text-[#A25B74] text-right">₹{act.amount}</td>
+                    <td className="py-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                        act.status === 'approved'
+                          ? 'bg-[#E8F7F1] text-[#477A60] border border-[#C8EEDD]'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {act.status === 'approved' ? t("common.completed") : t("common.pending")}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

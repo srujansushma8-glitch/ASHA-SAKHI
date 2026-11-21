@@ -5,3 +5,6 @@ __pycache__/
 backend/data/*.db
 backend/data/backups/
 backend/.env
+scratch/
+node_modules/
+dist/
