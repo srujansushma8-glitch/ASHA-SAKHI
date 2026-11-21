@@ -37,8 +37,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-navy-950/60 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in font-sans">
-      <div className="bg-white dark:bg-navy-900 w-full max-w-md rounded-3xl p-6 sm:p-8 border border-navy-200/80 dark:border-navy-700 shadow-2xl relative space-y-6">
+    <div className="fixed inset-0 z-50 bg-[#3B2A33]/50 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in font-sans">
+      <div className="bg-white w-full max-w-md rounded-3xl p-6 sm:p-8 border border-[#F0DDE2] shadow-2xl relative space-y-6">
         
         {/* Close Button */}
         <button
@@ -50,13 +50,13 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
 
         {/* Modal Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-cyan text-white flex items-center justify-center mx-auto shadow-touch">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#A25B74] to-[#C47A92] text-white flex items-center justify-center mx-auto shadow-md shadow-[#A25B74]/25">
             <Lock className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold font-serif text-navy-900 dark:text-white">
+          <h3 className="text-2xl font-cormorant font-bold text-[#3B2A33]">
             {step === 'phone' ? 'ಕಾರ್ಯಕರ್ತೆ ಲಾಗಿನ್ (Worker Sign In)' : 'OTP ದೃಢೀಕರಣ (Verify OTP)'}
           </h3>
-          <p className="text-xs text-navy-500 dark:text-navy-300">
+          <p className="text-xs text-[#7A6670]">
             {step === 'phone'
               ? 'ಆಶಾ ಸಖಿ ಪೋರ್ಟಲ್ ಪ್ರವೇಶಿಸಲು ನಿಮ್ಮ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ'
               : `+91 ${phoneNumber} ಸಂಖ್ಯೆಗೆ ಕಳುಹಿಸಲಾದ 6-ಅಂಕಿಯ ಕೋಡ್ ನಮೂದಿಸಿ`}
@@ -66,7 +66,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
         {/* Role Selector */}
         {step === 'phone' && (
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold font-mono text-navy-500 uppercase tracking-wider block">
+            <label className="text-[11px] font-bold font-mono text-[#A25B74] uppercase tracking-wider block">
               ಪಾತ್ರ ಆಯ್ಕೆಮಾಡಿ (Select Role):
             </label>
             <div className="grid grid-cols-3 gap-2 text-xs">
@@ -81,8 +81,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                   onClick={() => setRole(r.id)}
                   className={`p-2.5 rounded-2xl border text-center transition-all ${
                     role === r.id
-                      ? 'bg-primary text-white border-primary shadow-sm font-bold'
-                      : 'bg-cream-100 dark:bg-navy-800 text-navy-700 dark:text-navy-300 border-navy-200 dark:border-navy-700'
+                      ? 'bg-[#A25B74] text-white border-[#A25B74] shadow-xs font-bold'
+                      : 'bg-[#FDF6F5] text-[#7A6670] border border-[#F0DDE2] hover:bg-[#F9ECEC]'
                   }`}
                 >
                   <span className="block text-base mb-0.5">{r.icon}</span>
@@ -97,7 +97,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
         {step === 'phone' ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-navy-700 dark:text-navy-200 block">
+              <label className="text-xs font-bold text-[#3B2A33] block">
                 ಮೊಬೈಲ್ ಸಂಖ್ಯೆ (Mobile Number):
               </label>
               <div className="relative">
@@ -110,7 +110,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="98450 XXXXX"
-                  className="w-full text-sm font-mono font-bold pl-12 pr-4 py-3 bg-cream-100 dark:bg-navy-800 border border-navy-200 dark:border-navy-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary text-navy-900 dark:text-white"
+                  className="w-full text-sm font-mono font-bold pl-12 pr-4 py-3 bg-white border border-[#F0DDE2] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#A25B74] text-[#3B2A33]"
                 />
               </div>
             </div>
@@ -118,7 +118,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-teal-deep to-primary hover:from-teal-800 hover:to-primary-hover text-white font-bold py-3.5 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 text-sm active:scale-95 transition-decelerate"
+              className="w-full bg-[#A25B74] hover:bg-[#84455C] text-white font-bold py-3.5 px-4 rounded-2xl shadow-md shadow-[#A25B74]/25 flex items-center justify-center space-x-2 text-sm active:scale-95 transition-all"
             >
               <span>{loading ? 'ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...' : 'OTP ಕೋಡ್ ಪಡೆಯಿರಿ (Send OTP)'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -139,7 +139,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                     newOtp[idx] = e.target.value;
                     setOtp(newOtp);
                   }}
-                  className="w-11 h-12 text-center text-lg font-mono font-bold bg-cream-100 dark:bg-navy-800 border border-navy-300 dark:border-navy-700 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none text-navy-900 dark:text-white"
+                  className="w-11 h-12 text-center text-lg font-mono font-bold bg-white border border-[#F0DDE2] rounded-xl focus:ring-2 focus:ring-[#A25B74] focus:outline-none text-[#3B2A33]"
                 />
               ))}
             </div>
@@ -151,7 +151,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-saffron to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white font-bold py-3.5 px-4 rounded-2xl shadow-saffron flex items-center justify-center space-x-2 text-sm active:scale-95 transition-decelerate"
+              className="w-full bg-[#A25B74] hover:bg-[#84455C] text-white font-bold py-3.5 px-4 rounded-2xl shadow-md shadow-[#A25B74]/25 flex items-center justify-center space-x-2 text-sm active:scale-95 transition-all"
             >
               <span>{loading ? 'ದೃಢೀಕರಿಸಲಾಗುತ್ತಿದೆ...' : 'ದೃಢೀಕರಿಸಿ ಲಾಗಿನ್ ಆಗಿ (Verify & Enter)'}</span>
               <CheckCircle2 className="w-4 h-4" />
@@ -167,7 +167,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           </form>
         )}
 
-        <div className="pt-2 text-center text-[10px] text-navy-400 border-t border-navy-100 dark:border-navy-800">
+        <div className="pt-2 text-center text-[10px] text-[#7A6670] border-t border-[#F0DDE2]">
           🔒 NHM ದತ್ತಾಂಶ ರಕ್ಷಣಾ ಮಾನದಂಡಗಳಿಗೆ ಅನುಗುಣವಾಗಿದೆ (ABDM FHIR Ready)
         </div>
       </div>

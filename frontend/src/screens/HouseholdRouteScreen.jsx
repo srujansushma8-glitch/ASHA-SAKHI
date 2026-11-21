@@ -127,29 +127,29 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
       {/* 1. Header Banner */}
-      <div className="bg-white dark:bg-navy-900 rounded-3xl p-6 border border-navy-200/60 dark:border-navy-700 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white  rounded-3xl p-6 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-50 dark:bg-cyan/10 text-cyan-800 dark:text-cyan text-xs font-bold border border-cyan-200 dark:border-cyan/30 mb-2">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#FDF6F5] dark:bg-cyan/10 text-[#A25B74] dark:text-[#A25B74] text-xs font-bold border border-[#F0DDE2] dark:border-cyan/30 mb-2">
             <Navigation className="w-3.5 h-3.5 animate-pulse" />
             <span>ದಿನನಿತ್ಯದ ಕ್ಷೇತ್ರ ಮಾರ್ಗ (Daily Field Visit Optimization)</span>
           </div>
-          <h1 className="text-2xl font-bold font-kannada text-navy-900 dark:text-white leading-tight">
+          <h1 className="text-2xl font-bold font-kannada text-[#3B2A33]  leading-tight">
             ಶಿವಳ್ಳಿ & ಕೆರೆಗೋಡು ವಲಯ ಮನೆ ಭೇಟಿ ನಕ್ಷೆ
           </h1>
-          <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+          <p className="text-xs text-[#7A6670]  mt-1">
             ಮಂಡ್ಯ ತಾಲೂಕು PHC • ಒಟ್ಟು 5 ಮನೆ ಭೇಟಿಗಳು • ಅಂದಾಜು ನಡಿಗೆ: 3.8 ಕಿ.ಮೀ • ಆಫ್‌ಲೈನ್ ಮ್ಯಾಪ್ ಲಭ್ಯ
           </p>
         </div>
 
         {/* Route Optimization Toggle & Distance Pill */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex bg-navy-100 dark:bg-navy-800 p-1 rounded-2xl text-xs font-bold">
+          <div className="flex bg-navy-100  p-1 rounded-2xl text-xs font-bold">
             <button
               onClick={() => setRouteMode('ai_priority')}
               className={`px-3 py-1.5 rounded-xl transition-all ${
                 routeMode === 'ai_priority'
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-navy-600 dark:text-navy-300 hover:text-navy-900'
+                  ? 'bg-[#A25B74] text-white shadow-sm'
+                  : 'text-[#7A6670]  hover:text-[#3B2A33]'
               }`}
             >
               <span className="flex items-center space-x-1">
@@ -161,15 +161,15 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
               onClick={() => setRouteMode('shortest')}
               className={`px-3 py-1.5 rounded-xl transition-all ${
                 routeMode === 'shortest'
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-navy-600 dark:text-navy-300 hover:text-navy-900'
+                  ? 'bg-[#A25B74] text-white shadow-sm'
+                  : 'text-[#7A6670]  hover:text-[#3B2A33]'
               }`}
             >
               <span>ಕಡಿಮೆ ದೂರ (Shortest)</span>
             </button>
           </div>
 
-          <div className="bg-healthcare-50 dark:bg-healthcare/10 border border-healthcare-200 dark:border-healthcare/30 px-3 py-2 rounded-2xl text-xs font-bold text-healthcare flex items-center space-x-2">
+          <div className="bg-[#E8F7F1] dark:bg-[#477A60]/10 border border-[#C8EEDD] dark:border-healthcare/30 px-3 py-2 rounded-2xl text-xs font-bold text-[#477A60] flex items-center space-x-2">
             <CheckCircle2 className="w-4 h-4" />
             <span>ಮಾರ್ಗ ಆಪ್ಟಿಮೈಸ್ಡ್ ಆಗಿದೆ</span>
           </div>
@@ -180,19 +180,19 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left: Vector Interactive Map (7 cols) */}
-        <div className="lg:col-span-7 bg-white dark:bg-navy-900 rounded-3xl p-5 border border-navy-200/60 dark:border-navy-700 shadow-card flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-white  rounded-3xl p-5 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card flex flex-col justify-between">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2 text-xs font-bold text-navy-800 dark:text-white">
-              <Compass className="w-4 h-4 text-primary" />
+            <div className="flex items-center space-x-2 text-xs font-bold text-[#3B2A33] ">
+              <Compass className="w-4 h-4 text-[#A25B74]" />
               <span>ಲೈವ್ ಜಿಪಿಎಸ್ ವೆಕ್ಟರ್ ನಕ್ಷೆ (Live Field Vector Map)</span>
             </div>
-            <span className="text-[10px] font-mono font-bold bg-navy-100 dark:bg-navy-800 text-navy-600 dark:text-navy-300 px-2.5 py-1 rounded-full border border-navy-200 dark:border-navy-700">
+            <span className="text-[10px] font-mono font-bold bg-navy-100  text-[#7A6670]  px-2.5 py-1 rounded-full border border-[#F0DDE2] dark:border-[#F0DDE2]">
               Offline GPS Caching Active
             </span>
           </div>
 
           {/* Interactive SVG Canvas */}
-          <div className="relative w-full h-80 sm:h-96 bg-cream-50 dark:bg-navy-950 rounded-2xl border border-navy-200/50 dark:border-navy-800 overflow-hidden flex items-center justify-center select-none">
+          <div className="relative w-full h-80 sm:h-96 bg-[#FFF9F7]  rounded-2xl border border-[#F0DDE2] dark:border-[#F0DDE2] overflow-hidden flex items-center justify-center select-none">
             <svg 
               className="w-full h-full" 
               viewBox="0 0 640 420" 
@@ -202,12 +202,12 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
               {/* Background Village Terrain & Lanes */}
               <defs>
                 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-navy-200/40 dark:text-navy-800/40" />
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-navy-200/40 dark:text-[#3B2A33]/40" />
                 </pattern>
                 <linearGradient id="routeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#087F8C" />
-                  <stop offset="50%" stopColor="#D94343" />
-                  <stop offset="100%" stopColor="#20A675" />
+                  <stop offset="0%" stopColor="#A25B74" />
+                  <stop offset="50%" stopColor="#B94A58" />
+                  <stop offset="100%" stopColor="#477A60" />
                 </linearGradient>
               </defs>
 
@@ -233,8 +233,8 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
               />
 
               {/* Landmark: Shivalli Lake */}
-              <ellipse cx="280" cy="180" rx="35" ry="20" fill="#087F8C" fillOpacity="0.15" />
-              <text x="260" y="184" fill="#087F8C" fontSize="10" fontWeight="bold" fontFamily="sans-serif">ಕೆರೆ (Lake)</text>
+              <ellipse cx="280" cy="180" rx="35" ry="20" fill="#A25B74" fillOpacity="0.15" />
+              <text x="260" y="184" fill="#A25B74" fontSize="10" fontWeight="bold" fontFamily="sans-serif">ಕೆರೆ (Lake)</text>
 
               {/* Map Pins / Household Nodes */}
               {stops.map((stop) => {
@@ -242,10 +242,10 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
                 const isCritical = stop.type === 'high_risk';
                 const isDepot = stop.type === 'depot';
 
-                let pinColor = '#087F8C'; // default teal
-                if (isCritical) pinColor = '#D94343'; // emergency red
-                else if (stop.type === 'vaccine') pinColor = '#F2B84B'; // amber
-                else if (isDepot) pinColor = '#18364A'; // navy
+                let pinColor = '#A25B74'; // default teal
+                if (isCritical) pinColor = '#B94A58'; // emergency red
+                else if (stop.type === 'vaccine') pinColor = '#B88745'; // amber
+                else if (isDepot) pinColor = '#3B2A33'; // navy
 
                 return (
                   <g 
@@ -318,44 +318,44 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
             </svg>
 
             {/* Bottom Floating Legend */}
-            <div className="absolute bottom-3 left-3 right-3 bg-white/90 dark:bg-navy-900/90 backdrop-blur-md px-3 py-2 rounded-xl border border-navy-200/60 dark:border-navy-700 flex flex-wrap items-center justify-between text-[11px] font-bold">
+            <div className="absolute bottom-3 left-3 right-3 bg-white/90 /90 backdrop-blur-md px-3 py-2 rounded-xl border border-[#F0DDE2] dark:border-[#F0DDE2] flex flex-wrap items-center justify-between text-[11px] font-bold">
               <div className="flex items-center space-x-4">
                 <span className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emergency"></span>
-                  <span className="text-navy-700 dark:text-navy-300">ತುರ್ತು (Critical High-Risk)</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#B94A58]"></span>
+                  <span className="text-[#3B2A33] ">ತುರ್ತು (Critical High-Risk)</span>
                 </span>
                 <span className="flex items-center space-x-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                  <span className="text-navy-700 dark:text-navy-300">ಲಸಿಕೆ ಬಾಕಿ (Vaccine)</span>
+                  <span className="text-[#3B2A33] ">ಲಸಿಕೆ ಬಾಕಿ (Vaccine)</span>
                 </span>
                 <span className="flex items-center space-x-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary"></span>
-                  <span className="text-navy-700 dark:text-navy-300">ನಿಯಮಿತ ANC</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#A25B74]"></span>
+                  <span className="text-[#3B2A33] ">ನಿಯಮಿತ ANC</span>
                 </span>
               </div>
-              <span className="text-navy-400 font-mono text-[10px]">ನಕ್ಷೆಯಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ</span>
+              <span className="text-[#C47A92] font-mono text-[10px]">ನಕ್ಷೆಯಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ</span>
             </div>
           </div>
 
           {/* Active Stop Quick Info Strip */}
-          <div className="mt-4 p-4 rounded-2xl bg-cream-50 dark:bg-navy-800/60 border border-navy-200/50 dark:border-navy-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="mt-4 p-4 rounded-2xl bg-[#FFF9F7] /60 border border-[#F0DDE2] dark:border-[#F0DDE2] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">
+                <span className="w-6 h-6 rounded-full bg-[#A25B74] text-white text-xs font-bold flex items-center justify-center">
                   #{activeStop.id}
                 </span>
-                <h4 className="text-sm font-bold font-kannada text-navy-900 dark:text-white">
+                <h4 className="text-sm font-bold font-kannada text-[#3B2A33] ">
                   {activeStop.name_kn}
                 </h4>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   activeStop.type === 'high_risk' 
-                    ? 'bg-emergency-50 text-emergency border border-emergency-200' 
-                    : 'bg-primary/10 text-primary'
+                    ? 'bg-[#FCF1F1] text-[#B94A58] border border-[#B94A58]/30' 
+                    : 'bg-[#A25B74]/10 text-[#A25B74]'
                 }`}>
                   {activeStop.distance}
                 </span>
               </div>
-              <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+              <p className="text-xs text-[#7A6670]  mt-1">
                 {activeStop.address}
               </p>
             </div>
@@ -375,11 +375,11 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
         {/* Right: Detailed Itinerary Stops List (5 cols) */}
         <div className="lg:col-span-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold font-kannada text-navy-900 dark:text-white">
+            <h3 className="text-sm font-bold font-kannada text-[#3B2A33] ">
               ಭೇಟಿ ವೇಳಾಪಟ್ಟಿ (Stop Itinerary)
             </h3>
             {/* Filter Tabs */}
-            <div className="flex bg-navy-100 dark:bg-navy-800 p-0.5 rounded-xl text-[10px] font-bold">
+            <div className="flex bg-navy-100  p-0.5 rounded-xl text-[10px] font-bold">
               {[
                 { id: 'all', label: 'ಎಲ್ಲಾ' },
                 { id: 'high_risk', label: 'ತುರ್ತು' },
@@ -391,8 +391,8 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
                   onClick={() => setFilter(t.id)}
                   className={`px-2.5 py-1 rounded-lg transition-all ${
                     filter === t.id
-                      ? 'bg-white dark:bg-navy-700 text-primary dark:text-cyan shadow-sm'
-                      : 'text-navy-600 dark:text-navy-400'
+                      ? 'bg-white  text-[#A25B74] dark:text-[#A25B74] shadow-sm'
+                      : 'text-[#7A6670] '
                   }`}
                 >
                   {t.label}
@@ -413,45 +413,45 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
                   onClick={() => setSelectedStopId(stop.id)}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-white dark:bg-navy-900 border-primary dark:border-cyan ring-2 ring-primary/20 shadow-card'
-                      : 'bg-white/80 dark:bg-navy-900/60 border-navy-200/60 dark:border-navy-800 hover:bg-white'
+                      ? 'bg-white  border-[#A25B74] dark:border-cyan ring-2 ring-primary/20 shadow-card'
+                      : 'bg-white/80 /60 border-[#F0DDE2] dark:border-[#F0DDE2] hover:bg-white'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3">
                       <div className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 ${
                         isHighRisk
-                          ? 'bg-emergency-50 text-emergency border border-emergency-300'
+                          ? 'bg-[#FCF1F1] text-[#B94A58] border border-emergency-300'
                           : stop.type === 'vaccine'
                           ? 'bg-amber-50 text-amber-600 border border-amber-300'
-                          : 'bg-primary/10 text-primary border border-primary/20'
+                          : 'bg-[#A25B74]/10 text-[#A25B74] border border-[#A25B74]/20'
                       }`}>
                         #{stop.id}
                       </div>
 
                       <div>
                         <div className="flex items-center space-x-2">
-                          <h4 className="text-xs font-bold font-kannada text-navy-900 dark:text-white">
+                          <h4 className="text-xs font-bold font-kannada text-[#3B2A33] ">
                             {stop.name_kn}
                           </h4>
                           {isHighRisk && (
-                            <span className="w-2 h-2 rounded-full bg-emergency animate-pulse"></span>
+                            <span className="w-2 h-2 rounded-full bg-[#B94A58] animate-pulse"></span>
                           )}
                         </div>
-                        <p className="text-[11px] text-navy-400 dark:text-navy-400">
+                        <p className="text-[11px] text-[#C47A92] ">
                           {stop.name_en}
                         </p>
-                        <p className="text-[11px] text-navy-600 dark:text-navy-300 font-medium mt-1">
+                        <p className="text-[11px] text-[#7A6670]  font-medium mt-1">
                           {stop.clinicalNote || stop.description}
                         </p>
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-[11px] font-mono font-bold text-navy-900 dark:text-white block">
+                      <span className="text-[11px] font-mono font-bold text-[#3B2A33]  block">
                         {stop.eta}
                       </span>
-                      <span className="text-[10px] text-navy-400 font-mono block">
+                      <span className="text-[10px] text-[#C47A92] font-mono block">
                         {stop.distance}
                       </span>
                     </div>
@@ -459,19 +459,19 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
 
                   {/* Expanded Actions when selected */}
                   {isSelected && (
-                    <div className="mt-3 pt-3 border-t border-navy-100 dark:border-navy-800 flex items-center justify-between">
+                    <div className="mt-3 pt-3 border-t border-[#F0DDE2] dark:border-[#F0DDE2] flex items-center justify-between">
                       <div className="flex items-center space-x-2 text-xs">
                         {stop.phone && (
                           <a
                             href={`tel:${stop.phone}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-navy-100 dark:bg-navy-800 text-navy-700 dark:text-navy-300 hover:text-navy-900 font-medium"
+                            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-navy-100  text-[#3B2A33]  hover:text-[#3B2A33] font-medium"
                           >
-                            <Phone className="w-3 h-3 text-primary" />
+                            <Phone className="w-3 h-3 text-[#A25B74]" />
                             <span>ಕರೆ ಮಾಡಿ</span>
                           </a>
                         )}
-                        <span className="text-[11px] text-navy-400">
+                        <span className="text-[11px] text-[#C47A92]">
                           {stop.priority}
                         </span>
                       </div>
@@ -482,7 +482,7 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
                             e.stopPropagation();
                             onStartVoiceVisit(stop.beneficiaryId);
                           }}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover shadow-sm"
+                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-[#A25B74] text-white text-xs font-bold hover:bg-[#A25B74]-hover shadow-sm"
                         >
                           <Mic className="w-3 h-3" />
                           <span>ಭೇಟಿ ಆರಂಭಿಸಿ</span>
@@ -496,12 +496,12 @@ export default function HouseholdRouteScreen({ onStartVoiceVisit, onBack }) {
           </div>
 
           {/* Quick Summary Card */}
-          <div className="p-4 rounded-2xl bg-primary/5 dark:bg-cyan/5 border border-primary/20 dark:border-cyan/20 space-y-2">
-            <div className="flex items-center space-x-2 text-xs font-bold text-primary dark:text-cyan">
+          <div className="p-4 rounded-2xl bg-[#A25B74]/5 dark:bg-cyan/5 border border-[#A25B74]/20 dark:border-cyan/20 space-y-2">
+            <div className="flex items-center space-x-2 text-xs font-bold text-[#A25B74] dark:text-[#A25B74]">
               <Sparkles className="w-4 h-4" />
               <span>AI ಮಾರ್ಗ ಶಿಫಾರಸು (Smart Routing Insight)</span>
             </div>
-            <p className="text-xs text-navy-600 dark:text-navy-300 leading-relaxed font-kannada">
+            <p className="text-xs text-[#7A6670]  leading-relaxed font-kannada">
               ಮೀನಾಕ್ಷಿಯವರಿಗೆ ತೀವ್ರ ರಕ್ತಹೀನತೆ ಮತ್ತು ಅಧಿಕ ರಕ್ತದೊತ್ತಡ ಇರುವುದರಿಂದ, ಅವರ ಮನೆಗೆ ಬೆಳಿಗ್ಗೆ 9:20 ಕ್ಕೆ ಮೊದಲ ಭೇಟಿ ನೀಡಲು ಮಾರ್ಗವನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗಿದೆ. 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಮತ್ತು PHC ಮೆಡಿಕಲ್ ಆಫೀಸರ್ ಸಂಪರ್ಕ ಸಿದ್ಧವಾಗಿದೆ.
             </p>
           </div>

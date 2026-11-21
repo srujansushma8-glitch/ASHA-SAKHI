@@ -172,16 +172,16 @@ export default function IncentivesReportScreen({ onBack }) {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-7 animate-fade-in pb-24 lg:pb-12">
       {/* 1. Header Banner */}
-      <div className="bg-white dark:bg-navy-900 rounded-3xl p-6 border border-navy-200/60 dark:border-navy-700 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white  rounded-3xl p-6 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-saffron/10 text-saffron-800 dark:text-saffron text-xs font-bold border border-saffron/30 mb-2">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#FEF9EF] text-saffron-800 dark:text-saffron text-xs font-bold border border-[#B88745]/30 mb-2">
             <IndianRupee className="w-3.5 h-3.5" />
             <span>ರಾಷ್ಟ್ರೀಯ ಆರೋಗ್ಯ ಅಭಿಯಾನ (NHM) • ಆಶಾ ಪ್ರೋತ್ಸಾಹಧನ ಲೆಕ್ಕಪತ್ರ</span>
           </div>
-          <h1 className="text-2xl font-bold font-kannada text-navy-900 dark:text-white leading-tight">
+          <h1 className="text-2xl font-bold font-kannada text-[#3B2A33]  leading-tight">
             ಪ್ರೋತ್ಸಾಹಧನ ಮತ್ತು ವರದಿಗಳ ದಿನಚರಿ (Incentive Ledger)
           </h1>
-          <p className="text-xs text-navy-500 dark:text-navy-400 mt-1">
+          <p className="text-xs text-[#7A6670]  mt-1">
             ಆಶಾ ಕಾರ್ಯಕರ್ತೆ: ಶಾರದಾ ಬಾಯಿ • ಶಿವಳ್ಳಿ ಉಪಕೇಂದ್ರ • ಮಂಡ್ಯ ತಾಲೂಕು PHC
           </p>
         </div>
@@ -190,16 +190,16 @@ export default function IncentivesReportScreen({ onBack }) {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleExportCSV}
-            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white dark:bg-navy-800 border border-navy-200 dark:border-navy-700 text-navy-700 dark:text-navy-200 text-xs font-bold hover:bg-navy-50 dark:hover:bg-navy-700 transition-all shadow-sm active:scale-95"
+            className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white  border border-[#F0DDE2] dark:border-[#F0DDE2] text-[#3B2A33]  text-xs font-bold hover:bg-navy-50 dark:hover:bg-navy-700 transition-all shadow-sm active:scale-95"
           >
-            <Download className="w-4 h-4 text-primary" />
+            <Download className="w-4 h-4 text-[#A25B74]" />
             <span>CSV ಡೌನ್‌ಲೋಡ್</span>
           </button>
 
           <button
             onClick={handleSubmitBatch}
             disabled={submittedToANM}
-            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-healthcare text-white text-xs font-bold shadow-card hover:opacity-95 active:scale-95 transition-all"
+            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-[#A25B74] hover:bg-[#84455C] text-white text-xs font-bold shadow-card hover:opacity-95 active:scale-95 transition-all"
           >
             {submittedToANM ? (
               <>
@@ -219,74 +219,74 @@ export default function IncentivesReportScreen({ onBack }) {
       {/* 2. Key Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Earned This Month */}
-        <div className="bg-white dark:bg-navy-900 p-5 rounded-3xl border border-navy-200/60 dark:border-navy-700 shadow-card">
+        <div className="bg-white  p-5 rounded-3xl border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy-500 dark:text-navy-400">
+            <span className="text-xs font-bold text-[#7A6670] ">
               ಈ ತಿಂಗಳ ಒಟ್ಟು ಗಳಿಕೆ
             </span>
-            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center font-bold">
               ₹
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-navy-900 dark:text-white mt-2">
+          <div className="text-2xl font-bold font-mono text-[#3B2A33]  mt-2">
             ₹{totalEarned.toLocaleString('en-IN')}
           </div>
-          <div className="flex items-center space-x-1.5 text-[11px] font-semibold text-healthcare mt-2">
+          <div className="flex items-center space-x-1.5 text-[11px] font-semibold text-[#477A60] mt-2">
             <TrendingUp className="w-3.5 h-3.5" />
             <span>ಕಳೆದ ತಿಂಗಳಿಗಿಂತ +12% ಹೆಚ್ಚಳ</span>
           </div>
         </div>
 
         {/* Approved by ANM */}
-        <div className="bg-white dark:bg-navy-900 p-5 rounded-3xl border border-navy-200/60 dark:border-navy-700 shadow-card">
+        <div className="bg-white  p-5 rounded-3xl border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy-500 dark:text-navy-400">
+            <span className="text-xs font-bold text-[#7A6670] ">
               ANM ಅನುಮೋದಿತ
             </span>
-            <div className="w-9 h-9 rounded-xl bg-healthcare/10 text-healthcare flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#E8F7F1] text-[#477A60] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-healthcare mt-2">
+          <div className="text-2xl font-bold font-mono text-[#477A60] mt-2">
             ₹{approvedTotal.toLocaleString('en-IN')}
           </div>
-          <p className="text-[11px] text-navy-400 mt-2">
+          <p className="text-[11px] text-[#C47A92] mt-2">
             ಖಾತೆಗೆ ಜಮೆ ಆಗಲು ಸಿದ್ಧ (DBT Bank Payout)
           </p>
         </div>
 
         {/* Under Review by MO */}
-        <div className="bg-white dark:bg-navy-900 p-5 rounded-3xl border border-navy-200/60 dark:border-navy-700 shadow-card">
+        <div className="bg-white  p-5 rounded-3xl border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy-500 dark:text-navy-400">
+            <span className="text-xs font-bold text-[#7A6670] ">
               MO ಪರಿಶೀಲನೆಯಲ್ಲಿದೆ
             </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#FEF9EF] text-[#B88745] flex items-center justify-center">
               <Clock className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-amber-600 mt-2">
+          <div className="text-2xl font-bold font-mono text-[#B88745] mt-2">
             ₹{underReviewTotal.toLocaleString('en-IN')}
           </div>
-          <p className="text-[11px] text-navy-400 mt-2">
+          <p className="text-[11px] text-[#C47A92] mt-2">
             ವೈದ್ಯಾಧಿಕಾರಿಗಳ ಸಹಿ ಬಾಕಿ ಇದೆ (2 claims)
           </p>
         </div>
 
         {/* Projected Monthly Target */}
-        <div className="bg-white dark:bg-navy-900 p-5 rounded-3xl border border-navy-200/60 dark:border-navy-700 shadow-card">
+        <div className="bg-white  p-5 rounded-3xl border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy-500 dark:text-navy-400">
+            <span className="text-xs font-bold text-[#7A6670] ">
               ಗುರಿ ಸಂಭಾವನೆ (Target)
             </span>
-            <div className="w-9 h-9 rounded-xl bg-saffron/10 text-saffron-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#FEF9EF] text-[#B88745] flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold font-mono text-saffron-600 mt-2">
+          <div className="text-2xl font-bold font-mono text-[#B88745] mt-2">
             ₹{potentialTotal.toLocaleString('en-IN')}
           </div>
-          <div className="w-full bg-navy-100 dark:bg-navy-800 h-2 rounded-full mt-3 overflow-hidden">
+          <div className="w-full bg-navy-100  h-2 rounded-full mt-3 overflow-hidden">
             <div 
               className="bg-gradient-to-r from-saffron to-healthcare h-full rounded-full transition-all"
               style={{ width: `${(totalEarned / potentialTotal) * 100}%` }}
@@ -296,24 +296,24 @@ export default function IncentivesReportScreen({ onBack }) {
       </div>
 
       {/* 3. Recharts Visual Analytics Section */}
-      <div className="bg-white dark:bg-navy-900 rounded-3xl p-6 border border-navy-200/60 dark:border-navy-700 shadow-card space-y-4">
+      <div className="bg-white  rounded-3xl p-6 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-base font-bold font-kannada text-navy-900 dark:text-white">
+            <h3 className="text-base font-bold font-kannada text-[#3B2A33] ">
               ಮಾಸಿಕ ಪ್ರೋತ್ಸಾಹಧನ ಪ್ರಗತಿ (Monthly Earnings Trend)
             </h3>
-            <p className="text-xs text-navy-500 dark:text-navy-400">
+            <p className="text-xs text-[#7A6670] ">
               ಕಳೆದ 6 ತಿಂಗಳ ಸರಾಸರಿ NHM ಪ್ರೋತ್ಸಾಹಧನ ಹೋಲಿಕೆ
             </p>
           </div>
           <div className="flex items-center space-x-3 text-xs font-semibold">
             <span className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 rounded bg-primary"></span>
-              <span className="text-navy-600 dark:text-navy-300">ಗಳಿಸಿದ ಮೊತ್ತ (₹)</span>
+              <span className="w-3 h-3 rounded bg-[#A25B74]"></span>
+              <span className="text-[#7A6670] ">ಗಳಿಸಿದ ಮೊತ್ತ (₹)</span>
             </span>
             <span className="flex items-center space-x-1.5">
-              <span className="w-3 h-3 rounded bg-saffron/40 border border-saffron"></span>
-              <span className="text-navy-600 dark:text-navy-300">ಗರಿಷ್ಠ ಗುರಿ (Target ₹)</span>
+              <span className="w-3 h-3 rounded bg-saffron/40 border border-[#B88745]"></span>
+              <span className="text-[#7A6670] ">ಗರಿಷ್ಠ ಗುರಿ (Target ₹)</span>
             </span>
           </div>
         </div>
@@ -321,40 +321,40 @@ export default function IncentivesReportScreen({ onBack }) {
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-              <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} />
-              <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F0DDE2" vertical={false} />
+              <XAxis dataKey="month" stroke="#7A6670" fontSize={11} tickLine={false} />
+              <YAxis stroke="#7A6670" fontSize={11} tickLine={false} />
               <Tooltip 
                 formatter={(val) => [`₹${val.toLocaleString('en-IN')}`, 'ಮೊತ್ತ']}
                 contentStyle={{ 
-                  backgroundColor: '#18364A', 
-                  borderColor: '#087F8C', 
+                  backgroundColor: '#3B2A33', 
+                  borderColor: '#A25B74', 
                   borderRadius: '16px',
                   color: '#fff',
                   fontSize: '12px'
                 }} 
               />
-              <Bar dataKey="earned" name="ಗಳಿಸಿದ ಮೊತ್ತ" fill="#087F8C" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="potential" name="ಗರಿಷ್ಠ ಗುರಿ" fill="#FF9933" opacity={0.35} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="earned" name="ಗಳಿಸಿದ ಮೊತ್ತ" fill="#A25B74" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="potential" name="ಗರಿಷ್ಠ ಗುರಿ" fill="#E8B4C4" opacity={0.35} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* 4. Itemized Claims Ledger Table */}
-      <div className="bg-white dark:bg-navy-900 rounded-3xl p-6 border border-navy-200/60 dark:border-navy-700 shadow-card space-y-4">
+      <div className="bg-white  rounded-3xl p-6 border border-[#F0DDE2] dark:border-[#F0DDE2] shadow-card space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-bold font-kannada text-navy-900 dark:text-white">
+            <h3 className="text-base font-bold font-kannada text-[#3B2A33] ">
               ಕ್ಲೈಮ್ ವಿವರಗಳ ಪಟ್ಟಿ (Itemized NHM Claims Ledger)
             </h3>
-            <p className="text-xs text-navy-500 dark:text-navy-400">
+            <p className="text-xs text-[#7A6670] ">
               ಪ್ರತಿಯೊಂದು ಕಾರ್ಯಕ್ಕೆ ಸರ್ಕಾರದ ದರ ಮತ್ತು ಅನುಮೋದನೆ ಸ್ಥಿತಿ
             </p>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex bg-navy-100 dark:bg-navy-800 p-1 rounded-2xl text-xs font-bold">
+          <div className="flex bg-navy-100  p-1 rounded-2xl text-xs font-bold">
             {[
               { id: 'all', label: 'ಎಲ್ಲಾ (All)' },
               { id: 'approved', label: 'ಅನುಮೋದಿತ (Approved)' },
@@ -366,8 +366,8 @@ export default function IncentivesReportScreen({ onBack }) {
                 onClick={() => setActiveFilter(f.id)}
                 className={`px-3 py-1.5 rounded-xl transition-all ${
                   activeFilter === f.id
-                    ? 'bg-white dark:bg-navy-700 text-primary dark:text-cyan shadow-sm'
-                    : 'text-navy-600 dark:text-navy-400 hover:text-navy-900'
+                    ? 'bg-white dark:bg-navy-700 text-[#A25B74] dark:text-cyan shadow-sm'
+                    : 'text-[#7A6670]  hover:text-[#3B2A33]'
                 }`}
               >
                 {f.label}
@@ -380,7 +380,7 @@ export default function IncentivesReportScreen({ onBack }) {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-navy-100 dark:border-navy-800 text-[11px] font-mono uppercase tracking-wider text-navy-400">
+              <tr className="border-b border-[#F0DDE2] dark:border-[#F0DDE2] text-[11px] font-mono uppercase tracking-wider text-[#C47A92]">
                 <th className="py-3 px-4">ಕ್ಲೈಮ್ ಐಡಿ</th>
                 <th className="py-3 px-4">ಕಾರ್ಯ / ಯೋಜನೆ (Task Description)</th>
                 <th className="py-3 px-4">ಫಲಾನುಭವಿ</th>
@@ -393,46 +393,46 @@ export default function IncentivesReportScreen({ onBack }) {
             <tbody className="divide-y divide-navy-100 dark:divide-navy-800 text-xs">
               {filteredClaims.map((claim) => (
                 <tr key={claim.id} className="hover:bg-navy-50/50 dark:hover:bg-navy-800/40 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-navy-500 dark:text-navy-400">
+                  <td className="py-3.5 px-4 font-mono font-bold text-[#7A6670] ">
                     {claim.id}
                   </td>
                   <td className="py-3.5 px-4">
-                    <div className="font-bold font-kannada text-navy-900 dark:text-white">
+                    <div className="font-bold font-kannada text-[#3B2A33] ">
                       {claim.task_kn}
                     </div>
-                    <div className="text-[11px] text-navy-400">
-                      {claim.task_en} • <span className="text-primary font-medium">{claim.scheme}</span>
+                    <div className="text-[11px] text-[#C47A92]">
+                      {claim.task_en} • <span className="text-[#A25B74] font-medium">{claim.scheme}</span>
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 font-medium text-navy-800 dark:text-navy-200 font-kannada">
+                  <td className="py-3.5 px-4 font-medium text-[#3B2A33]  font-kannada">
                     {claim.beneficiary}
                   </td>
-                  <td className="py-3.5 px-4 font-mono text-navy-500">
+                  <td className="py-3.5 px-4 font-mono text-[#7A6670]">
                     {claim.date}
                   </td>
-                  <td className="py-3.5 px-4 text-right font-mono font-bold text-sm text-navy-900 dark:text-white">
+                  <td className="py-3.5 px-4 text-right font-mono font-bold text-sm text-[#3B2A33] ">
                     ₹{claim.amount}
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     {claim.status === 'approved' && (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-healthcare-50 dark:bg-healthcare/10 text-healthcare text-[10px] font-bold border border-healthcare-200 dark:border-healthcare/30">
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#477A60]-50 dark:bg-[#E8F7F1] text-[#477A60] text-[10px] font-bold border border-[#C8EEDD] dark:border-healthcare/30">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>ಅನುಮೋದಿತ</span>
                       </span>
                     )}
                     {claim.status === 'under_review' && (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-500/30">
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[#FEF9EF] dark:bg-[#FEF9EF]0/10 text-amber-700 dark:text-amber-400 text-[10px] font-bold border border-amber-200 dark:border-amber-500/30">
                         <Clock className="w-3 h-3" />
                         <span>MO ಪರಿಶೀಲನೆ</span>
                       </span>
                     )}
                     {claim.status === 'pending' && (
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-navy-100 dark:bg-navy-800 text-navy-600 dark:text-navy-300 text-[10px] font-bold">
+                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-navy-100  text-[#7A6670]  text-[10px] font-bold">
                         <span>ಡ್ರಾಫ್ಟ್</span>
                       </span>
                     )}
                   </td>
-                  <td className="py-3.5 px-4 text-[11px] text-navy-500 dark:text-navy-400">
+                  <td className="py-3.5 px-4 text-[11px] text-[#7A6670] ">
                     {claim.approvedBy}
                   </td>
                 </tr>

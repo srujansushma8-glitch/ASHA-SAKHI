@@ -74,7 +74,7 @@ export default function CommandPalette({
       subtitle: 'AI4Bharat Indic-Transcribe speech-to-register',
       category: 'AI Actions',
       icon: Mic,
-      color: 'text-primary bg-primary/10',
+      color: 'text-[#A25B74] bg-[#FDF6F5]',
       action: () => {
         onClose();
         if (onStartRecording) onStartRecording();
@@ -86,7 +86,7 @@ export default function CommandPalette({
       subtitle: 'High-risk clinical referral with GPS ambulance dispatch',
       category: 'Emergency',
       icon: AlertTriangle,
-      color: 'text-emergency bg-emergency/10',
+      color: 'text-[#B94A58] bg-[#FCF1F1]',
       action: () => {
         onClose();
         if (onNavigate) onNavigate('emergency');
@@ -98,7 +98,7 @@ export default function CommandPalette({
       subtitle: 'Daily optimized field route with GPS markers',
       category: 'Navigation',
       icon: MapPin,
-      color: 'text-cyan-700 bg-cyan-50',
+      color: 'text-[#C47A92] bg-[#FDF6F5]',
       action: () => {
         onClose();
         if (onNavigate) onNavigate('route');
@@ -110,7 +110,7 @@ export default function CommandPalette({
       subtitle: 'JSY, Immunization, ANC payout tracking & ANM approval',
       category: 'Finance',
       icon: IndianRupee,
-      color: 'text-saffron-600 bg-saffron/10',
+      color: 'text-[#B88745] bg-[#FEF9EF]',
       action: () => {
         onClose();
         if (onNavigate) onNavigate('incentives');
@@ -122,7 +122,7 @@ export default function CommandPalette({
       subtitle: 'Trimester checkups, IFA tablets, Hb testing',
       category: 'Clinical',
       icon: Baby,
-      color: 'text-maternal-pink bg-pink-50',
+      color: 'text-[#A25B74] bg-[#FDF6F5]',
       action: () => {
         onClose();
         if (onNavigate) onNavigate('maternal');
@@ -134,7 +134,7 @@ export default function CommandPalette({
       subtitle: '48 registered mothers and infants in Shivalli sector',
       category: 'Records',
       icon: Users,
-      color: 'text-healthcare bg-healthcare/10',
+      color: 'text-[#477A60] bg-[#E8F7F1]',
       action: () => {
         onClose();
         if (onNavigate) onNavigate('beneficiaries');
@@ -146,7 +146,7 @@ export default function CommandPalette({
       subtitle: 'Pending vaccinations and postpartum home visits',
       category: 'Records',
       icon: CalendarCheck,
-      color: 'text-navy-700 bg-navy-50',
+      color: 'text-[#7A6670] bg-[#FDF6F5]',
       action: () => {
         onClose();
         if (onNavigate) onNavigate('followups');
@@ -158,7 +158,7 @@ export default function CommandPalette({
       subtitle: 'Real-time vehicle position and driver telemetry',
       category: 'Emergency',
       icon: Ambulance,
-      color: 'text-emergency bg-emergency/10',
+      color: 'text-[#B94A58] bg-[#FCF1F1]',
       action: () => {
         onClose();
         if (onNavigate) onNavigate('ambulance');
@@ -170,7 +170,7 @@ export default function CommandPalette({
       subtitle: 'Return to public showcase & 3D hero page',
       category: 'General',
       icon: ExternalLink,
-      color: 'text-teal-deep bg-teal-50',
+      color: 'text-[#A25B74] bg-[#FDF6F5]',
       action: () => {
         onClose();
         if (onViewLanding) onViewLanding();
@@ -194,7 +194,7 @@ export default function CommandPalette({
       subtitle: 'AI4Bharat Indic-Transcribe & Indic-Speak Language Selector',
       category: 'Languages',
       icon: Globe,
-      color: 'text-primary bg-primary/10',
+      color: 'text-[#A25B74] bg-[#FDF6F5]',
       action: () => {
         onClose();
         if (onOpenLanguageSelector) onOpenLanguageSelector();
@@ -206,7 +206,7 @@ export default function CommandPalette({
       subtitle: `Script: ${lang.script} • Region: ${lang.region}${lang.dir === 'rtl' ? ' • RTL Script' : ''}`,
       category: '22 Indic Languages',
       icon: Globe,
-      color: currentLanguage === lang.code ? 'text-primary bg-primary/20 font-bold' : 'text-navy-700 bg-navy-50',
+      color: currentLanguage === lang.code ? 'text-primary bg-primary/20 font-bold' : 'text-[#7A6670] bg-[#FDF6F5]',
       action: () => {
         onClose();
         if (onLanguageChange) onLanguageChange(lang.code);
@@ -244,12 +244,12 @@ export default function CommandPalette({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-navy-950/60 backdrop-blur-sm animate-fade-in">
       <div 
-        className="w-full max-w-2xl bg-white dark:bg-navy-900 rounded-3xl shadow-2xl border border-navy-200 dark:border-navy-700 overflow-hidden flex flex-col"
+        className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#F0DDE2] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center px-5 py-4 border-b border-navy-100 dark:border-navy-800">
-          <Search className="w-5 h-5 text-primary dark:text-cyan mr-3 shrink-0" />
+        <div className="flex items-center px-5 py-4 border-b border-[#F0DDE2] bg-[#FFF9F7]">
+          <Search className="w-5 h-5 text-[#A25B74] mr-3 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -260,7 +260,7 @@ export default function CommandPalette({
             }}
             onKeyDown={handleKeyDownInList}
             placeholder="ತ್ವರಿತ ಆಜ್ಞೆ ಅಥವಾ ಫಲಾನುಭವಿ ಹುಡುಕಿ (Type a command or search)..."
-            className="flex-1 bg-transparent text-navy-900 dark:text-white placeholder-navy-400 dark:placeholder-navy-500 text-sm font-medium focus:outline-none font-kannada"
+            className="flex-1 bg-transparent text-[#3B2A33] placeholder-[#7A6670] text-sm font-medium focus:outline-none font-kannada"
           />
           <div className="flex items-center space-x-2">
             <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono font-bold text-navy-500 dark:text-navy-400 bg-navy-100 dark:bg-navy-800 rounded border border-navy-200 dark:border-navy-700">
@@ -292,8 +292,8 @@ export default function CommandPalette({
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all ${
                     isSelected 
-                      ? 'bg-primary/10 dark:bg-cyan/15 border border-primary/20 dark:border-cyan/30 text-navy-900 dark:text-white' 
-                      : 'hover:bg-navy-50 dark:hover:bg-navy-800/60 text-navy-700 dark:text-navy-200'
+                      ? 'bg-[#F9ECEC] border border-[#F0DDE2] text-[#A25B74]' 
+                      : 'hover:bg-[#FDF6F5] text-[#3B2A33]'
                   }`}
                 >
                   <div className="flex items-center space-x-3.5 min-w-0">
@@ -315,7 +315,7 @@ export default function CommandPalette({
                       {item.category}
                     </span>
                     {isSelected && (
-                      <ArrowRight className="w-4 h-4 text-primary dark:text-cyan" />
+                      <ArrowRight className="w-4 h-4 text-[#A25B74]" />
                     )}
                   </div>
                 </div>
@@ -325,12 +325,12 @@ export default function CommandPalette({
         </div>
 
         {/* Bottom Hint Footer */}
-        <div className="px-5 py-2.5 bg-navy-50 dark:bg-navy-950/80 border-t border-navy-100 dark:border-navy-800 flex items-center justify-between text-[11px] text-navy-500 dark:text-navy-400">
+        <div className="px-5 py-2.5 bg-[#FFF9F7] border-t border-[#F0DDE2] flex items-center justify-between text-[11px] text-[#7A6670]">
           <div className="flex items-center space-x-3">
             <span>↑↓ ನ್ಯಾವಿಗೇಟ್</span>
             <span>↵ ಆಯ್ಕೆಮಾಡಿ</span>
           </div>
-          <span className="font-mono text-[10px] font-bold text-primary dark:text-cyan">
+          <span className="font-mono text-[10px] font-bold text-[#A25B74]">
             ASHA SAKHI Command Engine v2.4
           </span>
         </div>

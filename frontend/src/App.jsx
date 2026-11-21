@@ -143,7 +143,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-appbg dark:bg-navy-950 text-navy-900 dark:text-navy-50 font-sans selection:bg-cyan/20 selection:text-navy-900 transition-colors duration-200">
+    <div className="min-h-screen bg-[#F9ECEC] text-[#3B2A33] font-poppins selection:bg-[#A25B74]/20 selection:text-[#3B2A33] transition-colors duration-200">
       
       {/* View Mode 1: 3D Landing Page */}
       {viewMode === 'landing' ? (

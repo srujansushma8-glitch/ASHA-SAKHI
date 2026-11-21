@@ -30,7 +30,7 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
 
       // Centerline
       ctx.beginPath();
-      ctx.strokeStyle = '#CBDCEB';
+      ctx.strokeStyle = '#F0DDE2';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
       ctx.moveTo(0, height / 2);
@@ -45,7 +45,7 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
         if (realData && audioRecorder.analyser) {
           // Live microphone visualization
           ctx.lineWidth = 2.5;
-          ctx.strokeStyle = '#19B8D5'; // Electric Cyan
+          ctx.strokeStyle = '#A25B74'; // Electric Cyan
           ctx.beginPath();
 
           const sliceWidth = width / bufferLength;
@@ -78,7 +78,7 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
           // Synthesized active wave for demo recording
           phaseRef.current += 0.08;
           ctx.lineWidth = 2.5;
-          ctx.strokeStyle = '#19B8D5'; // Electric Cyan
+          ctx.strokeStyle = '#A25B74'; // Electric Cyan
           ctx.beginPath();
 
           for (let x = 0; x < width; x += 3) {
@@ -130,7 +130,7 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
       } else {
         // Idle flat line
         ctx.lineWidth = 1.5;
-        ctx.strokeStyle = '#CBDCEB';
+        ctx.strokeStyle = '#F0DDE2';
         ctx.beginPath();
         ctx.moveTo(0, height / 2);
         ctx.lineTo(width, height / 2);
@@ -157,7 +157,7 @@ export default function WaveformVisualizer({ isRecording, isProcessing, isPlayin
               : isPlayingTTS 
               ? 'bg-healthcare animate-pulse' 
               : isProcessing 
-              ? 'bg-primary animate-bounce' 
+              ? 'bg-[#A25B74] animate-bounce' 
               : 'bg-navy-300'
           }`}></span>
           <span className="font-kannada font-semibold text-navy-800">

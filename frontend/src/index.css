@@ -5,12 +5,18 @@
 :root {
   --rose-deep: #A25B74;
   --rose-mid: #C47A92;
+  --rose-soft: #E9B9C8;
   --rose-light: #E8B4C4;
   --blush: #F9ECEC;
   --blush-light: #FDF6F5;
+  --cream: #FFF9F7;
   --white: #FFFFFF;
   --plum-text: #3B2A33;
   --muted: #7A6670;
+  --border-soft: #F0DDE2;
+  --success: #477A60;
+  --warning: #B88745;
+  --danger: #B94A58;
 }
 
 @layer base {

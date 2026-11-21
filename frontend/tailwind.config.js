@@ -15,6 +15,12 @@ export default {
         // Dark Mode Background: #0B1926
 
         // Rose & Blush Clinic Design System (Reference Palette)
+        'border-soft': '#F0DDE2',
+        'rose-deep': '#A25B74',
+        'rose-mid': '#C47A92',
+        'rose-soft': '#E9B9C8',
+        'blush-light': '#FDF6F5',
+        'plum-text': '#3B2A33',
         rose: {
           deep: '#A25B74',      // footer, stats card, testimonial band, primary buttons
           mid: '#C47A92',       // accents, icons, links
@@ -50,10 +56,11 @@ export default {
         },
 
         cream: {
-          50: '#FDFCF9',
-          100: '#FAF9F5', // Soft Cream
-          200: '#F3EFE6',
-          300: '#E7E2D5',
+          50: '#FFFDFD',
+          100: '#FFF9F7', // Pure Soft Cream
+          200: '#FAF2F0',
+          300: '#F4E5E3',
+          DEFAULT: '#FFF9F7',
         },
         saffron: {
           50: '#FFF7EB',

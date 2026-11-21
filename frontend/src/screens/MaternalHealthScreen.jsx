@@ -123,28 +123,28 @@ export default function MaternalHealthScreen({
   return (
     <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
       {/* 1. Header with Back Button and Quick Patient Selector */}
-      <div className="bg-white rounded-3xl p-5 lg:p-6 border border-navy-200/60 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-5 lg:p-6 border border-[#F0DDE2] shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5">
           <button
             onClick={onBack}
-            className="p-2.5 rounded-2xl bg-softblue border border-navy-200/70 text-navy-800 hover:bg-navy-100 active:scale-[0.98] transition-decelerate"
+            className="p-2.5 rounded-2xl bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] hover:bg-navy-100 active:scale-[0.98] transition-decelerate"
             title="ಹಿಂದೆ ಹೋಗಿ (Back)"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[#F9ECEC] text-[#A25B74] flex items-center justify-center">
                 <Baby className="w-5 h-5" />
               </div>
-              <h1 className="text-lg lg:text-xl font-bold font-kannada text-navy-900 leading-tight">
+              <h1 className="text-lg lg:text-xl font-bold font-kannada text-[#3B2A33] leading-tight">
                 ತಾಯಿ ಮತ್ತು ಗರ್ಭಿಣಿ ಆರೋಗ್ಯ ವಿಶ್ಲೇಷಣೆ (Maternal Health)
               </h1>
-              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200">
+              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-[#FDF6F5] text-[#A25B74] border border-[#F0DDE2]">
                 ANC Analytics
               </span>
             </div>
-            <p className="text-xs text-navy-500 font-medium mt-0.5">
+            <p className="text-xs text-[#7A6670] font-medium mt-0.5">
               ಸುರಕ್ಷಿತ ಮಾತೃತ್ವ (Pradhan Mantri Surakshit Matritva Abhiyan - PMSMA)
             </p>
           </div>
@@ -152,20 +152,20 @@ export default function MaternalHealthScreen({
 
         {/* Patient Selector Pills */}
         <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none pb-1 sm:pb-0">
-          <span className="text-xs font-bold text-navy-500 hidden md:inline font-kannada">ಗರ್ಭಿಣಿ ಆಯ್ಕೆಮಾಡಿ:</span>
+          <span className="text-xs font-bold text-[#7A6670] hidden md:inline font-kannada">ಗರ್ಭಿಣಿ ಆಯ್ಕೆಮಾಡಿ:</span>
           {pregnantMothers.map(m => (
             <button
               key={m.id}
               onClick={() => handleSelectMother(m.id)}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap active:scale-[0.98] transition-decelerate flex items-center space-x-1.5 ${
                 selectedMotherId === m.id
-                  ? 'bg-pink text-white shadow-pink'
-                  : 'bg-softblue hover:bg-pink-50 text-navy-700 border border-navy-200/60'
+                  ? 'bg-[#A25B74] text-white shadow-pink'
+                  : 'bg-[#FDF6F5] hover:bg-[#FDF6F5] text-[#3B2A33] border border-[#F0DDE2]'
               }`}
             >
               <span>{m.name_kn || m.name_en}</span>
               {m.highRisk && (
-                <span className={`w-2 h-2 rounded-full ${selectedMotherId === m.id ? 'bg-white' : 'bg-emergency animate-pulse'}`}></span>
+                <span className={`w-2 h-2 rounded-full ${selectedMotherId === m.id ? 'bg-white' : 'bg-[#B94A58] animate-pulse'}`}></span>
               )}
             </button>
           ))}
@@ -180,7 +180,7 @@ export default function MaternalHealthScreen({
           {/* Mother Bio */}
           <div className="lg:col-span-8 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-pink-500/80 text-white text-xs font-bold font-mono">
+              <span className="px-3 py-1 rounded-full bg-[#FDF6F5]0/80 text-white text-xs font-bold font-mono">
                 RCH ID: {currentMother.id}
               </span>
               <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-medium">
@@ -190,12 +190,12 @@ export default function MaternalHealthScreen({
                 ರಕ್ತ: {currentMother.bloodGroup || 'B+'}
               </span>
               {currentMother.highRisk ? (
-                <span className="px-3 py-1 rounded-full bg-emergency text-white text-xs font-bold animate-pulse shadow-emergency flex items-center space-x-1">
+                <span className="px-3 py-1 rounded-full bg-[#B94A58] text-white text-xs font-bold animate-pulse shadow-emergency flex items-center space-x-1">
                   <AlertTriangle className="w-3.5 h-3.5" />
                   <span>ಹೆಚ್ಚಿನ ಅಪಾಯದ ಗರ್ಭಾವಸ್ಥೆ (High Risk)</span>
                 </span>
               ) : (
-                <span className="px-3 py-1 rounded-full bg-healthcare text-white text-xs font-bold flex items-center space-x-1">
+                <span className="px-3 py-1 rounded-full bg-[#477A60] text-white text-xs font-bold flex items-center space-x-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>ಸಾಮಾನ್ಯ ಗರ್ಭಾವಸ್ಥೆ (Low Risk)</span>
                 </span>
@@ -230,7 +230,7 @@ export default function MaternalHealthScreen({
               </div>
               <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
                 <span className="text-[11px] text-white/70 block font-kannada">ತೂಕ ಏರಿಕೆ</span>
-                <span className="text-lg font-bold font-mono text-healthcare">+4.5 kg</span>
+                <span className="text-lg font-bold font-mono text-[#477A60]">+4.5 kg</span>
               </div>
             </div>
           </div>
@@ -256,17 +256,17 @@ export default function MaternalHealthScreen({
       {/* 3. Vitals KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* BP */}
-        <div className="bg-white p-5 rounded-3xl border border-navy-200/60 shadow-card">
+        <div className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy-500 font-kannada">ರಕ್ತದೊತ್ತಡ (BP)</span>
-            <Activity className={`w-4 h-4 ${currentMother.highRisk ? 'text-emergency' : 'text-primary'}`} />
+            <span className="text-xs font-bold text-[#7A6670] font-kannada">ರಕ್ತದೊತ್ತಡ (BP)</span>
+            <Activity className={`w-4 h-4 ${currentMother.highRisk ? 'text-[#B94A58]' : 'text-[#A25B74]'}`} />
           </div>
           <div className="mt-3">
-            <div className={`text-2xl lg:text-3xl font-bold font-mono ${currentMother.highRisk ? 'text-emergency' : 'text-navy-900'}`}>
-              {bp} <span className="text-xs font-normal text-navy-400">mmHg</span>
+            <div className={`text-2xl lg:text-3xl font-bold font-mono ${currentMother.highRisk ? 'text-[#B94A58]' : 'text-[#3B2A33]'}`}>
+              {bp} <span className="text-xs font-normal text-[#C47A92]">mmHg</span>
             </div>
             <span className={`text-[11px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full ${
-              currentMother.highRisk ? 'bg-emergency-50 text-emergency' : 'bg-healthcare-50 text-healthcare'
+              currentMother.highRisk ? 'bg-[#FCF1F1] text-[#B94A58]' : 'bg-[#E8F7F1] text-[#477A60]'
             }`}>
               {currentMother.highRisk ? 'ಅಧಿಕ ರಕ್ತದೊತ್ತಡ (Stage 1)' : 'ಸಾಮಾನ್ಯ (Normal)'}
             </span>
@@ -274,14 +274,14 @@ export default function MaternalHealthScreen({
         </div>
 
         {/* Haemoglobin (Hb) */}
-        <div className="bg-white p-5 rounded-3xl border border-navy-200/60 shadow-card">
+        <div className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy-500 font-kannada">ಹಿಮೋಗ್ಲೋಬಿನ್ (Hb)</span>
+            <span className="text-xs font-bold text-[#7A6670] font-kannada">ಹಿಮೋಗ್ಲೋಬಿನ್ (Hb)</span>
             <Heart className="w-4 h-4 text-pink" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl lg:text-3xl font-bold font-mono text-navy-900">
-              {hb} <span className="text-xs font-normal text-navy-400">g/dL</span>
+            <div className="text-2xl lg:text-3xl font-bold font-mono text-[#3B2A33]">
+              {hb} <span className="text-xs font-normal text-[#C47A92]">g/dL</span>
             </div>
             <span className="text-[11px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full bg-warning-50 text-warning-700">
               {parseFloat(hb) < 11 ? 'ಮಧ್ಯಮ ರಕ್ತಹೀನತೆ (Mild)' : 'ಸಾಮಾನ್ಯ (Healthy)'}
@@ -290,32 +290,32 @@ export default function MaternalHealthScreen({
         </div>
 
         {/* Current Weight */}
-        <div className="bg-white p-5 rounded-3xl border border-navy-200/60 shadow-card">
+        <div className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy-500 font-kannada">ಪ್ರಸ್ತುತ ತೂಕ</span>
-            <Scale className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold text-[#7A6670] font-kannada">ಪ್ರಸ್ತುತ ತೂಕ</span>
+            <Scale className="w-4 h-4 text-[#A25B74]" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl lg:text-3xl font-bold font-mono text-navy-900">
-              {currentMother.weight || 56.5} <span className="text-xs font-normal text-navy-400">kg</span>
+            <div className="text-2xl lg:text-3xl font-bold font-mono text-[#3B2A33]">
+              {currentMother.weight || 56.5} <span className="text-xs font-normal text-[#C47A92]">kg</span>
             </div>
-            <span className="text-[11px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700">
+            <span className="text-[11px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full bg-[#FDF6F5] text-cyan-700">
               ಪ್ರತಿ ತಿಂಗಳಿಗೆ ~1.5 kg ಏರಿಕೆ
             </span>
           </div>
         </div>
 
         {/* Fetal Heart Rate */}
-        <div className="bg-white p-5 rounded-3xl border border-navy-200/60 shadow-card">
+        <div className="bg-white p-5 rounded-3xl border border-[#F0DDE2] shadow-card">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-navy-500 font-kannada">ಭ್ರೂಣದ ಹೃದಯ ಬಡಿತ (FHR)</span>
-            <Baby className="w-4 h-4 text-healthcare" />
+            <span className="text-xs font-bold text-[#7A6670] font-kannada">ಭ್ರೂಣದ ಹೃದಯ ಬಡಿತ (FHR)</span>
+            <Baby className="w-4 h-4 text-[#477A60]" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl lg:text-3xl font-bold font-mono text-healthcare">
-              {fhr} <span className="text-xs font-normal text-navy-400">bpm</span>
+            <div className="text-2xl lg:text-3xl font-bold font-mono text-[#477A60]">
+              {fhr} <span className="text-xs font-normal text-[#C47A92]">bpm</span>
             </div>
-            <span className="text-[11px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full bg-healthcare-50 text-healthcare">
+            <span className="text-[11px] font-bold mt-1 inline-block px-2 py-0.5 rounded-full bg-[#E8F7F1] text-[#477A60]">
               ಉತ್ತಮ (Healthy Range 120-160)
             </span>
           </div>
@@ -327,20 +327,20 @@ export default function MaternalHealthScreen({
         {/* Left Column: ANC Stepper & Supplement Adherence */}
         <div className="lg:col-span-7 space-y-6">
           {/* ANC Checkup Schedule Stepper */}
-          <div className="bg-white rounded-3xl p-6 border border-navy-200/60 shadow-card space-y-5">
-            <div className="flex items-center justify-between border-b border-navy-100 pb-3">
+          <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-5">
+            <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-3">
               <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-xl bg-pink-50 text-pink-700 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center">
                   <FileCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-navy-900 font-kannada">
+                  <h3 className="font-bold text-sm text-[#3B2A33] font-kannada">
                     ANC ತಪಾಸಣೆ ವೇಳಾಪಟ್ಟಿ (MoHFW 4-ANC Protocol)
                   </h3>
-                  <span className="text-[11px] text-navy-400 font-medium">ಕನಿಷ್ಠ 4 ತಪಾಸಣೆಗಳು ಕಡ್ಡಾಯ</span>
+                  <span className="text-[11px] text-[#C47A92] font-medium">ಕನಿಷ್ಠ 4 ತಪಾಸಣೆಗಳು ಕಡ್ಡಾಯ</span>
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold text-primary bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-200">
+              <span className="text-xs font-mono font-bold text-[#A25B74] bg-[#FDF6F5] px-2.5 py-1 rounded-full border border-[#F0DDE2]">
                 {gestationalWeeks >= 28 ? '3/4 ಪೂರ್ಣಗೊಂಡಿದೆ' : '2/4 ಪೂರ್ಣಗೊಂಡಿದೆ'}
               </span>
             </div>
@@ -353,22 +353,22 @@ export default function MaternalHealthScreen({
                 { name: '3ನೇ ANC ತಪಾಸಣೆ (28-34 ವಾರಗಳಲ್ಲಿ)', status: gestationalWeeks >= 28 ? 'due' : 'upcoming', date: '2026-11-25', details: 'ರಕ್ತದೊತ್ತಡ, ಗರ್ಭದ ಎತ್ತರ, ರಕ್ತಹೀನತೆ ತಪಾಸಣೆ' },
                 { name: '4ನೇ ANC ತಪಾಸಣೆ (36 ವಾರಗಳಲ್ಲಿ)', status: 'upcoming', date: '2026-12-20', details: 'ಹೆರಿಗೆ ಸಿದ್ಧತೆ, ಆಸ್ಪತ್ರೆ ಆಯ್ಕೆ, ತುರ್ತು ಯೋಜನೆ' }
               ].map((step, idx) => (
-                <div key={idx} className="flex items-start space-x-3.5 p-3.5 rounded-2xl bg-softblue/60 border border-navy-100">
+                <div key={idx} className="flex items-start space-x-3.5 p-3.5 rounded-2xl bg-[#FDF6F5]/60 border border-[#F0DDE2]">
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
                     step.status === 'completed'
-                      ? 'bg-healthcare text-white'
+                      ? 'bg-[#477A60] text-white'
                       : step.status === 'due'
                       ? 'bg-warning text-white animate-pulse'
-                      : 'bg-navy-200 text-navy-700'
+                      : 'bg-navy-200 text-[#3B2A33]'
                   }`}>
                     {step.status === 'completed' ? '✓' : idx + 1}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-navy-900 font-kannada">{step.name}</span>
-                      <span className="text-[10px] font-mono font-bold text-navy-500">{step.date}</span>
+                      <span className="text-xs font-bold text-[#3B2A33] font-kannada">{step.name}</span>
+                      <span className="text-[10px] font-mono font-bold text-[#7A6670]">{step.date}</span>
                     </div>
-                    <p className="text-[11px] text-navy-600 mt-0.5">{step.details}</p>
+                    <p className="text-[11px] text-[#7A6670] mt-0.5">{step.details}</p>
                   </div>
                 </div>
               ))}
@@ -376,8 +376,8 @@ export default function MaternalHealthScreen({
           </div>
 
           {/* Supplement Adherence (IFA & Calcium) */}
-          <div className="bg-white rounded-3xl p-6 border border-navy-200/60 shadow-card space-y-4">
-            <h3 className="font-bold text-sm text-navy-900 font-kannada flex items-center space-x-2">
+          <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
+            <h3 className="font-bold text-sm text-[#3B2A33] font-kannada flex items-center space-x-2">
               <Pill className="w-4 h-4 text-pink" />
               <span>ಪೌಷ್ಟಿಕಾಂಶ ಮಾತ್ರೆಗಳ ಅನುಸರಣೆ (Nutritional Adherence)</span>
             </h3>
@@ -385,27 +385,27 @@ export default function MaternalHealthScreen({
             {/* IFA Progress */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-kannada font-bold text-navy-700">ಐರನ್ ಫೋಲಿಕ್ ಆಸಿಡ್ (IFA - ಕೆಂಪು ಮಾತ್ರೆಗಳು):</span>
-                <span className="font-mono font-bold text-primary">{ifaCount} / 100 ಮಾತ್ರೆಗಳು ({Math.round(ifaCount)}%)</span>
+                <span className="font-kannada font-bold text-[#3B2A33]">ಐರನ್ ಫೋಲಿಕ್ ಆಸಿಡ್ (IFA - ಕೆಂಪು ಮಾತ್ರೆಗಳು):</span>
+                <span className="font-mono font-bold text-[#A25B74]">{ifaCount} / 100 ಮಾತ್ರೆಗಳು ({Math.round(ifaCount)}%)</span>
               </div>
-              <div className="w-full bg-softblue rounded-full h-3 overflow-hidden border border-navy-100">
+              <div className="w-full bg-[#FDF6F5] rounded-full h-3 overflow-hidden border border-[#F0DDE2]">
                 <div 
                   className="bg-gradient-to-r from-primary to-cyan h-full rounded-full transition-all duration-700" 
                   style={{ width: `${ifaCount}%` }}
                 ></div>
               </div>
-              <p className="text-[10px] text-navy-400 font-medium">ಕನಿಷ್ಠ 100 ದಿನಗಳ ಕಾಲ ಪ್ರತಿದಿನ 1 IFA ಮಾತ್ರೆ ಕಡ್ಡಾಯ</p>
+              <p className="text-[10px] text-[#C47A92] font-medium">ಕನಿಷ್ಠ 100 ದಿನಗಳ ಕಾಲ ಪ್ರತಿದಿನ 1 IFA ಮಾತ್ರೆ ಕಡ್ಡಾಯ</p>
             </div>
 
             {/* Calcium Progress */}
             <div className="space-y-1.5 pt-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-kannada font-bold text-navy-700">ಕ್ಯಾಲ್ಸಿಯಂ 500mg ಮಾತ್ರೆಗಳು (14 ವಾರಗಳ ನಂತರ):</span>
-                <span className="font-mono font-bold text-healthcare">{calciumCompliance} ಸೇವನೆ</span>
+                <span className="font-kannada font-bold text-[#3B2A33]">ಕ್ಯಾಲ್ಸಿಯಂ 500mg ಮಾತ್ರೆಗಳು (14 ವಾರಗಳ ನಂತರ):</span>
+                <span className="font-mono font-bold text-[#477A60]">{calciumCompliance} ಸೇವನೆ</span>
               </div>
-              <div className="w-full bg-softblue rounded-full h-3 overflow-hidden border border-navy-100">
+              <div className="w-full bg-[#FDF6F5] rounded-full h-3 overflow-hidden border border-[#F0DDE2]">
                 <div 
-                  className="bg-healthcare h-full rounded-full transition-all duration-700" 
+                  className="bg-[#477A60] h-full rounded-full transition-all duration-700" 
                   style={{ width: calciumCompliance }}
                 ></div>
               </div>
@@ -416,20 +416,20 @@ export default function MaternalHealthScreen({
         {/* Right Column: Danger Signs Checklist & High-Risk Alert Box */}
         <div className="lg:col-span-5 space-y-6">
           {/* Danger Sign Checklist Card */}
-          <div className="bg-white rounded-3xl p-6 border border-navy-200/60 shadow-card space-y-4">
-            <div className="flex items-center justify-between border-b border-navy-100 pb-3">
+          <div className="bg-white rounded-3xl p-6 border border-[#F0DDE2] shadow-card space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-3">
               <div className="flex items-center space-x-2">
-                <ShieldAlert className="w-5 h-5 text-emergency" />
-                <h3 className="font-bold text-sm text-navy-900 font-kannada">
+                <ShieldAlert className="w-5 h-5 text-[#B94A58]" />
+                <h3 className="font-bold text-sm text-[#3B2A33] font-kannada">
                   ಅಪಾಯಕಾರಿ ಲಕ್ಷಣಗಳ ಪರಿಶೀಲನೆ (Danger Signs)
                 </h3>
               </div>
-              <span className="text-[10px] font-bold text-emergency bg-emergency-50 px-2 py-0.5 rounded-full border border-emergency-200">
+              <span className="text-[10px] font-bold text-[#B94A58] bg-[#FCF1F1] px-2 py-0.5 rounded-full border border-[#B94A58]/30">
                 MoHFW Guidelines
               </span>
             </div>
 
-            <p className="text-xs text-navy-500 font-kannada">
+            <p className="text-xs text-[#7A6670] font-kannada">
               ಈ ಕೆಳಗಿನ ಯಾವುದೇ ಲಕ್ಷಣಗಳು ಕಂಡುಬಂದರೆ ತಕ್ಷಣವೇ ಸಮೀಪದ PHC ಅಥವಾ 108 ಗೆ ಸಂಪರ್ಕಿಸಿ:
             </p>
 
@@ -446,8 +446,8 @@ export default function MaternalHealthScreen({
                   onClick={() => toggleChecklist(item.key)}
                   className={`p-3 rounded-2xl border transition-decelerate cursor-pointer flex items-center justify-between ${
                     checklist[item.key]
-                      ? 'bg-emergency-50 border-emergency-300 text-emergency'
-                      : 'bg-softblue border-navy-100 text-navy-800 hover:bg-navy-50'
+                      ? 'bg-[#FCF1F1] border-[#B94A58]/40 text-[#B94A58]'
+                      : 'bg-[#FDF6F5] border-[#F0DDE2] text-[#3B2A33] hover:bg-navy-50'
                   }`}
                 >
                   <div>
@@ -458,7 +458,7 @@ export default function MaternalHealthScreen({
                     type="checkbox"
                     checked={checklist[item.key]}
                     onChange={() => {}}
-                    className="w-4 h-4 text-emergency rounded border-navy-300 focus:ring-emergency"
+                    className="w-4 h-4 text-[#B94A58] rounded border-navy-300 focus:ring-emergency"
                   />
                 </div>
               ))}
@@ -466,7 +466,7 @@ export default function MaternalHealthScreen({
 
             {/* If any danger sign is checked, show immediate action recommendation */}
             {(checklist.headache || checklist.edema || checklist.bleeding || checklist.reducedMovement) && (
-              <div className="p-4 rounded-2xl bg-emergency text-white space-y-2 shadow-emergency animate-fade-in">
+              <div className="p-4 rounded-2xl bg-[#B94A58] text-white space-y-2 shadow-emergency animate-fade-in">
                 <div className="flex items-center space-x-2 text-xs font-bold font-kannada">
                   <AlertCircle className="w-4 h-4" />
                   <span>ಎಚ್ಚರಿಕೆ! ತಕ್ಷಣವೇ PHC ಗೆ ರೆಫರ್ ಮಾಡಿ (Refer to PHC Now)</span>
