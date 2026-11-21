@@ -6,7 +6,6 @@ import {
   Volume2, 
   VolumeX, 
   Save, 
-  AlertTriangle, 
   Calendar, 
   User, 
   Scale, 
@@ -15,7 +14,8 @@ import {
   ArrowLeft,
   X,
   Sparkles,
-  Check
+  Check,
+  BookmarkCheck
 } from 'lucide-react';
 import { voiceWs } from '../services/websocket';
 import { api } from '../services/api';
@@ -27,15 +27,17 @@ export default function StructuredVisitRecordScreen({
   onBack, 
   onTriggerEmergency 
 }) {
+  const existingDraft = api.getDraftVisit ? api.getDraftVisit() : null;
+
   const [formData, setFormData] = useState({
-    beneficiary_id: record?.beneficiary_id || 'ASHA-KA-2024-0101',
-    beneficiary_name: record?.beneficiary_name || 'ಲಕ್ಷ್ಮಮ್ಮ ಕೆ. (Lakshmamma K.)',
-    visit_type: record?.visit_type || 'ANC (Antenatal Care)',
-    weight: record?.weight || '58.5',
-    vaccinations_due: record?.vaccinations_due || 'TT-2 / TD-2 Booster',
-    vaccinations_completed: record?.vaccinations_completed || 'TT-1, Albendazole',
-    next_visit_date: record?.next_visit_date || '2026-12-05',
-    additional_notes: record?.additional_notes || 'ಭ್ರೂಣದ ಚಲನೆ ಸಾಮಾನ್ಯವಾಗಿದೆ. 30 ದಿನಗಳ ಐರನ್ ಮಾತ್ರೆ (IFA) ವಿತರಿಸಲಾಗಿದೆ.'
+    beneficiary_id: record?.beneficiary_id || existingDraft?.beneficiary_id || 'ASHA-KA-2024-0101',
+    beneficiary_name: record?.beneficiary_name || existingDraft?.beneficiary_name || 'ಲಕ್ಷ್ಮಮ್ಮ ಕೆ. (Lakshmamma K.)',
+    visit_type: record?.visit_type || existingDraft?.visit_type || 'ANC (Antenatal Care)',
+    weight: record?.weight || existingDraft?.weight || '58.5',
+    vaccinations_due: record?.vaccinations_due || existingDraft?.vaccinations_due || 'TT-2 / TD-2 Booster',
+    vaccinations_completed: record?.vaccinations_completed || existingDraft?.vaccinations_completed || 'TT-1, Albendazole',
+    next_visit_date: record?.next_visit_date || existingDraft?.next_visit_date || '2026-12-05',
+    additional_notes: record?.additional_notes || existingDraft?.additional_notes || 'ಭ್ರೂಣದ ಚಲನೆ ಸಾಮಾನ್ಯವಾಗಿದೆ. 30 ದಿನಗಳ ಐರನ್ ಮಾತ್ರೆ (IFA) ವಿತರಿಸಲಾಗಿದೆ.'
   });
 
   const [editingField, setEditingField] = useState(null);
@@ -69,7 +71,6 @@ export default function StructuredVisitRecordScreen({
     });
   };
 
-  // Manual Edit
   const handleStartEditField = (fieldName, currentValue) => {
     setEditingField(fieldName);
     setEditFieldValue(currentValue || '');
@@ -99,7 +100,6 @@ export default function StructuredVisitRecordScreen({
     setEditingField(null);
   };
 
-  // Voice Correction
   const handleStartVoiceCorrection = (fieldKey) => {
     setVoiceCorrectionField(fieldKey);
     setVoiceCorrectionActive(true);
@@ -130,10 +130,20 @@ export default function StructuredVisitRecordScreen({
     setVoiceCorrectionField(null);
   };
 
-  // Save Record
+  const handleSaveDraft = () => {
+    if (api.saveDraftVisit) {
+      api.saveDraftVisit(formData);
+      setSuccessToast('ಕರಡು (Draft) ಸುರಕ್ಷಿತವಾಗಿ ಮೊಬೈಲ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ.');
+      setTimeout(() => setSuccessToast(''), 3000);
+    }
+  };
+
   const handleConfirmAndSave = async () => {
     try {
       setIsSaving(true);
+      ttsService.stop();
+      voiceWs.confirmRecord(formData);
+
       const res = await api.confirmVisit({
         session_id: voiceWs.sessionId || `SES-${Date.now()}`,
         visit_record: formData
@@ -238,7 +248,7 @@ export default function StructuredVisitRecordScreen({
           <div className="flex items-center justify-between text-navy-500 mb-1.5">
             <span className="text-xs font-bold font-kannada flex items-center">
               <Scale className="w-4 h-4 mr-1 text-primary" />
-              ತಾಯಿ/ಮಗು ತೂಕ (Weight)
+              ತೂಕ (Weight)
             </span>
             <button
               onClick={() => handleStartVoiceCorrection('weight')}
@@ -261,7 +271,7 @@ export default function StructuredVisitRecordScreen({
           <div className="flex items-center justify-between text-navy-500 mb-1.5">
             <span className="text-xs font-bold font-kannada flex items-center">
               <Calendar className="w-4 h-4 mr-1 text-primary" />
-              ಮುಂದಿನ ಭೇಟಿ (Next Visit)
+              ಮುಂದಿನ ಭೇಟಿ
             </span>
             <button
               onClick={() => handleStartVoiceCorrection('next_visit_date')}
@@ -422,8 +432,8 @@ export default function StructuredVisitRecordScreen({
         </div>
       )}
 
-      {/* 7. Final Confirm & Save Primary Button */}
-      <div className="pt-2">
+      {/* Action Buttons: Draft Save & Primary Confirm */}
+      <div className="space-y-2 pt-2">
         <button
           onClick={handleConfirmAndSave}
           disabled={isSaving}
@@ -433,6 +443,14 @@ export default function StructuredVisitRecordScreen({
           <span className="font-kannada">
             {isSaving ? 'ಉಳಿಸಲಾಗುತ್ತಿದೆ...' : 'ದೃಢೀಕರಿಸಿ ಅಧಿಕೃತವಾಗಿ ಉಳಿಸಿ (Confirm & Save)'}
           </span>
+        </button>
+
+        <button
+          onClick={handleSaveDraft}
+          className="w-full py-2.5 px-3 rounded-xl border border-primary-200 text-primary bg-mint-surface/40 font-semibold text-xs hover:bg-mint-surface active:scale-[0.98] transition-decelerate flex items-center justify-center space-x-1.5"
+        >
+          <BookmarkCheck className="w-4 h-4" />
+          <span>ಕರಡು ಉಳಿಸಿ (Save Local Draft)</span>
         </button>
       </div>
     </div>

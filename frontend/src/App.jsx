@@ -5,13 +5,14 @@ import HomeDashboard from './screens/HomeDashboard';
 import VoiceRecordingScreen from './screens/VoiceRecordingScreen';
 import StructuredVisitRecordScreen from './screens/StructuredVisitRecordScreen';
 import EmergencyAlertScreen from './screens/EmergencyAlertScreen';
+import AmbulanceTrackingScreen from './screens/AmbulanceTrackingScreen';
 import FollowUpDashboard from './screens/FollowUpDashboard';
 import BeneficiaryManagementScreen from './screens/BeneficiaryManagementScreen';
 import { api } from './services/api';
 import { voiceWs } from './services/websocket';
 
 export default function App() {
-  const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'structured_record', 'emergency', 'followups', 'beneficiaries'
+  const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'structured_record', 'emergency', 'ambulance', 'followups', 'beneficiaries'
   const [currentLanguage, setCurrentLanguage] = useState('kn'); // 'kn', 'kn-en', 'en'
   const [emergencyAlerts, setEmergencyAlerts] = useState([]);
   const [currentRecord, setCurrentRecord] = useState(null);
@@ -127,6 +128,13 @@ export default function App() {
           <EmergencyAlertScreen
             alertData={currentDangerAlert}
             onBack={() => setActiveScreen('home')}
+            onTrackAmbulance={() => setActiveScreen('ambulance')}
+          />
+        )}
+
+        {activeScreen === 'ambulance' && (
+          <AmbulanceTrackingScreen
+            onBack={() => setActiveScreen('emergency')}
           />
         )}
 

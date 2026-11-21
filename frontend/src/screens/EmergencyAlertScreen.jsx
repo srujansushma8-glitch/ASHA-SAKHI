@@ -9,13 +9,13 @@ import {
   ArrowLeft,
   ChevronRight,
   ShieldAlert,
-  Play,
   RotateCw,
-  Navigation
+  Navigation,
+  ExternalLink
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function EmergencyAlertScreen({ onBack, alertData }) {
+export default function EmergencyAlertScreen({ onBack, alertData, onTrackAmbulance }) {
   const [alerts, setAlerts] = useState([]);
   const [selectedAlert, setSelectedAlert] = useState(alertData || null);
   const [actionStatusToast, setActionStatusToast] = useState('');
@@ -34,10 +34,13 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
       setSelectedAlert(active);
     }
 
-    // Load ambulance status
-    const ambRequests = await api.getAmbulanceRequests();
-    if (ambRequests.length > 0) {
-      setAmbulanceRequest(ambRequests[0]);
+    try {
+      const ambData = await api.getAmbulanceTracking();
+      if (ambData) {
+        setAmbulanceRequest(ambData);
+      }
+    } catch (e) {
+      console.warn('Could not load ambulance tracking', e);
     }
   };
 
@@ -54,17 +57,6 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
   const handleCallAmbulance = async () => {
     window.open('tel:108', '_self');
     handleUpdateStatus('108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಸಂಪರ್ಕಿಸಲಾಗಿದೆ (108 Ambulance Called)');
-
-    // Ensure a simulated ambulance request is created if none exists
-    if (!ambulanceRequest) {
-      const created = await api.createAmbulanceRequest({
-        beneficiary_id: selectedAlert?.beneficiary_id || 'BEN-KA-002',
-        emergency_id: selectedAlert?.id || 'EMG-001',
-        pickup_location: selectedAlert?.village ? `${selectedAlert.village}, Mandya Sector 4` : 'Shivalli Village, Mandya Sector 4',
-        destination_facility: 'Mandya Taluk Hospital / PHC'
-      });
-      setAmbulanceRequest(created);
-    }
   };
 
   const handleCallMedicalOfficer = () => {
@@ -72,24 +64,10 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
     handleUpdateStatus('PHC ವೈದ್ಯಾಧಿಕಾರಿಗೆ ಮಾಹಿತಿ ನೀಡಲಾಗಿದೆ (MO Informed)');
   };
 
-  // Advance simulated ambulance step (REQUESTED -> DISPATCHED -> ON_THE_WAY -> ARRIVED -> COMPLETED)
   const handleAdvanceSimulationStep = async () => {
-    if (!ambulanceRequest) {
-      const created = await api.createAmbulanceRequest({
-        beneficiary_id: selectedAlert?.beneficiary_id || 'BEN-KA-002',
-        emergency_id: selectedAlert?.id || 'EMG-001',
-        pickup_location: 'Shivalli Village, Mandya Sector 4',
-        destination_facility: 'Mandya Taluk Hospital / PHC'
-      });
-      setAmbulanceRequest(created);
-      setActionStatusToast('ಆಂಬ್ಯುಲೆನ್ಸ್ ಸಿಮ್ಯುಲೇಶನ್ ಪ್ರಾರಂಭಿಸಲಾಗಿದೆ (REQUESTED)');
-      setTimeout(() => setActionStatusToast(''), 3000);
-      return;
-    }
-
     try {
       setIsAdvancingAmbulance(true);
-      const updated = await api.stepAmbulanceSimulation(ambulanceRequest.request_id);
+      const updated = await api.simulateNextAmbulanceStep();
       if (updated) {
         setAmbulanceRequest(updated);
         setActionStatusToast(`ಆಂಬ್ಯುಲೆನ್ಸ್ ಸ್ಥಿತಿ: ${updated.status}`);
@@ -212,8 +190,17 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
             <span className="w-3 h-3 rounded-full bg-warning animate-ping"></span>
           </div>
 
-          {/* Emergency Calling Buttons */}
+          {/* Emergency Calling & Map Tracking Actions */}
           <div className="space-y-2.5 pt-1">
+            {/* Direct Map Tracking Screen Button */}
+            <button
+              onClick={() => onTrackAmbulance && onTrackAmbulance(selectedAlert.id)}
+              className="w-full bg-mint-surface hover:bg-mint-surface/90 text-primary font-bold py-3.5 px-4 rounded-2xl shadow-touch flex items-center justify-center space-x-2 text-sm active:scale-[0.98] transition-decelerate touch-manipulation"
+            >
+              <Navigation className="w-5 h-5 text-primary" />
+              <span className="font-kannada">ಆಂಬ್ಯುಲೆನ್ಸ್ ಲೈವ್ ಮ್ಯಾಪ್ ನೋಡಿ (Track Ambulance Map)</span>
+            </button>
+
             <button
               onClick={handleCallAmbulance}
               className="w-full bg-white hover:bg-ivory-bg text-emergency font-bold py-3.5 px-4 rounded-2xl shadow-card flex items-center justify-center space-x-2.5 text-base active:scale-[0.98] transition-decelerate touch-manipulation"
@@ -232,6 +219,27 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
               <span>PHC ವೈದ್ಯಾಧಿಕಾರಿಗೆ ಕರೆ (Call Medical Officer)</span>
             </button>
           </div>
+
+          {/* Quick Status Update Chips */}
+          <div className="pt-2 border-t border-emergency-500/40">
+            <span className="text-[10px] font-bold text-emergency-100 block mb-2">
+              ಸ್ಥಿತಿಯನ್ನು ತ್ವರಿತವಾಗಿ ನವೀಕರಿಸಿ (Quick Status Update):
+            </span>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <button
+                onClick={() => handleUpdateStatus('108 ವಾಹನ ಹೊರಟಿದೆ (Ambulance Dispatched)')}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-center active:scale-[0.98] transition-decelerate"
+              >
+                🚑 ವಾಹನ ಹೊರಟಿದೆ
+              </button>
+              <button
+                onClick={() => handleUpdateStatus('PHC ತಲುಪಿದೆ (Arrived at PHC)')}
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-center active:scale-[0.98] transition-decelerate"
+              >
+                🏥 PHC ತಲುಪಿದೆ
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="bg-white rounded-2xl p-8 text-center border border-navy-100 shadow-subtle">
@@ -245,7 +253,7 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
         </div>
       )}
 
-      {/* 3. SIMULATED 108 AMBULANCE TRACKING CARD (Full Interactive Simulation) */}
+      {/* 3. SIMULATED 108 AMBULANCE TRACKING CARD */}
       <div className="bg-white rounded-3xl p-5 border border-navy-100 shadow-card space-y-3">
         <div className="flex items-center justify-between border-b border-navy-100 pb-2.5">
           <div className="flex items-center space-x-2">
@@ -276,7 +284,7 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
           </button>
         </div>
 
-        {/* Status Stepper Progression */}
+        {/* Stepper Progress */}
         <div className="py-1">
           <div className="grid grid-cols-5 gap-1 text-center text-[10px] font-bold">
             {['REQUESTED', 'DISPATCHED', 'ON_THE_WAY', 'ARRIVED', 'COMPLETED'].map((st, i) => {
@@ -309,7 +317,6 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
 
         {/* Telemetry Details Grid */}
         <div className="grid grid-cols-2 gap-2.5 pt-1">
-          {/* Driver & Vehicle */}
           <div className="p-3 rounded-xl bg-ivory-bg border border-navy-100 space-y-1">
             <span className="text-[10px] text-navy-400 font-bold uppercase block">ಚಾಲಕ & ವಾಹನ:</span>
             <div className="text-xs font-bold text-navy">
@@ -320,24 +327,22 @@ export default function EmergencyAlertScreen({ onBack, alertData }) {
             </div>
           </div>
 
-          {/* ETA & Progress */}
           <div className="p-3 rounded-xl bg-ivory-bg border border-navy-100 space-y-1">
             <span className="text-[10px] text-navy-400 font-bold uppercase block">ಅಂದಾಜು ಸಮಯ (ETA):</span>
             <div className="text-xs font-bold text-healthcare flex items-center space-x-1">
               <Navigation className="w-3.5 h-3.5 text-healthcare" />
               <span>{ambulanceRequest?.eta_minutes ?? 8} ನಿಮಿಷಗಳು (mins)</span>
             </div>
-            {/* Progress bar */}
             <div className="w-full bg-navy-100 h-1.5 rounded-full overflow-hidden mt-1">
               <div 
                 className="bg-healthcare h-full transition-all duration-500 rounded-full"
-                style={{ width: `${ambulanceRequest?.progress_percentage ?? 40}%` }}
+                style={{ width: `${(ambulanceRequest?.route_step ?? 2) * 20}%` }}
               ></div>
             </div>
           </div>
         </div>
 
-        {/* Simulation Disclaimer Rule */}
+        {/* Simulation Disclaimer */}
         <div className="p-2.5 rounded-xl bg-warning-50 border border-warning-200 text-[10px] text-warning-700 font-semibold leading-tight">
           ⚠️ {ambulanceRequest?.simulation_disclaimer || 'ಗಮನಿಸಿ: ಇದು 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಸಿಮ್ಯುಲೇಶನ್ ಆಗಿದೆ. ನೈಜ ತುರ್ತು ಪರಿಸ್ಥಿತಿಯಲ್ಲಿ 108 ಸಂಖ್ಯೆಗೆ ನೇರವಾಗಿ ಕರೆ ಮಾಡಿ.'}
         </div>
