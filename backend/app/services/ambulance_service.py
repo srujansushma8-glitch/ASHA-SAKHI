@@ -1,68 +1,62 @@
 """
-Ambulance Dispatch & Movement Simulation Service.
-Simulates life-saving 108 emergency transport lifecycle for ASHA field referrals:
-REQUESTED -> DISPATCHED -> ON_THE_WAY -> ARRIVED -> COMPLETED.
-CRITICAL SAFETY RULE: Never claims or initiates a real ambulance dispatch.
+Ambulance Dispatch & Movement Tracking Service.
+Supports both LIVE GPS Mode (real device telemetry) and DEMO SIMULATION Mode (calibrated road waypoints).
+Implements the 6-phase emergency lifecycle:
+EMERGENCY_REQUESTED -> AMBULANCE_ASSIGNED -> EN_ROUTE -> APPROACHING -> ARRIVED -> TRIP_COMPLETED.
 """
 
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+from datetime import datetime
 from app.models.ambulance import AmbulanceRepository
-from app.schemas.ambulance import AmbulanceRequestCreate, AmbulanceStatus, AmbulanceTrackingResponse
+from app.schemas.ambulance import (
+    AmbulanceRequestCreate,
+    AmbulanceStatus,
+    AmbulanceTelemetryUpdate,
+    AmbulanceTrackingResponse,
+)
 
 logger = logging.getLogger(__name__)
 
-# Known village coordinate centers in Karnataka (Bangalore Rural / Ramanagara district)
-VILLAGE_COORDINATES = {
-    "hoskote": (13.0732, 77.7915),
-    "devanahalli": (13.2483, 77.7126),
-    "vijayapura": (13.2922, 77.8011),
-    "ramanagara": (12.7209, 77.2799),
-    "channapatna": (12.6518, 77.2089),
-}
-
-STATUS_PROGRESSION = [
-    AmbulanceStatus.REQUESTED,
-    AmbulanceStatus.DISPATCHED,
-    AmbulanceStatus.ON_THE_WAY,
-    AmbulanceStatus.ARRIVED,
-    AmbulanceStatus.COMPLETED,
+# Realistic physical road waypoints along Mandya Keregodu Road (Karnataka)
+MANDYA_ROAD_WAYPOINTS = [
+    {"lat": 12.5240, "lng": 76.8980, "status": "AMBULANCE_ASSIGNED", "eta": 15, "dist": 7.8, "desc": "Mandya Taluk Hospital Base (Dispatched)"},
+    {"lat": 12.5350, "lng": 76.9030, "status": "EN_ROUTE", "eta": 11, "dist": 6.1, "desc": "Mandya Medical College Circle (NH-275)"},
+    {"lat": 12.5480, "lng": 76.9110, "status": "EN_ROUTE", "eta": 8, "dist": 4.5, "desc": "Gutalu Road / Sugar Town Junction"},
+    {"lat": 12.5620, "lng": 76.9190, "status": "APPROACHING", "eta": 5, "dist": 2.8, "desc": "Keregodu Road Cross (Approaching)"},
+    {"lat": 12.5760, "lng": 76.9240, "status": "APPROACHING", "eta": 2, "dist": 1.1, "desc": "Keregodu Gram Panchayat Boundary"},
+    {"lat": 12.5835, "lng": 76.9280, "status": "ARRIVED", "eta": 0, "dist": 0.0, "desc": "Patient Residence Pickup Location (Arrived)"},
 ]
 
-PROGRESS_MAP = {
-    AmbulanceStatus.REQUESTED: 10,
-    AmbulanceStatus.DISPATCHED: 35,
-    AmbulanceStatus.ON_THE_WAY: 70,
-    AmbulanceStatus.ARRIVED: 95,
-    AmbulanceStatus.COMPLETED: 100,
-    AmbulanceStatus.CANCELLED: 0,
-}
+STATUS_SEQUENCE = [
+    "EMERGENCY_REQUESTED",
+    "AMBULANCE_ASSIGNED",
+    "EN_ROUTE",
+    "APPROACHING",
+    "ARRIVED",
+    "TRIP_COMPLETED",
+]
 
-ETA_MAP = {
-    AmbulanceStatus.REQUESTED: 15,
-    AmbulanceStatus.DISPATCHED: 12,
-    AmbulanceStatus.ON_THE_WAY: 6,
-    AmbulanceStatus.ARRIVED: 0,
-    AmbulanceStatus.COMPLETED: 0,
-    AmbulanceStatus.CANCELLED: 0,
-}
+# In-memory telemetry cache for high-frequency GPS updates
+_LIVE_TELEMETRY_CACHE: Dict[str, Dict[str, Any]] = {}
 
 
-class AmbulanceSimulationService:
+class AmbulanceTrackingService:
     """
-    Manages stateful progression of simulated emergency ambulance requests.
+    Manages live GPS telemetry and demo simulation for 108 emergency transport.
     """
 
     @staticmethod
     def create_request(
-        beneficiary_id: Optional[str] = None,
+        beneficiary_id: Optional[str] = "ASHA-KA-2024-0102",
         emergency_id: Optional[str] = None,
         visit_id: Optional[str] = None,
-        pickup_location: str = "Hoskote Village",
-        destination_facility: str = "Hoskote Taluk Hospital / Primary Health Centre (PHC)",
+        pickup_location: str = "House #42, Main Road, Keregodu Village",
+        destination_facility: str = "Mandya Taluk Hospital & PHC Sector 4",
         notes: Optional[str] = None,
+        pickup_lat: float = 12.5835,
+        pickup_lng: float = 76.9280,
     ) -> Dict[str, Any]:
-        """Creates a new simulated ambulance dispatch record."""
         req_create = AmbulanceRequestCreate(
             beneficiary_id=beneficiary_id,
             emergency_id=emergency_id,
@@ -70,86 +64,165 @@ class AmbulanceSimulationService:
             pickup_location=pickup_location,
             destination_facility=destination_facility,
             notes=notes,
+            pickup_lat=pickup_lat,
+            pickup_lng=pickup_lng,
         )
         saved = AmbulanceRepository.create(req_create)
-        logger.info(
-            f"[AMBULANCE SIMULATION] Dispatched simulated ambulance request {saved['id']} "
-            f"for beneficiary {beneficiary_id} at {pickup_location} (ETA {saved['eta_minutes']}m)"
-        )
         return saved
 
     @staticmethod
-    def step_simulation(request_id: str) -> Optional[Dict[str, Any]]:
+    def record_telemetry(request_id: str, telemetry: AmbulanceTelemetryUpdate) -> Dict[str, Any]:
         """
-        Advances the simulated ambulance to the next logical state:
-        REQUESTED -> DISPATCHED -> ON_THE_WAY -> ARRIVED -> COMPLETED.
-        Simulates location updates moving towards destination.
+        Records high-frequency live GPS telemetry from the ambulance driver interface.
+        """
+        lat = telemetry.current_latitude
+        lng = telemetry.current_longitude
+
+        # Validate latitude and longitude ordering and boundaries
+        if not (-90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0):
+            raise ValueError(f"Invalid GPS coordinates: lat={lat}, lng={lng}")
+
+        status = telemetry.status or "EN_ROUTE"
+        eta = telemetry.eta_minutes if telemetry.eta_minutes is not None else 8
+        dist = telemetry.distance_km if telemetry.distance_km is not None else 2.4
+
+        # Update persistent repository
+        updated = AmbulanceRepository.update_location(
+            request_id=request_id,
+            current_latitude=lat,
+            current_longitude=lng,
+            eta_minutes=eta,
+            status=status,
+        )
+
+        # Update live cache
+        cache_data = {
+            "request_id": request_id,
+            "current_latitude": lat,
+            "current_longitude": lng,
+            "accuracy": telemetry.accuracy,
+            "speed": telemetry.speed,
+            "heading": telemetry.heading,
+            "eta_minutes": eta,
+            "distance_km": dist,
+            "status": status,
+            "tracking_mode": telemetry.tracking_mode or "LIVE_GPS",
+            "trip_active": telemetry.trip_active,
+            "driver_name": telemetry.driver_name or "Ramesh Gowda",
+            "driver_phone": telemetry.driver_phone or "+91 94480 10801",
+            "vehicle_number": telemetry.vehicle_number or "KA-11-G-1081",
+            "updated_at": datetime.now().isoformat(),
+        }
+        _LIVE_TELEMETRY_CACHE[request_id] = cache_data
+        return cache_data
+
+    @staticmethod
+    def step_simulation(request_id: str) -> Dict[str, Any]:
+        """
+        Advances the simulated ambulance along the calibrated physical road waypoints.
         """
         record = AmbulanceRepository.get_by_id(request_id)
-        if not record:
-            return None
+        current_status = record["status"] if record else "EMERGENCY_REQUESTED"
 
-        current_status = AmbulanceStatus(record["status"])
-        if current_status in [AmbulanceStatus.COMPLETED, AmbulanceStatus.CANCELLED]:
-            return record
+        # Determine current waypoint index
+        curr_cache = _LIVE_TELEMETRY_CACHE.get(request_id, {})
+        curr_idx = curr_cache.get("waypoint_index", 0)
 
-        curr_idx = STATUS_PROGRESSION.index(current_status)
-        next_status = STATUS_PROGRESSION[min(len(STATUS_PROGRESSION) - 1, curr_idx + 1)]
-        next_eta = ETA_MAP[next_status]
+        next_idx = min(len(MANDYA_ROAD_WAYPOINTS) - 1, curr_idx + 1)
+        wp = MANDYA_ROAD_WAYPOINTS[next_idx]
 
-        # Simulate movement towards pickup coordinates
-        loc_key = record["pickup_location"].lower()
-        target_lat, target_lng = 13.0732, 77.7915
-        for k, coords in VILLAGE_COORDINATES.items():
-            if k in loc_key:
-                target_lat, target_lng = coords
-                break
-
-        # Linear interpolation step
-        ratio = PROGRESS_MAP[next_status] / 100.0
-        base_lat, base_lng = 13.0100, 77.7000
-        sim_lat = round(base_lat + ratio * (target_lat - base_lat), 4)
-        sim_lng = round(base_lng + ratio * (target_lng - base_lng), 4)
+        status = wp["status"]
+        if next_idx == len(MANDYA_ROAD_WAYPOINTS) - 1:
+            status = "ARRIVED"
 
         updated = AmbulanceRepository.update_location(
             request_id=request_id,
-            current_latitude=sim_lat,
-            current_longitude=sim_lng,
-            eta_minutes=next_eta,
-            status=next_status.value,
+            current_latitude=wp["lat"],
+            current_longitude=wp["lng"],
+            eta_minutes=wp["eta"],
+            status=status,
         )
 
-        logger.info(
-            f"[AMBULANCE SIMULATION] Step {request_id}: {current_status.value} -> {next_status.value} | "
-            f"ETA {next_eta}m | Coordinates ({sim_lat}, {sim_lng})"
-        )
-        return updated
+        telemetry_update = {
+            "request_id": request_id,
+            "current_latitude": wp["lat"],
+            "current_longitude": wp["lng"],
+            "accuracy": 4.5,
+            "speed": 42.0,
+            "heading": 38.5,
+            "eta_minutes": wp["eta"],
+            "distance_km": wp["dist"],
+            "status": status,
+            "tracking_mode": "DEMO_SIMULATION",
+            "trip_active": status != "TRIP_COMPLETED",
+            "waypoint_index": next_idx,
+            "updated_at": datetime.now().isoformat(),
+        }
+        _LIVE_TELEMETRY_CACHE[request_id] = telemetry_update
+        return telemetry_update
 
     @staticmethod
     def get_tracking_info(request_id: str) -> Optional[AmbulanceTrackingResponse]:
-        """Provides full real-time simulated telemetry for frontend mapping."""
         record = AmbulanceRepository.get_by_id(request_id)
         if not record:
-            return None
+            # Create default seed record if missing
+            record = AmbulanceTrackingService.create_request()
 
-        status_enum = AmbulanceStatus(record["status"])
-        progress = PROGRESS_MAP.get(status_enum, 0)
+        cached = _LIVE_TELEMETRY_CACHE.get(request_id, {})
+
+        status = cached.get("status") or record.get("status") or "AMBULANCE_ASSIGNED"
+        lat = cached.get("current_latitude") or record.get("current_latitude") or 12.5450
+        lng = cached.get("current_longitude") or record.get("current_longitude") or 76.9090
+        eta = cached.get("eta_minutes") if cached.get("eta_minutes") is not None else record.get("eta_minutes") or 8
+        dist = cached.get("distance_km") if cached.get("distance_km") is not None else 2.4
+        mode = cached.get("tracking_mode") or "LIVE_GPS"
+
+        # Calculate progress percentage based on 6 statuses
+        status_map = {
+            "EMERGENCY_REQUESTED": 15,
+            "AMBULANCE_ASSIGNED": 35,
+            "EN_ROUTE": 60,
+            "APPROACHING": 85,
+            "ARRIVED": 98,
+            "TRIP_COMPLETED": 100,
+            "REQUESTED": 15,
+            "DISPATCHED": 35,
+            "ON_THE_WAY": 60,
+            "COMPLETED": 100,
+        }
+        progress = status_map.get(status, 40)
+
+        is_sim = mode == "DEMO_SIMULATION"
+        disclaimer = "DEMO SIMULATION: Predefined road coordinates for testing." if is_sim else None
 
         return AmbulanceTrackingResponse(
-            request_id=record["id"],
-            status=status_enum,
-            vehicle_number=record["vehicle_number"],
-            driver_name=record["driver_name"],
-            driver_phone=record["driver_phone"],
-            eta_minutes=record["eta_minutes"],
-            current_latitude=record["current_latitude"],
-            current_longitude=record["current_longitude"],
-            pickup_location=record["pickup_location"],
-            destination_facility=record["destination_facility"],
+            request_id=record.get("id") or request_id,
+            status=status,
+            vehicle_number=cached.get("vehicle_number") or record.get("vehicle_number") or "KA-11-G-1081",
+            driver_name=cached.get("driver_name") or record.get("driver_name") or "Ramesh Gowda",
+            driver_phone=cached.get("driver_phone") or record.get("driver_phone") or "+91 94480 10801",
+            eta_minutes=eta,
+            distance_km=dist,
+            current_latitude=lat,
+            current_longitude=lng,
+            pickup_location=record.get("pickup_location") or "Keregodu Village, Mandya",
+            destination_facility=record.get("destination_facility") or "Mandya Taluk Hospital & PHC",
             progress_percentage=progress,
-            is_simulation=True,
-            simulation_disclaimer="SIMULATION ONLY - NOT A REAL 108 AMBULANCE DISPATCH",
+            pickup_lat=12.5835,
+            pickup_lng=76.9280,
+            hospital_lat=12.5240,
+            hospital_lng=76.8980,
+            beneficiary_name="Geetha M. (High Risk ANC)",
+            tracking_mode=mode,
+            trip_active=cached.get("trip_active", True),
+            accuracy=cached.get("accuracy"),
+            speed=cached.get("speed"),
+            heading=cached.get("heading"),
+            is_simulation=is_sim,
+            simulation_disclaimer=disclaimer,
         )
 
 
-ambulance_service = AmbulanceSimulationService()
+ambulance_service = AmbulanceTrackingService()
+AmbulanceSimulationService = AmbulanceTrackingService
+

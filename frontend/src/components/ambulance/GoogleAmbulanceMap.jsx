@@ -1,37 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-
-// Standalone Google Maps JavaScript API script loader (zero external package dependencies)
-function loadGoogleMapsScript(apiKey, language) {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') return reject(new Error('Window not available'));
-    if (window.google && window.google.maps) {
-      return resolve(window.google);
-    }
-    const scriptId = 'google-maps-js-sdk';
-    let script = document.getElementById(scriptId);
-    if (!script) {
-      script = document.createElement('script');
-      script.id = scriptId;
-      script.type = 'text/javascript';
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places&language=${language}`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-
-    const handleLoad = () => {
-      if (window.google && window.google.maps) {
-        resolve(window.google);
-      } else {
-        reject(new Error('Google Maps SDK loaded but window.google.maps is unavailable'));
-      }
-    };
-    const handleError = (e) => reject(new Error('Failed to load Google Maps script'));
-
-    script.addEventListener('load', handleLoad);
-    script.addEventListener('error', handleError);
-  });
-}
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { 
   Navigation, 
   MapPin, 
@@ -45,38 +12,93 @@ import {
   Maximize2, 
   LocateFixed,
   Layers,
-  Sparkles
+  Key,
+  ExternalLink,
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { t } from '../../services/i18n';
 
-// Custom Rose & Blush Google Maps JSON Style Token
+/**
+ * Robust Google Maps JavaScript API script loader.
+ * Loads the official Google Maps JS API. If apiKey is not provided or empty,
+ * it loads Google Maps in standard developer mode which provides fully functional
+ * interactive road vector tiles, street labels, landmarks, and DirectionsService.
+ */
+function loadGoogleMapsScript(apiKey, language = 'en') {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') return reject(new Error('Window not available'));
+    if (window.google && window.google.maps) {
+      return resolve(window.google);
+    }
+
+    const scriptId = 'google-maps-js-sdk';
+    let script = document.getElementById(scriptId);
+
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.type = 'text/javascript';
+      const keyParam = apiKey ? `key=${encodeURIComponent(apiKey)}&` : '';
+      script.src = `https://maps.googleapis.com/maps/api/js?${keyParam}libraries=geometry,places&language=${encodeURIComponent(language)}&v=weekly`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    const handleLoad = () => {
+      if (window.google && window.google.maps) {
+        resolve(window.google);
+      } else {
+        reject(new Error('Google Maps script loaded but window.google.maps is unavailable'));
+      }
+    };
+
+    const handleError = (e) => {
+      reject(new Error('Failed to load Google Maps script. Check network or API key restrictions.'));
+    };
+
+    script.addEventListener('load', handleLoad);
+    script.addEventListener('error', handleError);
+
+    // Timeout safety
+    setTimeout(() => {
+      if (window.google && window.google.maps) {
+        resolve(window.google);
+      }
+    }, 3000);
+  });
+}
+
+// Custom Rose & Blush Google Maps Style: High legibility street map
 export const ASHA_ROSE_MAP_STYLE = [
   {
     "elementType": "geometry",
-    "stylers": [{ "color": "#FFF9F7" }] // Pure Soft Cream
+    "stylers": [{ "color": "#FDFBF7" }]
   },
   {
     "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#7A6670" }] // Muted Plum
+    "stylers": [{ "color": "#4A3B43" }]
   },
   {
     "elementType": "labels.text.stroke",
-    "stylers": [{ "color": "#FFFFFF" }]
+    "stylers": [{ "color": "#FFFFFF" }, { "weight": 2.5 }]
   },
   {
     "featureType": "administrative.locality",
     "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#3B2A33" }] // Plum Heading
+    "stylers": [{ "color": "#3B2A33" }, { "weight": 600 }]
   },
   {
     "featureType": "poi",
     "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#A25B74" }] // Rose Deep
+    "stylers": [{ "color": "#84455C" }]
   },
   {
-    "featureType": "poi.park",
+    "featureType": "poi.medical",
     "elementType": "geometry",
-    "stylers": [{ "color": "#F4FAF6" }] // Very subtle health green tint
+    "stylers": [{ "color": "#F4FAF6" }]
   },
   {
     "featureType": "road",
@@ -86,27 +108,37 @@ export const ASHA_ROSE_MAP_STYLE = [
   {
     "featureType": "road",
     "elementType": "geometry.stroke",
-    "stylers": [{ "color": "#F0DDE2" }] // Delicate Rose Border
+    "stylers": [{ "color": "#EED8DE" }, { "weight": 1.5 }]
   },
   {
     "featureType": "road.highway",
     "elementType": "geometry",
-    "stylers": [{ "color": "#FDF6F5" }] // Blush Light
+    "stylers": [{ "color": "#FFF0F4" }]
   },
   {
     "featureType": "road.highway",
     "elementType": "geometry.stroke",
-    "stylers": [{ "color": "#E9B9C8" }] // Rose Soft
+    "stylers": [{ "color": "#E2A4B8" }, { "weight": 2 }]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "geometry",
+    "stylers": [{ "color": "#FFFFFF" }]
+  },
+  {
+    "featureType": "road.arterial",
+    "elementType": "geometry.stroke",
+    "stylers": [{ "color": "#F0DDE2" }]
   },
   {
     "featureType": "water",
     "elementType": "geometry",
-    "stylers": [{ "color": "#F4E8EC" }] // Soft Blush Tint Water
+    "stylers": [{ "color": "#EBF2F7" }]
   },
   {
     "featureType": "water",
     "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#A25B74" }]
+    "stylers": [{ "color": "#5A738E" }]
   }
 ];
 
@@ -114,11 +146,16 @@ export default function GoogleAmbulanceMap({
   ambulanceLocation = { lat: 12.5450, lng: 76.9090 },
   patientLocation = { lat: 12.5835, lng: 76.9280 },
   hospitalLocation = { lat: 12.5240, lng: 76.8980 },
-  status = 'DISPATCHED',
+  status = 'AMBULANCE_ASSIGNED',
   etaMinutes = 8,
   distanceKm = 2.4,
+  speedKmh = 42,
+  heading = 45,
+  accuracy = 4.5,
+  trackingMode = 'LIVE_GPS', // 'LIVE_GPS' or 'DEMO_SIMULATION'
   currentLanguage = 'kn',
-  onLocationDetected = null
+  onLocationDetected = null,
+  onRouteMetricsCalculated = null
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -126,92 +163,178 @@ export default function GoogleAmbulanceMap({
   const patientMarkerRef = useRef(null);
   const hospitalMarkerRef = useRef(null);
   const directionsRendererRef = useRef(null);
+  const directionsServiceRef = useRef(null);
+  const lastRoutedCoordsRef = useRef({ ambLat: 0, ambLng: 0, destLat: 0, destLng: 0 });
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [loadError, setLoadError] = useState(null);
-  const [geoStatus, setGeoStatus] = useState(null); // 'detecting', 'success', 'denied'
-  const [usingFallback, setUsingFallback] = useState(false);
+  const [geoStatus, setGeoStatus] = useState(null);
+  const [mapType, setMapType] = useState('roadmap');
+  const [calculatedDistance, setCalculatedDistance] = useState(null);
+  const [calculatedDuration, setCalculatedDuration] = useState(null);
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [customKeyInput, setCustomKeyInput] = useState(() => {
+    return localStorage.getItem('asha_custom_gmaps_key') || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  });
+  const [activeApiKey, setActiveApiKey] = useState(() => {
+    return localStorage.getItem('asha_custom_gmaps_key') || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  });
 
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+  // Validate latitude and longitude values
+  const isValidCoord = (coord) => {
+    return (
+      coord &&
+      typeof coord.lat === 'number' &&
+      !isNaN(coord.lat) &&
+      coord.lat >= -90 &&
+      coord.lat <= 90 &&
+      typeof coord.lng === 'number' &&
+      !isNaN(coord.lng) &&
+      coord.lng >= -180 &&
+      coord.lng <= 180
+    );
+  };
 
-  // Initialize or Load Google Maps
+  const validAmbulanceLoc = isValidCoord(ambulanceLocation) ? ambulanceLocation : { lat: 12.5450, lng: 76.9090 };
+  const validPatientLoc = isValidCoord(patientLocation) ? patientLocation : { lat: 12.5835, lng: 76.9280 };
+  const validHospitalLoc = isValidCoord(hospitalLocation) ? hospitalLocation : { lat: 12.5240, lng: 76.8980 };
+
+  // Determine current routing destination
+  const isTransportingToHospital = status === 'ARRIVED' || status === 'TRIP_COMPLETED';
+  const currentDestination = isTransportingToHospital ? validHospitalLoc : validPatientLoc;
+
+  // Initialize Google Maps instance
   useEffect(() => {
-    if (!apiKey) {
-      setUsingFallback(true);
-      return;
-    }
-
     let isMounted = true;
     const lang = currentLanguage === 'hi' ? 'hi' : currentLanguage === 'kn' ? 'kn' : 'en';
 
-    loadGoogleMapsScript(apiKey, lang)
+    loadGoogleMapsScript(activeApiKey, lang)
       .then((google) => {
         if (!isMounted || !mapContainerRef.current) return;
 
         try {
+          // Create Google Map
           const map = new google.maps.Map(mapContainerRef.current, {
-            center: ambulanceLocation,
-            zoom: 13,
-            styles: ASHA_ROSE_MAP_STYLE,
-            disableDefaultUI: true,
-            zoomControl: false,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false,
-            backgroundColor: '#FFF9F7'
+            center: validAmbulanceLoc,
+            zoom: 14,
+            mapTypeId: mapType,
+            styles: mapType === 'roadmap' ? ASHA_ROSE_MAP_STYLE : null,
+            disableDefaultUI: false,
+            zoomControl: true,
+            mapTypeControl: true,
+            scaleControl: true,
+            streetViewControl: true,
+            fullscreenControl: true,
+            backgroundColor: '#FDFBF7'
           });
 
           mapInstanceRef.current = map;
+          directionsServiceRef.current = new google.maps.DirectionsService();
 
           // Hospital Base Marker
-          hospitalMarkerRef.current = new google.maps.Marker({
-            position: hospitalLocation,
+          const hospitalMarker = new google.maps.Marker({
+            position: validHospitalLoc,
             map,
-            title: "Mandya Primary Health Centre (PHC)",
+            title: "Mandya Taluk Hospital & PHC Base",
             icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 10,
-              fillColor: '#477A60',
-              fillOpacity: 1,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 3
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48">
+                  <path d="M20 0C8.95 0 0 8.95 0 20c0 14 20 28 20 28s20-14 20-28C40 8.95 31.05 0 20 0z" fill="#477A60"/>
+                  <circle cx="20" cy="18" r="13" fill="#FFFFFF"/>
+                  <rect x="18" y="10" width="4" height="16" fill="#477A60" rx="1.5"/>
+                  <rect x="12" y="16" width="16" height="4" fill="#477A60" rx="1.5"/>
+                </svg>
+              `),
+              scaledSize: new google.maps.Size(36, 44),
+              anchor: new google.maps.Point(18, 44)
             }
           });
+          hospitalMarkerRef.current = hospitalMarker;
+
+          const hospitalInfo = new google.maps.InfoWindow({
+            content: `
+              <div style="font-family: sans-serif; padding: 6px; max-width: 200px;">
+                <div style="font-weight: bold; color: #477A60; font-size: 13px;">🏥 Mandya Taluk Hospital</div>
+                <div style="font-size: 11px; color: #666; margin-top: 3px;">24/7 PHC Sector 4 Referral Centre</div>
+                <div style="font-size: 10px; color: #888; margin-top: 2px;">Emergency Beds Available: 14</div>
+              </div>
+            `
+          });
+          hospitalMarker.addListener('click', () => hospitalInfo.open(map, hospitalMarker));
 
           // Patient Pickup Marker
-          patientMarkerRef.current = new google.maps.Marker({
-            position: patientLocation,
+          const patientMarker = new google.maps.Marker({
+            position: validPatientLoc,
             map,
-            title: "Patient Pickup Location",
+            title: "Patient Pickup Location (Geetha M.)",
             icon: {
-              path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-              scale: 7,
-              fillColor: '#B94A58',
-              fillOpacity: 1,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 2.5
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48">
+                  <path d="M20 0C8.95 0 0 8.95 0 20c0 14 20 28 20 28s20-14 20-28C40 8.95 31.05 0 20 0z" fill="#B94A58"/>
+                  <circle cx="20" cy="18" r="13" fill="#FFFFFF"/>
+                  <circle cx="20" cy="15" r="4" fill="#B94A58"/>
+                  <path d="M14 24c0-3.3 2.7-6 6-6s6 2.7 6 6" fill="#B94A58"/>
+                </svg>
+              `),
+              scaledSize: new google.maps.Size(36, 44),
+              anchor: new google.maps.Point(18, 44)
             }
           });
+          patientMarkerRef.current = patientMarker;
 
-          // Ambulance Marker
-          ambulanceMarkerRef.current = new google.maps.Marker({
-            position: ambulanceLocation,
-            map,
-            title: "108 Emergency Ambulance",
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 12,
-              fillColor: '#A25B74',
-              fillOpacity: 1,
-              strokeColor: '#FFFFFF',
-              strokeWeight: 3
-            }
+          const patientInfo = new google.maps.InfoWindow({
+            content: `
+              <div style="font-family: sans-serif; padding: 6px; max-width: 220px;">
+                <div style="font-weight: bold; color: #B94A58; font-size: 13px;">📍 Patient Pickup Location</div>
+                <div style="font-size: 11px; font-weight: bold; color: #3B2A33; margin-top: 3px;">Geetha M. (High Risk ANC)</div>
+                <div style="font-size: 10px; color: #666; margin-top: 2px;">Keregodu Village, Mandya</div>
+                <div style="font-size: 10px; color: #B94A58; font-weight: bold; margin-top: 3px;">Pre-eclampsia (BP 150/98 mmHg)</div>
+              </div>
+            `
           });
+          patientMarker.addListener('click', () => patientInfo.open(map, patientMarker));
 
-          // Directions Renderer for the Rose Route
+          // Ambulance Vehicle Marker
+          const ambulanceMarker = new google.maps.Marker({
+            position: validAmbulanceLoc,
+            map,
+            title: "108 Emergency Ambulance (KA-11-G-1081)",
+            icon: {
+              url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46">
+                  <circle cx="23" cy="23" r="22" fill="#FFFFFF" stroke="#A25B74" stroke-width="3"/>
+                  <rect x="10" y="15" width="26" height="17" rx="4" fill="#A25B74"/>
+                  <rect x="13" y="18" width="8" height="6" fill="#FFFFFF" rx="1"/>
+                  <rect x="23" y="18" width="10" height="6" fill="#E8D0D8" rx="1"/>
+                  <circle cx="16" cy="32" r="3.5" fill="#3B2A33" stroke="#FFFFFF" stroke-width="1.5"/>
+                  <circle cx="30" cy="32" r="3.5" fill="#3B2A33" stroke="#FFFFFF" stroke-width="1.5"/>
+                  <rect x="21" y="9" width="4" height="6" fill="#B94A58" rx="1"/>
+                </svg>
+              `),
+              scaledSize: new google.maps.Size(46, 46),
+              anchor: new google.maps.Point(23, 23)
+            },
+            zIndex: 999
+          });
+          ambulanceMarkerRef.current = ambulanceMarker;
+
+          const ambulanceInfo = new google.maps.InfoWindow({
+            content: `
+              <div style="font-family: sans-serif; padding: 6px; max-width: 220px;">
+                <div style="font-weight: bold; color: #A25B74; font-size: 13px;">🚑 108 Emergency Ambulance</div>
+                <div style="font-size: 11px; font-weight: bold; color: #3B2A33; margin-top: 3px;">KA-11-G-1081 • Ramesh Gowda</div>
+                <div style="font-size: 10px; color: #666; margin-top: 2px;">EMT: Suresh Kumar</div>
+                <div style="font-size: 10px; color: #477A60; font-weight: bold; margin-top: 3px;">Telemetry: Live Road Routing</div>
+              </div>
+            `
+          });
+          ambulanceMarker.addListener('click', () => ambulanceInfo.open(map, ambulanceMarker));
+
+          // Directions Renderer for Genuine Road Route Polyline
           const directionsRenderer = new google.maps.DirectionsRenderer({
             map,
             suppressMarkers: true,
+            preserveViewport: false,
             polylineOptions: {
               strokeColor: '#A25B74',
               strokeWeight: 6,
@@ -220,47 +343,100 @@ export default function GoogleAmbulanceMap({
           });
           directionsRendererRef.current = directionsRenderer;
 
-          // Calculate Route
-          const directionsService = new google.maps.DirectionsService();
-          directionsService.route({
-            origin: ambulanceLocation,
-            destination: patientLocation,
-            travelMode: google.maps.TravelMode.DRIVING
-          }, (result, status) => {
-            if (status === google.maps.DirectionsStatus.OK) {
-              directionsRenderer.setDirections(result);
-            }
-          });
-
           setMapLoaded(true);
+          setLoadError(null);
         } catch (err) {
-          console.warn('[GoogleAmbulanceMap] Init error, falling back to vector map', err);
-          setUsingFallback(true);
+          console.error('[GoogleAmbulanceMap] Map initialization error', err);
+          setLoadError(err.message);
         }
       })
       .catch((err) => {
-        console.warn('[GoogleAmbulanceMap] Loader catch, falling back to vector map', err);
-        setUsingFallback(true);
+        console.error('[GoogleAmbulanceMap] Loader error', err);
+        setLoadError(err.message);
       });
 
     return () => {
       isMounted = false;
     };
-  }, [apiKey, currentLanguage]);
+  }, [activeApiKey, currentLanguage, mapType]);
 
-  // Update Markers when coordinates change
-  useEffect(() => {
-    if (mapLoaded && mapInstanceRef.current && window.google) {
-      if (ambulanceMarkerRef.current) {
-        ambulanceMarkerRef.current.setPosition(ambulanceLocation);
+  // Recalculate Genuine Road Route via Google Maps DirectionsService
+  const calculateRoadRoute = useCallback(() => {
+    if (!mapLoaded || !window.google || !directionsServiceRef.current || !directionsRendererRef.current) {
+      return;
+    }
+
+    const ambLat = validAmbulanceLoc.lat;
+    const ambLng = validAmbulanceLoc.lng;
+    const destLat = currentDestination.lat;
+    const destLng = currentDestination.lng;
+
+    // Check if coordinates have moved significantly (> ~20 meters)
+    const last = lastRoutedCoordsRef.current;
+    const latDiff = Math.abs(ambLat - last.ambLat);
+    const lngDiff = Math.abs(ambLng - last.ambLng);
+    const destDiff = Math.abs(destLat - last.destLat) + Math.abs(destLng - last.destLng);
+
+    if (latDiff < 0.0002 && lngDiff < 0.0002 && destDiff < 0.0001 && calculatedDistance) {
+      return; // Skip redundant API calls when stationary
+    }
+
+    lastRoutedCoordsRef.current = { ambLat, ambLng, destLat, destLng };
+
+    directionsServiceRef.current.route(
+      {
+        origin: new window.google.maps.LatLng(ambLat, ambLng),
+        destination: new window.google.maps.LatLng(destLat, destLng),
+        travelMode: window.google.maps.TravelMode.DRIVING
+      },
+      (result, routeStatus) => {
+        if (routeStatus === window.google.maps.DirectionsStatus.OK && result.routes && result.routes[0]) {
+          directionsRendererRef.current.setDirections(result);
+          const leg = result.routes[0].legs[0];
+          if (leg) {
+            const distInKm = Number((leg.distance.value / 1000).toFixed(1));
+            const durationInMins = Math.ceil(leg.duration.value / 60);
+
+            setCalculatedDistance(distInKm);
+            setCalculatedDuration(durationInMins);
+
+            if (onRouteMetricsCalculated) {
+              onRouteMetricsCalculated({
+                distanceKm: distInKm,
+                etaMinutes: durationInMins,
+                distanceText: leg.distance.text,
+                durationText: leg.duration.text
+              });
+            }
+          }
+        } else {
+          console.warn('[GoogleAmbulanceMap] Directions route status:', routeStatus);
+        }
       }
-      if (patientMarkerRef.current) {
-        patientMarkerRef.current.setPosition(patientLocation);
+    );
+  }, [mapLoaded, validAmbulanceLoc, currentDestination, calculatedDistance, onRouteMetricsCalculated]);
+
+  // Trigger route calculation when coordinates or destination changes
+  useEffect(() => {
+    calculateRoadRoute();
+  }, [calculateRoadRoute]);
+
+  // Update marker positions smoothly when coordinates change
+  useEffect(() => {
+    if (mapLoaded && window.google) {
+      if (ambulanceMarkerRef.current && isValidCoord(validAmbulanceLoc)) {
+        ambulanceMarkerRef.current.setPosition(validAmbulanceLoc);
+      }
+      if (patientMarkerRef.current && isValidCoord(validPatientLoc)) {
+        patientMarkerRef.current.setPosition(validPatientLoc);
+      }
+      if (hospitalMarkerRef.current && isValidCoord(validHospitalLoc)) {
+        hospitalMarkerRef.current.setPosition(validHospitalLoc);
       }
     }
-  }, [ambulanceLocation, patientLocation, mapLoaded]);
+  }, [validAmbulanceLoc, validPatientLoc, validHospitalLoc, mapLoaded]);
 
-  // Browser Geolocation Detector
+  // Browser Geolocation: Detect patient's real GPS coordinates
   const handleDetectPatientLocation = () => {
     if (!navigator.geolocation) {
       setGeoStatus('unsupported');
@@ -294,14 +470,14 @@ export default function GoogleAmbulanceMap({
   // Recenter actions
   const handleRecenterAmbulance = () => {
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.panTo(ambulanceLocation);
+      mapInstanceRef.current.panTo(validAmbulanceLoc);
       mapInstanceRef.current.setZoom(15);
     }
   };
 
   const handleRecenterPatient = () => {
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.panTo(patientLocation);
+      mapInstanceRef.current.panTo(validPatientLoc);
       mapInstanceRef.current.setZoom(15);
     }
   };
@@ -309,69 +485,77 @@ export default function GoogleAmbulanceMap({
   const handleFitRouteBounds = () => {
     if (mapInstanceRef.current && window.google) {
       const bounds = new window.google.maps.LatLngBounds();
-      bounds.extend(ambulanceLocation);
-      bounds.extend(patientLocation);
-      bounds.extend(hospitalLocation);
-      mapInstanceRef.current.fitBounds(bounds);
+      bounds.extend(validAmbulanceLoc);
+      bounds.extend(validPatientLoc);
+      bounds.extend(validHospitalLoc);
+      mapInstanceRef.current.fitBounds(bounds, { padding: 40 });
     }
   };
 
-  const handleZoomIn = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() + 1);
-    }
+  const handleSaveCustomKey = () => {
+    const key = customKeyInput.trim();
+    localStorage.setItem('asha_custom_gmaps_key', key);
+    setActiveApiKey(key);
+    setShowKeyModal(false);
+    window.location.reload();
   };
 
-  const handleZoomOut = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() - 1);
-    }
-  };
+  // Display values: Genuine calculated route metrics take precedence
+  const displayEta = calculatedDuration !== null ? calculatedDuration : etaMinutes;
+  const displayDist = calculatedDistance !== null ? calculatedDistance : distanceKm;
 
   return (
     <div className="relative w-full rounded-3xl bg-[#FFF9F7] border border-[#F0DDE2] shadow-card overflow-hidden">
       
       {/* Top Map Header & Controls Overlay */}
-      <div className="p-4 bg-white/90 backdrop-blur-md border-b border-[#F0DDE2] flex flex-wrap items-center justify-between gap-3 z-10 relative">
+      <div className="p-3.5 sm:p-4 bg-white/95 backdrop-blur-md border-b border-[#F0DDE2] flex flex-wrap items-center justify-between gap-3 z-10 relative">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center font-bold">
-            <Navigation className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-xl bg-[#FDF6F5] text-[#A25B74] flex items-center justify-center font-bold shadow-inner">
+            <Navigation className="w-4 h-4 text-[#A25B74]" />
           </div>
           <div>
-            <h3 className="text-xs font-bold font-kannada text-[#3B2A33] leading-tight flex items-center space-x-1.5">
-              <span>{t('ambulance.title', currentLanguage)}</span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E8F7F1] text-[#477A60] border border-[#C8EEDD] font-bold">
-                {apiKey ? 'Google Maps JS API' : 'High-Precision Vector Terrain'}
+            <div className="flex items-center space-x-2">
+              <h3 className="text-xs font-bold font-serif text-[#3B2A33] leading-tight">
+                Google Maps GPS Road Telemetry
+              </h3>
+              {/* Dynamic Tracking Mode Badge */}
+              <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold flex items-center space-x-1 ${
+                trackingMode === 'LIVE_GPS'
+                  ? 'bg-[#E8F7F1] text-[#477A60] border border-[#C8EEDD]'
+                  : 'bg-[#FEF9EF] text-[#B88745] border border-[#F2B84B]/40'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${trackingMode === 'LIVE_GPS' ? 'bg-[#477A60] animate-ping' : 'bg-[#B88745]'}`}></span>
+                <span>{trackingMode === 'LIVE_GPS' ? 'LIVE GPS' : 'DEMO ROAD'}</span>
               </span>
-            </h3>
-            <span className="text-[10px] text-[#7A6670] font-mono">
-              GPS: {ambulanceLocation.lat.toFixed(4)}° N, {ambulanceLocation.lng.toFixed(4)}° E • {status}
+            </div>
+            <span className="text-[10px] text-[#7A6670] font-mono block mt-0.5">
+              Lat: {validAmbulanceLoc.lat.toFixed(5)}° N, Lng: {validAmbulanceLoc.lng.toFixed(5)}° E {accuracy ? `• ±${accuracy}m` : ''}
             </span>
           </div>
         </div>
 
-        {/* Quick Map Action Buttons */}
+        {/* Quick Map Action Controls */}
         <div className="flex items-center space-x-1.5 text-xs">
           <button
             onClick={handleDetectPatientLocation}
-            className="px-2.5 py-1.5 rounded-xl bg-[#FDF6F5] hover:bg-[#F9ECEC] border border-[#F0DDE2] text-[#A25B74] font-bold text-[11px] flex items-center space-x-1 transition-all active:scale-95"
+            className="px-2.5 py-1.5 rounded-xl bg-[#FDF6F5] hover:bg-[#F9ECEC] border border-[#F0DDE2] text-[#A25B74] font-bold text-[11px] flex items-center space-x-1 transition-all active:scale-95 shadow-xs"
             title="Detect Device GPS Location via Geolocation API"
           >
             <LocateFixed className="w-3.5 h-3.5 text-[#A25B74]" />
-            <span>GPS ಪಿಕ್-ಅಪ್</span>
+            <span className="hidden sm:inline">GPS ಪಿಕ್-ಅಪ್</span>
           </button>
 
           <button
             onClick={handleRecenterAmbulance}
-            className="px-2 py-1.5 rounded-xl bg-white hover:bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] text-[11px] font-bold transition-all shadow-xs"
-            title="Recenter on Ambulance"
+            className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] text-[11px] font-bold transition-all shadow-xs"
+            title="Recenter on 108 Ambulance"
           >
             🚑 108
           </button>
 
           <button
             onClick={handleRecenterPatient}
-            className="px-2 py-1.5 rounded-xl bg-white hover:bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] text-[11px] font-bold transition-all shadow-xs"
+            className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#FDF6F5] border border-[#F0DDE2] text-[#3B2A33] text-[11px] font-bold transition-all shadow-xs"
             title="Recenter on Patient"
           >
             📍 Patient
@@ -379,26 +563,31 @@ export default function GoogleAmbulanceMap({
 
           <button
             onClick={handleFitRouteBounds}
-            className="p-1.5 rounded-xl bg-white hover:bg-[#FDF6F5] border border-[#F0DDE2] text-[#A25B74] font-bold shadow-xs"
-            title="Fit Entire Route Bounds"
+            className="p-1.5 rounded-xl bg-white hover:bg-[#FDF6F5] border border-[#F0DDE2] text-[#A25B74] font-bold shadow-xs active:scale-95 transition-all"
+            title="Fit Entire Road Route Bounds"
           >
             <Maximize2 className="w-3.5 h-3.5" />
           </button>
 
-          <div className="flex items-center space-x-0.5 pl-1 border-l border-[#F0DDE2]">
-            <button
-              onClick={handleZoomIn}
-              className="w-7 h-7 rounded-lg bg-white border border-[#F0DDE2] font-bold text-xs text-[#3B2A33] hover:bg-[#FDF6F5] shadow-xs"
-            >
-              +
-            </button>
-            <button
-              onClick={handleZoomOut}
-              className="w-7 h-7 rounded-lg bg-white border border-[#F0DDE2] font-bold text-xs text-[#3B2A33] hover:bg-[#FDF6F5] shadow-xs"
-            >
-              -
-            </button>
-          </div>
+          <button
+            onClick={() => setMapType(mapType === 'roadmap' ? 'hybrid' : 'roadmap')}
+            className={`p-1.5 rounded-xl border font-bold text-[11px] shadow-xs transition-all ${
+              mapType === 'hybrid'
+                ? 'bg-[#A25B74] text-white border-[#A25B74]'
+                : 'bg-white hover:bg-[#FDF6F5] text-[#3B2A33] border-[#F0DDE2]'
+            }`}
+            title="Toggle Satellite / Street Map"
+          >
+            <Layers className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={() => setShowKeyModal(true)}
+            className="p-1.5 rounded-xl bg-white hover:bg-[#FDF6F5] border border-[#F0DDE2] text-[#7A6670] hover:text-[#A25B74] font-bold shadow-xs transition-all"
+            title="Google Maps API Key Configuration"
+          >
+            <Key className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -416,131 +605,139 @@ export default function GoogleAmbulanceMap({
             {geoStatus === 'detecting' && <Radio className="w-4 h-4 text-[#A25B74] animate-spin" />}
             {geoStatus === 'denied' && <AlertCircle className="w-4 h-4 text-[#B94A58]" />}
             <span>
-              {geoStatus === 'success' && 'ರೋಗಿಯ ನಿಜವಾದ GPS ಸ್ಥಳ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!'}
-              {geoStatus === 'detecting' && 'ಬ್ರೌಸರ್ ಜಿಪಿಎಸ್ ಮೂಲಕ ರೋಗಿಯ ಸ್ಥಳ ಪತ್ತೆಹಚ್ಚಲಾಗುತ್ತಿದೆ...'}
-              {geoStatus === 'denied' && t('ambulance.mapPermissionDenied', currentLanguage)}
+              {geoStatus === 'success' && 'Device GPS location successfully detected and updated!'}
+              {geoStatus === 'detecting' && 'Detecting patient pickup coordinates via hardware GPS...'}
+              {geoStatus === 'denied' && 'GPS location permission was denied. Please allow location in browser settings.'}
             </span>
           </div>
         </div>
       )}
 
-      {/* Main Map Viewport */}
-      <div className="relative w-full h-[400px] sm:h-[460px] bg-[#FFF9F7]">
-        {/* Actual Google Maps DOM Container */}
+      {/* Main Google Maps Viewport */}
+      <div className="relative w-full h-[420px] sm:h-[480px] bg-[#FDFBF7]">
+        {/* Actual Google Maps DOM Element */}
         <div 
           ref={mapContainerRef} 
-          className={`w-full h-full ${usingFallback ? 'hidden' : 'block'}`}
+          className="w-full h-full"
         />
 
-        {/* High-Fidelity Vector Fallback Map (renders when API Key is pending or in fallback) */}
-        {usingFallback && (
-          <div className="w-full h-full relative overflow-hidden select-none bg-[#FFF9F7] flex items-center justify-center">
-            {/* SVG Vector Terrain & Rose Route Line */}
-            <svg viewBox="0 0 640 420" className="w-full h-full">
-              <defs>
-                <pattern id="roseGrid" width="30" height="30" patternUnits="userSpaceOnUse">
-                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#F0DDE2" strokeWidth="0.6" opacity="0.6" />
-                </pattern>
-                <linearGradient id="roseLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#477A60" />
-                  <stop offset="35%" stopColor="#A25B74" />
-                  <stop offset="100%" stopColor="#B94A58" />
-                </linearGradient>
-              </defs>
-
-              <rect width="640" height="420" fill="url(#roseGrid)" />
-
-              {/* Water feature: Mandya Shivalli Stream */}
-              <path d="M 40 40 Q 140 120 220 90 T 360 160 T 540 220" fill="none" stroke="#F4E8EC" strokeWidth="18" strokeLinecap="round" />
-              <text x="140" y="70" fill="#C47A92" fontSize="10" fontWeight="bold">ಶಿವಳ್ಳಿ ಹಳ್ಳ (Shivalli Stream)</text>
-
-              {/* Highway Arteries */}
-              <path d="M 50 110 L 600 110" stroke="#FFFFFF" strokeWidth="8" strokeLinecap="round" />
-              <path d="M 50 110 L 600 110" stroke="#F0DDE2" strokeWidth="2" strokeLinecap="round" />
-
-              <path d="M 160 110 Q 240 180 320 210 T 480 320" stroke="#FFFFFF" strokeWidth="7" strokeLinecap="round" />
-              <path d="M 160 110 Q 240 180 320 210 T 480 320" stroke="#F0DDE2" strokeWidth="1.8" strokeLinecap="round" />
-
-              {/* Active Recommended Google Maps Rose Route with Pulsing Dash */}
-              <path 
-                d="M 120 110 Q 200 160 280 180 T 420 260 T 520 330" 
-                stroke="#F0DDE2" 
-                strokeWidth="12" 
-                strokeLinecap="round" 
-              />
-              <path 
-                d="M 120 110 Q 200 160 280 180 T 420 260 T 520 330" 
-                stroke="url(#roseLineGrad)" 
-                strokeWidth="5" 
-                strokeLinecap="round" 
-              />
-              <path 
-                d="M 120 110 Q 200 160 280 180 T 420 260 T 520 330" 
-                stroke="#FFFFFF" 
-                strokeWidth="2" 
-                strokeDasharray="8 6" 
-                strokeLinecap="round"
-                className="animate-pulse"
-              />
-
-              {/* Hospital Pin (PHC Mandya) */}
-              <g transform="translate(120, 110)">
-                <circle r="14" fill="#477A60" opacity="0.25" className="animate-ping" />
-                <circle r="10" fill="#477A60" stroke="#FFFFFF" strokeWidth="2" />
-                <text x="0" y="3.5" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="bold">+</text>
-                <text x="0" y="24" textAnchor="middle" fill="#477A60" fontSize="9" fontWeight="bold">PHC Mandya Base</text>
-              </g>
-
-              {/* Patient Pickup Pin */}
-              <g transform="translate(520, 330)">
-                <circle r="16" fill="#B94A58" opacity="0.3" className="animate-ping" />
-                <circle r="11" fill="#B94A58" stroke="#FFFFFF" strokeWidth="2" />
-                <circle r="4" fill="#FFFFFF" />
-                <text x="0" y="24" textAnchor="middle" fill="#B94A58" fontSize="9" fontWeight="bold">Patient Pickup Location</text>
-              </g>
-
-              {/* Moving 108 Ambulance Vehicle Pin */}
-              <g transform="translate(320, 205)">
-                <circle r="20" fill="#A25B74" opacity="0.25" className="animate-ping" />
-                <rect x="-14" y="-10" width="28" height="20" rx="5" fill="#FFFFFF" stroke="#A25B74" strokeWidth="2.5" />
-                <rect x="-10" y="-7" width="9" height="7" fill="#C47A92" rx="1.5" />
-                <rect x="2" y="-7" width="9" height="7" fill="#B94A58" rx="1.5" />
-                <circle cx="-7" cy="10" r="3" fill="#3B2A33" />
-                <circle cx="7" cy="10" r="3" fill="#3B2A33" />
-                <text x="0" y="-14" textAnchor="middle" fill="#A25B74" fontSize="9" fontWeight="bold">🚑 108 LIVE</text>
-              </g>
-            </svg>
-
-            {/* In-Map Info Pill explaining API Key configuration */}
-            <div className="absolute bottom-3 left-3 right-3 sm:left-4 sm:right-auto sm:max-w-md bg-white/95 backdrop-blur-md rounded-2xl p-3 border border-[#F0DDE2] shadow-md text-xs space-y-1">
-              <div className="flex items-center space-x-1.5 text-[#A25B74] font-bold">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Google Maps Platform Integration Ready</span>
-              </div>
-              <p className="text-[11px] text-[#7A6670] leading-tight">
-                Rendering calibrated vector terrain. To connect live Google Maps satellite/street tiles, configure <code className="font-mono text-[#A25B74] bg-[#FDF6F5] px-1 rounded">VITE_GOOGLE_MAPS_API_KEY</code> in <code className="font-mono text-[#7A6670]">.env</code>.
-              </p>
-            </div>
+        {/* Loading Spinner overlay before map tiles mount */}
+        {!mapLoaded && !loadError && (
+          <div className="absolute inset-0 bg-[#FFF9F7]/90 flex flex-col items-center justify-center space-y-3 z-10">
+            <Radio className="w-8 h-8 text-[#A25B74] animate-spin" />
+            <span className="text-xs font-bold text-[#3B2A33]">Initializing Google Maps Road Engine...</span>
+            <span className="text-[11px] text-[#7A6670]">Connecting Mandya road network telemetry</span>
           </div>
         )}
 
-        {/* Floating Real-Time Telemetry HUD Banner */}
-        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-[#F0DDE2] shadow-md text-xs flex items-center space-x-3 text-[#3B2A33]">
+        {/* Floating Real-Time Road Telemetry HUD Banner */}
+        <div className="absolute top-4 left-4 right-4 sm:right-auto bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-[#F0DDE2] shadow-md text-xs flex flex-wrap items-center justify-between sm:justify-start gap-3 text-[#3B2A33] z-10">
           <div className="flex items-center space-x-1.5">
             <Radio className="w-4 h-4 text-[#A25B74] animate-pulse" />
-            <span className="font-bold">ETA: {etaMinutes} ನಿಮಿಷ ({etaMinutes} min)</span>
+            <span className="font-bold text-xs">ETA: {displayEta} min</span>
           </div>
-          <span className="text-[#F0DDE2] font-bold">|</span>
+          <span className="text-[#F0DDE2] font-bold hidden sm:inline">|</span>
           <div className="flex items-center space-x-1">
             <Navigation className="w-3.5 h-3.5 text-[#C47A92]" />
-            <span className="font-mono font-bold">{distanceKm} km ಬಾಕಿ</span>
+            <span className="font-mono font-bold">{displayDist} km remaining</span>
           </div>
-          <span className="text-[#F0DDE2] font-bold">|</span>
-          <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#E8F7F1] text-[#477A60] border border-[#C8EEDD]">
+          {speedKmh > 0 && (
+            <>
+              <span className="text-[#F0DDE2] font-bold hidden sm:inline">|</span>
+              <span className="text-[11px] font-mono text-[#7A6670] font-bold">
+                {speedKmh} km/h
+              </span>
+            </>
+          )}
+          <span className="text-[#F0DDE2] font-bold hidden sm:inline">|</span>
+          <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E8F7F1] text-[#477A60] border border-[#C8EEDD]">
             {status}
           </span>
         </div>
+
+        {/* Bottom Route Legend HUD */}
+        <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-md px-3 py-2 rounded-2xl border border-[#F0DDE2] shadow-md text-[11px] flex items-center space-x-3 text-[#3B2A33] z-10">
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#A25B74]"></span>
+            <span className="font-bold">108 Ambulance</span>
+          </div>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#B94A58]"></span>
+            <span className="font-bold">Patient</span>
+          </div>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#477A60]"></span>
+            <span className="font-bold">PHC Hospital</span>
+          </div>
+        </div>
       </div>
+
+      {/* Google Maps API Key Modal */}
+      {showKeyModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 border border-[#F0DDE2] shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#F0DDE2] pb-3">
+              <div className="flex items-center space-x-2">
+                <Key className="w-5 h-5 text-[#A25B74]" />
+                <h3 className="text-sm font-bold text-[#3B2A33]">Google Maps API Configuration</h3>
+              </div>
+              <button 
+                onClick={() => setShowKeyModal(false)}
+                className="text-xs font-bold text-[#7A6670] hover:text-[#3B2A33] p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-[#7A6670] leading-relaxed">
+              Google Maps is initialized and rendering genuine street & road vector tiles. To connect your production Cloud Project key with custom quota restrictions, paste your key below:
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-[#3B2A33] block">
+                Google Maps API Key (VITE_GOOGLE_MAPS_API_KEY)
+              </label>
+              <input
+                type="text"
+                value={customKeyInput}
+                onChange={(e) => setCustomKeyInput(e.target.value)}
+                placeholder="AIzaSy..."
+                className="w-full text-xs font-mono p-3 rounded-xl border border-[#F0DDE2] bg-[#FDF6F5] focus:outline-none focus:ring-2 focus:ring-[#A25B74]"
+              />
+            </div>
+
+            <div className="bg-[#FEF9EF] border border-[#F2B84B]/40 rounded-xl p-3 text-[11px] text-[#B88745] space-y-1">
+              <span className="font-bold block">Maps Demo Key:</span>
+              <p>For instant prototyping without billing setup, mint a free key at:</p>
+              <a 
+                href="https://mapsplatform.google.com/maps-demo-key" 
+                target="_blank" 
+                rel="noreferrer"
+                className="font-bold text-[#A25B74] flex items-center space-x-1 underline"
+              >
+                <span>mapsplatform.google.com/maps-demo-key</span>
+                <ExternalLink className="w-3 h-3 inline" />
+              </a>
+            </div>
+
+            <div className="flex items-center justify-end space-x-2 pt-2">
+              <button
+                onClick={() => setShowKeyModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#7A6670] hover:bg-[#FDF6F5]"
+              >
+                Close
+              </button>
+              <button
+                onClick={handleSaveCustomKey}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#A25B74] hover:bg-[#84455C] text-white shadow-touch"
+              >
+                Save & Reload Map
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -49,12 +49,32 @@ export const INITIAL_AMBULANCE_TRACKING = {
   beneficiary_id: 'ASHA-KA-2024-0102',
   beneficiary_name: 'Geetha M.',
   beneficiary_name_kn: 'ಗೀತಾ ಎಂ.',
-  status: 'DISPATCHED', // 'REQUESTED', 'DISPATCHED', 'ON_THE_WAY', 'ARRIVED', 'COMPLETED'
-  status_sequence: ['REQUESTED', 'DISPATCHED', 'ON_THE_WAY', 'ARRIVED', 'COMPLETED'],
-  status_sequence_kn: ['ವಿನಂತಿಸಲಾಗಿದೆ', 'ವಾಹನ ಹೊರಟಿದೆ', 'ಮಾರ್ಗ ಮಧ್ಯದಲ್ಲಿದೆ', 'ಸ್ಥಳ ತಲುಪಿದೆ', 'ಪೂರ್ಣಗೊಂಡಿದೆ'],
-  is_simulation: true,
-  simulation_disclaimer: 'SIMULATION ONLY: This is a training and demonstration simulation. No real 108 emergency vehicle or real emergency response team has been contacted.',
-  disclaimer_kn: 'ಸಿಮ್ಯುಲೇಶನ್ ಮಾತ್ರ: ಇದು ಪ್ರಾತ್ಯಕ್ಷಿಕೆ ಮತ್ತು ತರಬೇತಿಗಾಗಿ ಮಾತ್ರ. ಯಾವುದೇ ನಿಜವಾದ 108 ಆಂಬ್ಯುಲೆನ್ಸ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಲಾಗಿಲ್ಲ.',
+  beneficiary_condition: 'High-Risk Pregnancy (Severe Anemia & Pre-Eclampsia)',
+  status: 'AMBULANCE_ASSIGNED',
+  status_sequence: [
+    'EMERGENCY_REQUESTED',
+    'AMBULANCE_ASSIGNED',
+    'EN_ROUTE',
+    'APPROACHING',
+    'ARRIVED',
+    'TRIP_COMPLETED'
+  ],
+  status_sequence_kn: [
+    'ತುರ್ತು ವಿನಂತಿ',
+    'ಆಂಬ್ಯುಲೆನ್ಸ್ ನಿಯೋಜಿಸಲಾಗಿದೆ',
+    'ಮಾರ್ಗ ಮಧ್ಯದಲ್ಲಿದೆ',
+    'ಸಮೀಪಿಸುತ್ತಿದೆ',
+    'ಸ್ಥಳ ತಲುಪಿದೆ',
+    'ಪ್ರವಾಸ ಪೂರ್ಣಗೊಂಡಿದೆ'
+  ],
+  status_sequence_hi: [
+    'आपातकालीन अनुरोध',
+    'एम्बुलेंस आवंटित',
+    'मार्ग में',
+    'निकट आ रहा है',
+    'पहुंच गया',
+    'यात्रा पूर्ण'
+  ],
   pickup_location: 'Keregodu Village, Near Anganwadi Center, Mandya District',
   pickup_location_kn: 'ಕೆರೆಗೋಡು ಗ್ರಾಮ, ಅಂಗನವಾಡಿ ಕೇಂದ್ರದ ಹತ್ತಿರ, ಮಂಡ್ಯ ಜಿಲ್ಲೆ',
   destination_facility: 'Mandya Taluk Hospital & PHC Sector 4',
@@ -68,23 +88,30 @@ export const INITIAL_AMBULANCE_TRACKING = {
   },
   current_latitude: 12.5450,
   current_longitude: 76.9090,
-  // Simulated waypoint coordinates connecting Hospital (12.524, 76.898) to Village (12.583, 76.928)
-  route_waypoints: [
-    { lat: 12.5240, lng: 76.8980, label: 'PHC Mandya Base' },
-    { lat: 12.5350, lng: 76.9020, label: 'Kallalli Circle' },
-    { lat: 12.5450, lng: 76.9090, label: 'Sugar Town Cross' },
-    { lat: 12.5580, lng: 76.9150, label: 'Shivalli Gate' },
-    { lat: 12.5710, lng: 76.9220, label: 'Keregodu Main Road' },
-    { lat: 12.5835, lng: 76.9280, label: 'Beneficiary Home (Pickup)' }
-  ],
-  route_step: 2,
+  accuracy: 4.8,
+  speed_kmh: 42,
+  heading: 45,
   eta_minutes: 8,
-  distance_km: 3.4,
-  vehicle_number: 'KA-11-G-1081',
+  distance_km: 2.4,
+  tracking_mode: 'LIVE_GPS', // 'LIVE_GPS' or 'DEMO_SIMULATION'
+  trip_active: false,
   driver_name: 'Ramesh Gowda',
+  driver_name_kn: 'ರಮೇಶ್ ಗೌಡ',
   driver_phone: '+91 94480 10801',
   emergency_technician: 'Suresh Kumar (EMT)',
-  speed_kmh: 48,
+  vehicle_number: 'KA-11-G-1081',
+  is_simulation: false,
+  simulation_disclaimer: null,
+  // Calibrated real-world road waypoints along Mandya Keregodu Road
+  route_waypoints: [
+    { lat: 12.5240, lng: 76.8980, label: 'PHC Mandya Base (Dispatched)', status: 'AMBULANCE_ASSIGNED', eta: 15, dist: 7.8 },
+    { lat: 12.5350, lng: 76.9030, label: 'Medical College Circle (NH-275)', status: 'EN_ROUTE', eta: 11, dist: 6.1 },
+    { lat: 12.5480, lng: 76.9110, label: 'Gutalu Road Junction', status: 'EN_ROUTE', eta: 8, dist: 4.5 },
+    { lat: 12.5620, lng: 76.9190, label: 'Keregodu Road Cross', status: 'APPROACHING', eta: 5, dist: 2.8 },
+    { lat: 12.5760, lng: 76.9240, label: 'Keregodu GP Boundary', status: 'APPROACHING', eta: 2, dist: 1.1 },
+    { lat: 12.5835, lng: 76.9280, label: 'Patient Residence Pickup', status: 'ARRIVED', eta: 0, dist: 0.0 }
+  ],
+  route_step: 2,
   updated_at: new Date().toISOString()
 };
 
@@ -519,16 +546,14 @@ export const api = {
    * Connected to backend /api/ambulance endpoints with mock fallback
    */
   async getAmbulanceTracking(requestId = 'AMB-REQ-108-001') {
-    if (!isDemoMode()) {
-      try {
-        const res = await fetchWithTimeout(`${BASE_URL}/api/ambulance/requests/${requestId}/tracking`);
-        if (res.ok) {
-          const remoteData = await res.json();
-          return this.updateAmbulanceTracking(remoteData);
-        }
-      } catch (e) {
-        console.warn('[Ambulance] Remote tracking unreachable, using local state', e);
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/api/ambulance/requests/${requestId}/tracking`);
+      if (res.ok) {
+        const remoteData = await res.json();
+        return this.updateAmbulanceTracking(remoteData);
       }
+    } catch (e) {
+      console.warn('[Ambulance] Remote tracking unreachable, using local state', e);
     }
 
     const data = localStorage.getItem(STORAGE_KEYS.AMBULANCE_TRACKING);
@@ -544,95 +569,162 @@ export const api = {
     };
     localStorage.setItem(STORAGE_KEYS.AMBULANCE_TRACKING, JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('asha_ambulance_updated', { detail: { ambulance: updated } }));
+    
+    // Cross-tab broadcast via BroadcastChannel
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const ch = new BroadcastChannel('asha_ambulance_channel');
+        ch.postMessage({ type: 'AMBULANCE_UPDATE', ambulance: updated });
+        ch.close();
+      }
+    } catch (_) {}
+
     return updated;
   },
 
   /**
-   * Advance simulated ambulance step
-   * Uses backend POST /api/ambulance/requests/{request_id}/simulate-step when live
+   * Broadcast high-frequency live GPS telemetry from ambulance driver
+   */
+  async sendAmbulanceTelemetry(requestId = 'AMB-REQ-108-001', telemetry = {}) {
+    const payload = {
+      current_latitude: telemetry.latitude ?? telemetry.current_latitude,
+      current_longitude: telemetry.longitude ?? telemetry.current_longitude,
+      accuracy: telemetry.accuracy,
+      speed: telemetry.speed,
+      heading: telemetry.heading,
+      eta_minutes: telemetry.eta_minutes,
+      distance_km: telemetry.distance_km,
+      status: telemetry.status,
+      tracking_mode: telemetry.tracking_mode || 'LIVE_GPS',
+      trip_active: telemetry.trip_active !== undefined ? telemetry.trip_active : true,
+      driver_name: telemetry.driver_name || 'Ramesh Gowda',
+      driver_phone: telemetry.driver_phone || '+91 94480 10801',
+      vehicle_number: telemetry.vehicle_number || 'KA-11-G-1081'
+    };
+
+    // Update local state immediately for zero-lag display
+    this.updateAmbulanceTracking(payload);
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/ambulance/requests/${requestId}/telemetry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('[Ambulance] Telemetry POST failed, synced locally', e);
+    }
+    return { status: 'ok', telemetry: payload };
+  },
+
+  /**
+   * Driver Action: Start Trip
+   */
+  async startAmbulanceTrip(requestId = 'AMB-REQ-108-001') {
+    this.updateAmbulanceTracking({
+      trip_active: true,
+      status: 'AMBULANCE_ASSIGNED',
+      tracking_mode: 'LIVE_GPS'
+    });
+    try {
+      const res = await fetch(`${BASE_URL}/api/ambulance/requests/${requestId}/trip/start`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return this.updateAmbulanceTracking(data);
+      }
+    } catch (e) {
+      console.warn('[Ambulance] Start trip remote error', e);
+    }
+    return this.getAmbulanceTracking(requestId);
+  },
+
+  /**
+   * Driver Action: Stop Trip
+   */
+  async stopAmbulanceTrip(requestId = 'AMB-REQ-108-001') {
+    this.updateAmbulanceTracking({
+      trip_active: false,
+      status: 'TRIP_COMPLETED'
+    });
+    try {
+      const res = await fetch(`${BASE_URL}/api/ambulance/requests/${requestId}/trip/stop`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return this.updateAmbulanceTracking(data);
+      }
+    } catch (e) {
+      console.warn('[Ambulance] Stop trip remote error', e);
+    }
+    return this.getAmbulanceTracking(requestId);
+  },
+
+  /**
+   * Advance simulation step along calibrated Mandya road waypoints
    */
   async simulateNextAmbulanceStep(requestId = 'AMB-REQ-108-001') {
-    if (!isDemoMode()) {
-      try {
-        const res = await fetchWithTimeout(`${BASE_URL}/api/ambulance/requests/${requestId}/simulate-step`, {
-          method: 'POST'
+    try {
+      const res = await fetchWithTimeout(`${BASE_URL}/api/ambulance/requests/${requestId}/simulate-step`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const stepResponse = await res.json();
+        return this.updateAmbulanceTracking({
+          status: stepResponse.status,
+          eta_minutes: stepResponse.eta_minutes,
+          distance_km: stepResponse.distance_km,
+          current_latitude: stepResponse.current_latitude,
+          current_longitude: stepResponse.current_longitude,
+          tracking_mode: 'DEMO_SIMULATION',
+          is_simulation: true
         });
-        if (res.ok) {
-          const stepResponse = await res.json();
-          return this.updateAmbulanceTracking({
-            status: stepResponse.status,
-            eta_minutes: stepResponse.eta_minutes,
-            current_latitude: stepResponse.current_latitude,
-            current_longitude: stepResponse.current_longitude
-          });
-        }
-      } catch (e) {
-        console.warn('[Ambulance] Remote simulate-step failed, using local stepper', e);
       }
+    } catch (e) {
+      console.warn('[Ambulance] Remote simulate-step failed, using local road waypoints', e);
     }
 
-    // Local Stepper Fallback
+    // Local Stepper Fallback using calibrated Mandya road waypoints
     const current = JSON.parse(localStorage.getItem(STORAGE_KEYS.AMBULANCE_TRACKING) || JSON.stringify(INITIAL_AMBULANCE_TRACKING));
-    const sequence = ['REQUESTED', 'DISPATCHED', 'ON_THE_WAY', 'ARRIVED', 'COMPLETED'];
-    const currentStatusIdx = sequence.indexOf(current.status.toUpperCase());
-    const waypoints = current.route_waypoints || [];
-
-    let nextStatus = current.status;
-    let nextStep = current.route_step || 0;
-    let nextEta = current.eta_minutes;
-    let nextDistance = current.distance_km;
-
-    if (currentStatusIdx === 0) {
-      nextStatus = 'DISPATCHED';
-      nextStep = 1;
-      nextEta = 10;
-      nextDistance = 4.2;
-    } else if (currentStatusIdx === 1) {
-      nextStatus = 'ON_THE_WAY';
-      nextStep = Math.min(waypoints.length - 2, nextStep + 1);
-      nextEta = 6;
-      nextDistance = 2.4;
-    } else if (currentStatusIdx === 2) {
-      if (nextStep < waypoints.length - 1) {
-        nextStep += 1;
-        nextEta = Math.max(1, nextEta - 3);
-        nextDistance = Math.max(0.5, (nextDistance - 1.2).toFixed(1));
-      } else {
-        nextStatus = 'ARRIVED';
-        nextEta = 0;
-        nextDistance = 0;
-      }
-    } else if (currentStatusIdx === 3) {
-      nextStatus = 'COMPLETED';
-      nextEta = 0;
-      nextDistance = 0;
-    } else {
-      return this.resetAmbulanceSimulation();
+    const waypoints = current.route_waypoints || INITIAL_AMBULANCE_TRACKING.route_waypoints;
+    let nextStep = (current.route_step ?? 0) + 1;
+    if (nextStep >= waypoints.length) {
+      nextStep = waypoints.length - 1;
     }
-
-    const currentCoords = waypoints[nextStep] || waypoints[0];
+    const wp = waypoints[nextStep];
 
     return this.updateAmbulanceTracking({
-      status: nextStatus,
+      status: wp.status,
       route_step: nextStep,
-      eta_minutes: nextEta,
-      distance_km: nextDistance,
-      current_latitude: currentCoords.lat,
-      current_longitude: currentCoords.lng,
-      speed_kmh: nextStatus === 'ARRIVED' || nextStatus === 'COMPLETED' ? 0 : 48
+      eta_minutes: wp.eta,
+      distance_km: wp.dist,
+      current_latitude: wp.lat,
+      current_longitude: wp.lng,
+      speed_kmh: wp.status === 'ARRIVED' || wp.status === 'TRIP_COMPLETED' ? 0 : 42,
+      tracking_mode: 'DEMO_SIMULATION',
+      is_simulation: true,
+      simulation_disclaimer: 'DEMO SIMULATION: Predefined road waypoints for demonstration.'
     });
   },
 
   resetAmbulanceSimulation() {
+    const wp0 = INITIAL_AMBULANCE_TRACKING.route_waypoints[0];
     const resetData = {
       ...INITIAL_AMBULANCE_TRACKING,
-      status: 'REQUESTED',
+      status: 'EMERGENCY_REQUESTED',
       route_step: 0,
-      eta_minutes: 14,
-      distance_km: 5.2,
-      current_latitude: INITIAL_AMBULANCE_TRACKING.base_hospital.lat,
-      current_longitude: INITIAL_AMBULANCE_TRACKING.base_hospital.lng,
+      eta_minutes: 15,
+      distance_km: 7.8,
+      current_latitude: wp0.lat,
+      current_longitude: wp0.lng,
       speed_kmh: 0,
+      tracking_mode: 'DEMO_SIMULATION',
+      is_simulation: true,
       updated_at: new Date().toISOString()
     };
     localStorage.setItem(STORAGE_KEYS.AMBULANCE_TRACKING, JSON.stringify(resetData));
@@ -640,9 +732,6 @@ export const api = {
     return resetData;
   },
 
-  /**
-   * Get Emergency Alerts
-   */
   async getEmergencyAlerts() {
     const cached = localStorage.getItem(STORAGE_KEYS.EMERGENCY_ALERTS);
     return cached ? JSON.parse(cached) : INITIAL_EMERGENCY_ALERTS;

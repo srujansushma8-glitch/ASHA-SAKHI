@@ -1,38 +1,37 @@
 """
-Ambulance Simulation REST API Router.
-Provides endpoints for creating simulated ambulance requests, managing dispatch statuses,
-advancing simulated transport steps, and tracking simulated vehicle telemetry.
-CRITICAL SAFETY RULE: Explicitly flags all outputs with is_simulation=True and disclaimers.
+Ambulance REST API Router.
+Supports both LIVE GPS Mode (real device telemetry) and DEMO SIMULATION Mode.
+Provides real-time telemetry streaming, driver dispatch actions, and WebSocket broadcast.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.models.ambulance import AmbulanceRepository
 from app.schemas.ambulance import (
     AmbulanceRequestCreate,
     AmbulanceRequestResponse,
     AmbulanceStatusUpdate,
     AmbulanceLocationUpdate,
+    AmbulanceTelemetryUpdate,
     AmbulanceTrackingResponse,
 )
 from app.services.ambulance_service import ambulance_service
+from app.routers.voice_ws import broadcast_ws_event
 
-router = APIRouter(prefix="/api/ambulance", tags=["Ambulance Simulation"])
+router = APIRouter(prefix="/api/ambulance", tags=["Ambulance Operations & Live GPS"])
 
 
 @router.post("/requests", response_model=AmbulanceRequestResponse)
 async def create_ambulance_request(data: AmbulanceRequestCreate):
-    """
-    Creates a simulated 108 ambulance dispatch request.
-    Note: Simulation only. Never claims real emergency dispatch.
-    """
     created = ambulance_service.create_request(
         beneficiary_id=data.beneficiary_id,
         emergency_id=data.emergency_id,
         visit_id=data.visit_id,
         pickup_location=data.pickup_location,
-        destination_facility=data.destination_facility or "Hoskote Taluk Hospital / PHC",
+        destination_facility=data.destination_facility or "Mandya Taluk Hospital & PHC Sector 4",
         notes=data.notes,
+        pickup_lat=data.pickup_lat or 12.5835,
+        pickup_lng=data.pickup_lng or 76.9280,
     )
     return created
 
@@ -42,13 +41,11 @@ async def list_ambulance_requests(
     beneficiary_id: Optional[str] = Query(None, description="Filter by beneficiary ID"),
     status: Optional[str] = Query(None, description="Filter by dispatch status"),
 ):
-    """Retrieves all simulated ambulance requests."""
     return AmbulanceRepository.get_all(beneficiary_id=beneficiary_id, status=status)
 
 
 @router.get("/requests/{request_id}", response_model=AmbulanceRequestResponse)
 async def get_ambulance_request(request_id: str):
-    """Retrieves details of a specific simulated ambulance request."""
     record = AmbulanceRepository.get_by_id(request_id)
     if not record:
         raise HTTPException(
@@ -59,54 +56,97 @@ async def get_ambulance_request(request_id: str):
 
 @router.patch("/requests/{request_id}/status", response_model=AmbulanceRequestResponse)
 async def update_ambulance_status(request_id: str, data: AmbulanceStatusUpdate):
-    """Updates the dispatch status (REQUESTED, DISPATCHED, ON_THE_WAY, ARRIVED, COMPLETED)."""
+    status_str = data.status.value if hasattr(data.status, "value") else str(data.status)
     updated = AmbulanceRepository.update_status(
         request_id=request_id,
-        new_status=data.status.value,
+        new_status=status_str,
         notes=data.notes,
     )
     if not updated:
         raise HTTPException(
             status_code=404, detail=f"Ambulance request '{request_id}' not found."
         )
+    # Broadcast to all connected dashboards
+    await broadcast_ws_event("ambulance_update", updated)
     return updated
 
 
-@router.patch("/requests/{request_id}/location", response_model=AmbulanceRequestResponse)
-async def update_ambulance_location(request_id: str, data: AmbulanceLocationUpdate):
-    """Updates simulated GPS coordinates, remaining ETA, and optional status."""
-    status_val = data.status.value if data.status else None
-    updated = AmbulanceRepository.update_location(
-        request_id=request_id,
-        current_latitude=data.current_latitude,
-        current_longitude=data.current_longitude,
-        eta_minutes=data.eta_minutes,
-        status=status_val,
-    )
+@router.post("/requests/{request_id}/telemetry")
+async def receive_driver_telemetry(request_id: str, data: AmbulanceTelemetryUpdate):
+    """
+    Receives high-frequency live GPS telemetry from the Ambulance Driver interface.
+    Broadcasts the position instantly to the ASHA worker dashboard over WebSockets.
+    """
+    try:
+        recorded = ambulance_service.record_telemetry(request_id, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Broadcast live coordinates to all active dashboards
+    await broadcast_ws_event("ambulance_update", recorded)
+    return {"status": "ok", "telemetry": recorded}
+
+
+@router.post("/requests/{request_id}/trip/start")
+async def start_ambulance_trip(request_id: str):
+    """
+    Initiates an emergency trip: sets status to 'AMBULANCE_ASSIGNED' and activates live GPS streaming.
+    """
+    updated = AmbulanceRepository.update_status(request_id, "AMBULANCE_ASSIGNED", notes="Trip started by driver")
     if not updated:
-        raise HTTPException(
-            status_code=404, detail=f"Ambulance request '{request_id}' not found."
-        )
-    return updated
+        # Create request if not present
+        ambulance_service.create_request()
+        updated = AmbulanceRepository.update_status(request_id, "AMBULANCE_ASSIGNED", notes="Trip started by driver")
+    
+    tracking = ambulance_service.get_tracking_info(request_id)
+    payload = tracking.model_dump() if hasattr(tracking, "model_dump") else tracking.dict()
+    payload["trip_active"] = True
+    await broadcast_ws_event("ambulance_update", payload)
+    return payload
 
 
-@router.post("/requests/{request_id}/simulate-step", response_model=AmbulanceRequestResponse)
+@router.post("/requests/{request_id}/trip/stop")
+async def stop_ambulance_trip(request_id: str):
+    """
+    Completes the emergency transport trip: sets status to 'TRIP_COMPLETED' and terminates GPS streaming.
+    """
+    updated = AmbulanceRepository.update_status(request_id, "TRIP_COMPLETED", notes="Trip completed by driver")
+    tracking = ambulance_service.get_tracking_info(request_id)
+    payload = tracking.model_dump() if hasattr(tracking, "model_dump") else tracking.dict()
+    payload["trip_active"] = False
+    payload["status"] = "TRIP_COMPLETED"
+    await broadcast_ws_event("ambulance_update", payload)
+    return payload
+
+
+@router.post("/requests/{request_id}/simulate-step")
 async def simulate_dispatch_step(request_id: str):
     """
-    Advances the simulation step automatically:
-    REQUESTED -> DISPATCHED -> ON_THE_WAY -> ARRIVED -> COMPLETED.
+    Advances the demonstration simulation along realistic Mandya road waypoints.
     """
-    updated = ambulance_service.step_simulation(request_id)
-    if not updated:
+    stepped = ambulance_service.step_simulation(request_id)
+    await broadcast_ws_event("ambulance_update", stepped)
+    return stepped
+
+
+@router.get("/tracking", response_model=AmbulanceTrackingResponse)
+async def get_default_ambulance_tracking():
+    """
+    Returns real-time telemetry for the default active ambulance request (AMB-REQ-108-001).
+    """
+    tracking = ambulance_service.get_tracking_info("AMB-REQ-108-001")
+    if not tracking:
         raise HTTPException(
-            status_code=404, detail=f"Ambulance request '{request_id}' not found."
+            status_code=404, detail="Default ambulance request not found."
         )
-    return updated
+    return tracking
 
 
 @router.get("/requests/{request_id}/tracking", response_model=AmbulanceTrackingResponse)
 async def get_ambulance_tracking(request_id: str):
-    """Returns real-time simulated telemetry, progress percentage, and driver info for map rendering."""
+    """
+    Returns real-time telemetry, driver details, road distances, and coordinates for map rendering.
+    """
     tracking = ambulance_service.get_tracking_info(request_id)
     if not tracking:
         raise HTTPException(

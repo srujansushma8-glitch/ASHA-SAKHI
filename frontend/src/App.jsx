@@ -8,6 +8,7 @@ import VoiceRecordingScreen from './screens/VoiceRecordingScreen';
 import StructuredVisitRecordScreen from './screens/StructuredVisitRecordScreen';
 import EmergencyAlertScreen from './screens/EmergencyAlertScreen';
 import AmbulanceTrackingScreen from './screens/AmbulanceTrackingScreen';
+import AmbulanceDriverScreen from './screens/AmbulanceDriverScreen';
 import FollowUpDashboard from './screens/FollowUpDashboard';
 import BeneficiaryManagementScreen from './screens/BeneficiaryManagementScreen';
 import MaternalHealthScreen from './screens/MaternalHealthScreen';
@@ -45,6 +46,17 @@ export default function App() {
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState(null);
   const [initialScenarioId, setInitialScenarioId] = useState('anc_routine');
   const [globalSearch, setGlobalSearch] = useState('');
+
+  // Handle direct driver portal URL (?view=driver or ?mode=driver)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'driver' || params.get('mode') === 'driver') {
+        setViewMode('app');
+        setActiveScreen('ambulance_driver');
+      }
+    }
+  }, []);
 
   // Synchronize RTL and Language with html element
   useEffect(() => {
@@ -287,7 +299,15 @@ export default function App() {
               {activeScreen === 'ambulance' && (
                 <AmbulanceTrackingScreen
                   currentLanguage={currentLanguage}
-                  onBack={() => setActiveScreen('emergency')}
+                  onBack={() => setActiveScreen('home')}
+                  onOpenDriverPortal={() => setActiveScreen('ambulance_driver')}
+                />
+              )}
+
+              {activeScreen === 'ambulance_driver' && (
+                <AmbulanceDriverScreen
+                  currentLanguage={currentLanguage}
+                  onBack={() => setActiveScreen('ambulance')}
                 />
               )}
 

@@ -22,7 +22,8 @@ import {
   ExternalLink,
   Moon,
   Sun,
-  UserCheck
+  UserCheck,
+  Smartphone
 } from 'lucide-react';
 import { isDemoMode, setDemoMode, api } from '../services/api';
 
@@ -147,6 +148,12 @@ export default function Sidebar({
       label_kn: '108 ಆಂಬ್ಯುಲೆನ್ಸ್',
       label_en: 'Ambulance Map',
       icon: Ambulance,
+    },
+    {
+      id: 'ambulance_driver',
+      label_kn: 'ಚಾಲಕ ಜಿಪಿಎಸ್',
+      label_en: 'Driver GPS Portal',
+      icon: Smartphone,
     },
   ];
 

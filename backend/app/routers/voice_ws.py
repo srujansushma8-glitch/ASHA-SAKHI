@@ -37,10 +37,28 @@ router = APIRouter(tags=["WebSocket Voice"])
 asr_adapter: BaseASRAdapter = get_asr_adapter()
 tts_adapter: BaseTTSAdapter = get_tts_adapter()
 
+# Global set of active WebSocket clients for real-time broadcast
+active_connections: set = set()
+
+
+async def broadcast_ws_event(event_name: str, data: Dict[str, Any]):
+    """Broadcasts real-time events (e.g. ambulance telemetry, danger alerts) to all connected clients."""
+    payload = json.dumps({
+        "event": event_name,
+        "data": data,
+        "timestamp": datetime.now().isoformat()
+    })
+    for ws in list(active_connections):
+        try:
+            await ws.send_text(payload)
+        except Exception:
+            active_connections.discard(ws)
+
 
 @router.websocket("/ws/voice")
 async def voice_websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    active_connections.add(websocket)
     current_session: Optional[VoiceSession] = None
     logger.info("New WebSocket connection accepted on /ws/voice")
 
@@ -373,6 +391,7 @@ async def voice_websocket_endpoint(websocket: WebSocket):
                 current_session.audio_buffer.extend(message["bytes"])
 
     except WebSocketDisconnect:
+        active_connections.discard(websocket)
         logger.info(f"WebSocket client disconnected for session: {current_session.session_id if current_session else 'unknown'}")
         if current_session:
             session_manager.remove_session(current_session.session_id)
