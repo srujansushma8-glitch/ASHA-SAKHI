@@ -13,7 +13,10 @@ import {
   ShieldCheck,
   ChevronRight,
   Globe,
-  Settings
+  Settings,
+  Baby,
+  Activity,
+  Sparkles
 } from 'lucide-react';
 import { isDemoMode, setDemoMode, api } from '../services/api';
 
@@ -84,9 +87,16 @@ export default function Sidebar({
     {
       id: 'record',
       label_kn: 'ಧ್ವನಿ ಭೇಟಿ',
-      label_en: 'Voice Visit',
+      label_en: 'AI Voice Visit',
       icon: Mic,
       isSpecial: true,
+    },
+    {
+      id: 'maternal',
+      label_kn: 'ತಾಯಿ ಆರೋಗ್ಯ',
+      label_en: 'Maternal Health',
+      icon: Baby,
+      isMaternal: true,
     },
     {
       id: 'beneficiaries',
@@ -97,7 +107,7 @@ export default function Sidebar({
     {
       id: 'followups',
       label_kn: 'ಫಾಲೋ-ಅಪ್ ಪಟ್ಟಿ',
-      label_en: 'Follow-ups',
+      label_en: 'Follow-ups & Reports',
       icon: CalendarCheck,
     },
     {
@@ -117,31 +127,31 @@ export default function Sidebar({
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-navy-100 shadow-subtle shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
+    <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-navy-200/60 shadow-subtle shrink-0 min-h-screen sticky top-0 h-screen overflow-y-auto">
       {/* Brand Header */}
-      <div className="p-5 border-b border-navy-100">
+      <div className="p-5 border-b border-navy-100 bg-white">
         <div 
           onClick={() => setActiveScreen('home')}
           className="flex items-center space-x-3 cursor-pointer group select-none"
         >
-          <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-touch relative group-hover:scale-105 transition-decelerate">
-            <HeartPulse className="w-7 h-7 text-mint-surface" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-healthcare rounded-full border-2 border-white"></span>
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-navy-900 to-primary text-white flex items-center justify-center shadow-card relative group-hover:scale-105 transition-decelerate">
+            <HeartPulse className="w-6 h-6 text-cyan" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-cyan rounded-full border-2 border-white animate-pulse"></span>
           </div>
           <div>
             <div className="flex items-center space-x-1.5">
-              <span className="font-bold text-lg text-navy font-kannada tracking-tight leading-none">
+              <span className="font-bold text-lg text-navy-900 font-kannada tracking-tight leading-none">
                 ಆಶಾ ಸಖಿ
               </span>
-              <span className="text-[10px] font-bold text-primary font-mono bg-mint-surface/80 px-1.5 py-0.5 rounded border border-primary-200">
-                PRO
+              <span className="text-[10px] font-bold text-cyan-600 font-mono bg-cyan-50 px-1.5 py-0.5 rounded border border-cyan-200">
+                AI SaaS
               </span>
             </div>
-            <p className="text-xs font-semibold text-primary font-mono mt-0.5">
+            <p className="text-xs font-bold text-primary font-mono mt-0.5 tracking-wider">
               ASHA SAKHI
             </p>
             <p className="text-[10px] text-navy-400 font-medium">
-              NHM ಕರ್ನಾಟಕ • AI Voice Register
+              NHM ಕರ್ನಾಟಕ • AI Field Assistant
             </p>
           </div>
         </div>
@@ -149,7 +159,7 @@ export default function Sidebar({
 
       {/* Main Navigation Links */}
       <div className="flex-1 px-3 py-4 space-y-1.5">
-        <div className="px-3 pb-2 text-[11px] font-bold text-navy-400 uppercase tracking-wider font-mono">
+        <div className="px-3 pb-2 text-[10px] font-bold text-navy-400 uppercase tracking-widest font-mono">
           ಮುಖ್ಯ ಮೆನು (Navigation)
         </div>
 
@@ -164,15 +174,15 @@ export default function Sidebar({
                 onClick={() => setActiveScreen(item.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-decelerate active:scale-[0.98] ${
                   isActive
-                    ? 'bg-primary text-white shadow-touch'
+                    ? 'bg-gradient-to-r from-primary to-cyan text-white shadow-cyan'
                     : isRecording
                     ? 'bg-emergency text-white animate-pulse shadow-emergency'
-                    : 'bg-mint-surface/50 hover:bg-mint-surface text-primary border border-primary-100'
+                    : 'bg-softblue hover:bg-cyan-50 text-navy-900 border border-cyan-200/70'
                 }`}
               >
                 <div className="flex items-center space-x-3">
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                    isActive || isRecording ? 'bg-white/20 text-white' : 'bg-primary text-white'
+                    isActive || isRecording ? 'bg-white/20 text-white' : 'bg-primary text-white shadow-sm'
                   }`}>
                     <Icon className="w-4 h-4" />
                   </div>
@@ -181,16 +191,51 @@ export default function Sidebar({
                       {isRecording ? 'ರೆಕಾರ್ಡ್ ಆಗುತ್ತಿದೆ...' : item.label_kn}
                     </span>
                     <span className={`text-[10px] block font-mono font-medium ${
-                      isActive || isRecording ? 'text-white/80' : 'text-primary/70'
+                      isActive || isRecording ? 'text-white/80' : 'text-primary'
                     }`}>
                       {item.label_en}
                     </span>
                   </div>
                 </div>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  isActive ? 'bg-white text-primary' : 'bg-primary text-white'
+                  isActive ? 'bg-white text-navy-900' : 'bg-primary text-white'
                 }`}>
                   AI4Bharat
+                </span>
+              </button>
+            );
+          }
+
+          if (item.isMaternal) {
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveScreen(item.id)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-decelerate active:scale-[0.98] ${
+                  isActive
+                    ? 'bg-pink text-white shadow-pink font-bold'
+                    : 'text-navy-700 hover:text-pink-600 hover:bg-pink-50'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-pink-100 text-pink-600'
+                  }`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block font-kannada leading-tight text-[13px]">
+                      {item.label_kn}
+                    </span>
+                    <span className={`text-[10px] block font-medium ${isActive ? 'text-white/90' : 'text-pink-600'}`}>
+                      {item.label_en}
+                    </span>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  isActive ? 'bg-white text-pink-700' : 'bg-pink-100 text-pink-700'
+                }`}>
+                  ANC
                 </span>
               </button>
             );
@@ -203,18 +248,18 @@ export default function Sidebar({
               className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-decelerate active:scale-[0.98] ${
                 isActive
                   ? item.isEmergency
-                    ? 'bg-emergency text-white shadow-card font-bold'
-                    : 'bg-primary text-white shadow-touch font-bold'
-                  : 'text-navy-700 hover:text-navy hover:bg-ivory-bg'
+                    ? 'bg-emergency text-white shadow-emergency font-bold'
+                    : 'bg-navy-900 text-white shadow-card font-bold'
+                  : 'text-navy-700 hover:text-navy-900 hover:bg-softblue/60'
               }`}
             >
               <div className="flex items-center space-x-3">
                 <Icon className={`w-5 h-5 ${
                   isActive 
-                    ? 'text-white stroke-[2.2px]' 
+                    ? 'text-cyan stroke-[2.2px]' 
                     : item.isEmergency && item.badge > 0
                     ? 'text-emergency stroke-[2px]'
-                    : 'text-navy-500 stroke-[1.8px]'
+                    : 'text-navy-400 stroke-[1.8px]'
                 }`} />
                 <div className="text-left">
                   <span className="block font-kannada leading-tight text-[13px]">
@@ -239,34 +284,34 @@ export default function Sidebar({
       </div>
 
       {/* Mode & Language Quick Controls */}
-      <div className="p-4 mx-3 mb-3 bg-ivory-bg rounded-2xl border border-navy-100 space-y-2.5">
+      <div className="p-3.5 mx-3 mb-3 bg-softblue rounded-2xl border border-navy-200/60 space-y-2.5">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-navy-500 font-medium flex items-center space-x-1">
+          <span className="text-navy-600 font-medium flex items-center space-x-1.5">
             <Globe className="w-3.5 h-3.5 text-primary" />
-            <span>ಭಾಷೆ (Language)</span>
+            <span>ಭಾಷೆ (Lang)</span>
           </span>
           <button
             onClick={() => onLanguageChange(currentLanguage === 'kn' ? 'kn-en' : currentLanguage === 'kn-en' ? 'en' : 'kn')}
-            className="px-2 py-1 rounded-lg bg-white border border-navy-200 text-xs font-bold text-navy hover:bg-navy-50 active:scale-[0.98]"
+            className="px-2.5 py-1 rounded-lg bg-white border border-navy-200 text-xs font-bold text-navy-900 hover:bg-navy-50 active:scale-[0.98] shadow-sm"
           >
             {currentLanguage === 'kn' ? 'ಕನ್ನಡ' : currentLanguage === 'kn-en' ? 'ಕನ್+Eng' : 'English'}
           </button>
         </div>
 
-        <div className="flex items-center justify-between text-xs pt-1 border-t border-navy-100">
-          <span className="text-navy-500 font-medium flex items-center space-x-1">
-            <span className={`w-2 h-2 rounded-full ${demo ? 'bg-primary' : 'bg-healthcare'}`}></span>
-            <span>ಮೋಡ್ (Mode)</span>
+        <div className="flex items-center justify-between text-xs pt-1.5 border-t border-navy-200/50">
+          <span className="text-navy-600 font-medium flex items-center space-x-1.5">
+            <span className={`w-2 h-2 rounded-full ${demo ? 'bg-cyan' : 'bg-healthcare'}`}></span>
+            <span>ಇಂಜಿನ್ (Engine)</span>
           </span>
           <button
             onClick={toggleDemoMode}
-            className={`px-2 py-0.5 rounded-full text-[11px] font-bold border transition-decelerate ${
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-decelerate ${
               demo 
-                ? 'bg-primary-50 text-primary border-primary-200' 
+                ? 'bg-cyan-50 text-cyan-700 border-cyan-300' 
                 : 'bg-healthcare-50 text-healthcare border-healthcare-200'
             }`}
           >
-            {demo ? 'Demo AI4Bharat' : 'Live Backend'}
+            {demo ? 'AI4Bharat Engine' : 'Live Backend'}
           </button>
         </div>
 
@@ -287,7 +332,7 @@ export default function Sidebar({
       <div className="p-4 border-t border-navy-100 bg-white">
         <div className="flex items-center space-x-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-2xl bg-mint-surface text-primary border border-primary-200 flex items-center justify-center text-xl font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-navy-900 to-primary text-white border border-cyan-200 flex items-center justify-center text-lg font-bold shadow-sm">
               👩‍⚕️
             </div>
             <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
@@ -296,7 +341,7 @@ export default function Sidebar({
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-navy truncate font-kannada">
+            <div className="text-xs font-bold text-navy-900 truncate font-kannada">
               ಶಾರದಾ ಬಾಯಿ (Sharada)
             </div>
             <div className="text-[10px] text-navy-500 font-medium truncate">

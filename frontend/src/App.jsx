@@ -10,17 +10,19 @@ import EmergencyAlertScreen from './screens/EmergencyAlertScreen';
 import AmbulanceTrackingScreen from './screens/AmbulanceTrackingScreen';
 import FollowUpDashboard from './screens/FollowUpDashboard';
 import BeneficiaryManagementScreen from './screens/BeneficiaryManagementScreen';
+import MaternalHealthScreen from './screens/MaternalHealthScreen';
 import { api } from './services/api';
 import { voiceWs } from './services/websocket';
 
 export default function App() {
-  const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'structured_record', 'emergency', 'ambulance', 'followups', 'beneficiaries'
+  const [activeScreen, setActiveScreen] = useState('home'); // 'home', 'record', 'maternal', 'structured_record', 'emergency', 'ambulance', 'followups', 'beneficiaries'
   const [currentLanguage, setCurrentLanguage] = useState('kn'); // 'kn', 'kn-en', 'en'
   const [emergencyAlerts, setEmergencyAlerts] = useState([]);
   const [currentRecord, setCurrentRecord] = useState(null);
   const [currentDangerAlert, setCurrentDangerAlert] = useState(null);
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState(null);
   const [initialScenarioId, setInitialScenarioId] = useState('anc_routine');
+  const [globalSearch, setGlobalSearch] = useState('');
 
   useEffect(() => {
     loadEmergencyAlerts();
@@ -79,7 +81,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-ivory-bg text-navy flex flex-col lg:flex-row font-sans selection:bg-mint-surface selection:text-navy">
+    <div className="min-h-screen bg-appbg text-navy-900 flex flex-col lg:flex-row font-sans selection:bg-cyan-100 selection:text-navy-900">
       {/* 1. Desktop Persistent Left Sidebar */}
       <Sidebar
         activeScreen={activeScreen}
@@ -108,9 +110,18 @@ export default function App() {
           activeScreen={activeScreen}
           emergencyCount={emergencyAlerts.length}
           onEmergencyClick={() => setActiveScreen('emergency')}
+          searchValue={globalSearch}
+          onSearchChange={(val) => {
+            setGlobalSearch(val);
+            if (val && activeScreen !== 'beneficiaries') {
+              setActiveScreen('beneficiaries');
+            }
+          }}
+          currentLanguage={currentLanguage}
+          onLanguageChange={setCurrentLanguage}
         />
 
-        {/* Dynamic Screen Content with Smart Width */}
+        {/* Dynamic Screen Content */}
         <main className="flex-1 w-full overflow-y-auto">
           {activeScreen === 'home' && (
             <HomeDashboard
@@ -121,6 +132,14 @@ export default function App() {
                 setActiveScreen('beneficiaries');
               }}
               emergencyCount={emergencyAlerts.length}
+            />
+          )}
+
+          {activeScreen === 'maternal' && (
+            <MaternalHealthScreen
+              selectedBeneficiaryId={selectedBeneficiaryId}
+              onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
+              onBack={() => setActiveScreen('home')}
             />
           )}
 
@@ -172,6 +191,7 @@ export default function App() {
           {activeScreen === 'beneficiaries' && (
             <BeneficiaryManagementScreen
               selectedBeneficiaryId={selectedBeneficiaryId}
+              initialSearchQuery={globalSearch}
               onStartVoiceVisit={(bId) => handleStartVoiceRecording(bId)}
               onBack={() => setActiveScreen('home')}
             />

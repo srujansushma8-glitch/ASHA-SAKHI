@@ -7,15 +7,18 @@ import {
   MapPin, 
   Search, 
   Mic, 
-  RotateCcw,
-  Check,
-  CalendarCheck
+  RotateCcw, 
+  Check, 
+  CalendarCheck,
+  TrendingUp,
+  BarChart2,
+  FileText
 } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficiary }) {
   const [followups, setFollowups] = useState([]);
-  const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'upcoming', 'missed'
+  const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'upcoming', 'missed', 'completed'
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
@@ -83,24 +86,32 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
   return (
     <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6 animate-fade-in pb-24 lg:pb-12">
       {/* 1. Header */}
-      <div className="bg-white rounded-3xl p-5 lg:p-6 border border-navy-100 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center space-x-3">
+      <div className="bg-white rounded-3xl p-5 lg:p-6 border border-navy-200/60 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3.5">
           <div className="w-12 h-12 rounded-2xl bg-warning-50 text-warning-700 flex items-center justify-center font-bold">
             <CalendarCheck className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg lg:text-xl font-bold font-kannada text-navy leading-tight">
-                ಫಾಲೋ-ಅಪ್ ಭೇಟಿ ವೇಳಾಪಟ್ಟಿ (Follow-up Schedule)
+              <h1 className="text-lg lg:text-xl font-bold font-kannada text-navy-900 leading-tight">
+                ಫಾಲೋ-ಅಪ್ ಮತ್ತು ಭೇಟಿ ವೇಳಾಪಟ್ಟಿ (Follow-ups & Reports)
               </h1>
-              <span className="text-xs font-mono font-bold bg-mint-surface text-primary px-2.5 py-0.5 rounded-full border border-primary-200">
+              <span className="text-xs font-mono font-bold bg-cyan-50 text-cyan-800 px-2.5 py-0.5 rounded-full border border-cyan-200">
                 ಒಟ್ಟು: {followups.length}
               </span>
             </div>
             <p className="text-xs text-navy-500 font-medium mt-0.5">
-              ಮುಂಬರುವ ಗರ್ಭಿಣಿ ಮತ್ತು ನವಜಾತ ಶಿಶು ಮನೆ ಭೇಟಿಗಳು
+              ಮುಂಬರುವ ಗರ್ಭಿಣಿ ಮತ್ತು ನವಜಾತ ಶಿಶು ಮನೆ ಭೇಟಿಗಳು • ವರದಿಗಳು
             </p>
           </div>
+        </div>
+
+        {/* Statistical Summary Pills */}
+        <div className="flex items-center space-x-2 text-xs">
+          <span className="px-3 py-1.5 rounded-xl bg-healthcare-50 text-healthcare font-bold border border-healthcare-200 flex items-center space-x-1">
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>94% ಪೂರ್ಣಗೊಂಡ ದರ</span>
+          </span>
         </div>
       </div>
 
@@ -112,7 +123,7 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
       )}
 
       {/* 2. Full-Width Search & Filter Chips */}
-      <div className="bg-white rounded-3xl p-4 lg:p-5 border border-navy-100 shadow-card flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-3xl p-4 lg:p-5 border border-navy-200/60 shadow-card flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-navy-400 absolute left-4 top-3.5" />
           <input
@@ -120,17 +131,17 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="ಹೆಸರು, ಗ್ರಾಮ ಅಥವಾ ವರ್ಗ ಹುಡುಕಿ (Search by Name, Village, Category)..."
-            className="w-full text-xs font-medium pl-10 pr-4 py-3 bg-ivory-bg border border-navy-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary font-kannada"
+            className="w-full text-xs font-medium pl-10 pr-4 py-3 bg-softblue border border-navy-200/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white font-kannada transition-decelerate"
           />
         </div>
 
         {/* Tab Selectors */}
-        <div className="flex bg-ivory-bg p-1 rounded-2xl border border-navy-200">
+        <div className="flex bg-softblue p-1 rounded-2xl border border-navy-200/60">
           <button
             onClick={() => setActiveTab('pending')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-[0.98] ${
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 ${
               activeTab === 'pending'
-                ? 'bg-primary text-white shadow-subtle'
+                ? 'bg-primary text-white shadow-touch'
                 : 'text-navy-600 hover:text-navy-900'
             }`}
           >
@@ -138,9 +149,9 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
           </button>
           <button
             onClick={() => setActiveTab('upcoming')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-[0.98] ${
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 ${
               activeTab === 'upcoming'
-                ? 'bg-primary text-white shadow-subtle'
+                ? 'bg-primary text-white shadow-touch'
                 : 'text-navy-600 hover:text-navy-900'
             }`}
           >
@@ -148,9 +159,9 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
           </button>
           <button
             onClick={() => setActiveTab('missed')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-[0.98] ${
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-decelerate active:scale-95 ${
               activeTab === 'missed'
-                ? 'bg-emergency text-white shadow-subtle'
+                ? 'bg-emergency text-white shadow-emergency'
                 : 'text-navy-600 hover:text-navy-900'
             }`}
           >
@@ -165,12 +176,12 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
           filteredItems.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-3xl p-5 border border-navy-100 shadow-card hover:border-primary-300 hover:shadow-touch transition-decelerate flex flex-col justify-between space-y-4"
+              className="bg-white rounded-3xl p-5 border border-navy-200/60 shadow-card hover:border-primary hover:shadow-card-hover transition-decelerate flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2.5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-navy font-kannada leading-tight">
+                    <h3 className="text-base font-bold text-navy-900 font-kannada leading-tight">
                       {item.beneficiary_name_kn || item.beneficiary_name}
                     </h3>
                     <p className="text-xs font-semibold text-navy-700 mt-0.5">{item.type}</p>
@@ -181,7 +192,7 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
                 </div>
 
                 <div className="flex items-center space-x-2 text-xs">
-                  <span className="px-2.5 py-0.5 rounded-full bg-mint-surface text-primary font-bold text-[11px] border border-primary-100">
+                  <span className="px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-800 font-bold text-[11px] border border-cyan-200">
                     {item.category}
                   </span>
                   <span className="text-navy-400 font-mono text-[11px]">ID: {item.beneficiary_id}</span>
@@ -191,13 +202,19 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
                   <MapPin className="w-3.5 h-3.5 mr-1 text-primary shrink-0" />
                   {item.village}
                 </p>
+
+                {item.notes && (
+                  <p className="text-[11px] text-navy-600 bg-softblue p-2.5 rounded-xl border border-navy-100">
+                    {item.notes}
+                  </p>
+                )}
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center space-x-2 pt-3 border-t border-navy-50">
+              <div className="flex items-center space-x-2 pt-3 border-t border-navy-100">
                 <button
                   onClick={() => onStartVoiceVisit(item.beneficiary_id)}
-                  className="flex-1 bg-primary hover:bg-primary-hover text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-touch flex items-center justify-center space-x-1.5 active:scale-[0.98] transition-decelerate"
+                  className="flex-1 bg-gradient-to-r from-primary to-cyan hover:from-primary-hover hover:to-cyan-hover text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow-touch flex items-center justify-center space-x-1.5 active:scale-95 transition-decelerate"
                 >
                   <Mic className="w-3.5 h-3.5" />
                   <span className="font-kannada">ಧ್ವನಿ ಭೇಟಿ</span>
@@ -205,7 +222,7 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
 
                 <button
                   onClick={() => handleMarkCompleted(item)}
-                  className="p-2.5 rounded-xl border border-healthcare-200 text-healthcare hover:bg-healthcare-50 active:scale-[0.98] transition-decelerate"
+                  className="p-2.5 rounded-xl border border-healthcare-200 text-healthcare hover:bg-healthcare-50 active:scale-95 transition-decelerate"
                   title="ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ"
                 >
                   <Check className="w-4 h-4" />
@@ -213,7 +230,7 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
 
                 <button
                   onClick={() => handleReschedule(item)}
-                  className="p-2.5 rounded-xl border border-navy-200 text-navy hover:bg-ivory-bg active:scale-[0.98] transition-decelerate"
+                  className="p-2.5 rounded-xl border border-navy-200 text-navy-700 hover:bg-softblue active:scale-95 transition-decelerate"
                   title="ಮುಂದಿನ ವಾರಕ್ಕೆ ಮುಂದೂಡಿ"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -222,9 +239,9 @@ export default function FollowUpDashboard({ onStartVoiceVisit, onSelectBeneficia
             </div>
           ))
         ) : (
-          <div className="col-span-full bg-white rounded-3xl p-10 text-center border border-navy-100 shadow-card">
+          <div className="col-span-full bg-white rounded-3xl p-10 text-center border border-navy-200/60 shadow-card">
             <CheckCircle2 className="w-12 h-12 text-healthcare mx-auto mb-2" />
-            <h4 className="text-base font-bold text-navy font-kannada">
+            <h4 className="text-base font-bold text-navy-900 font-kannada">
               ಈ ವರ್ಗದಲ್ಲಿ ಯಾವುದೇ ಬಾಕಿ ಭೇಟಿಗಳಿಲ್ಲ
             </h4>
             <p className="text-xs text-navy-400 mt-1">All visits in this category are up to date.</p>
